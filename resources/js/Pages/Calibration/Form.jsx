@@ -88,19 +88,19 @@ export default function Form({ platforms, manufacturers, auth }) {
     return (
         <AuthenticatedLayout>
             <Head title="New Calibration Checklist" />
-            <div className="max-w-5xl mx-auto bg-white p-6 rounded-xl shadow-md">
+            <div className="max-w-10xl mx-auto bg-white p-6 rounded-xl shadow-md bg-gradient-to-r from-gray-600 to-black text-white rounded-t-2xl p-3">
                 <form onSubmit={handleSubmit}>
                     {step === 1 && (
                         <div>
-                            <h2 className="text-xl font-bold mb-4 text-gray-700 text-gray-700">Step 1: Platform & Manufacturer</h2>
+                            <h2 className="text-xl font-bold mb-4 text-white text-white">Step 1: Platform & Manufacturer</h2>
 
                             {/* Platform */}
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700">Platform</label>
+                                <label className="block text-sm font-medium text-white">Platform</label>
                                 <select
                                     value={data.platform}
                                     onChange={(e) => setData("platform", e.target.value)}
-                                    className="w-full border rounded p-2 text-gray-700"
+                                    className="w-full border rounded p-2 text-gray-800"
                                     required
                                 >
                                     <option value="">-- Select Platform --</option>
@@ -114,11 +114,11 @@ export default function Form({ platforms, manufacturers, auth }) {
 
                             {/* Manufacturer */}
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700">Manufacturer</label>
+                                <label className="block text-sm font-medium text-white">Manufacturer</label>
                                 <select
                                     value={data.manufacturer}
                                     onChange={(e) => setData("manufacturer", e.target.value)}
-                                    className="w-full border rounded p-2 text-gray-700"
+                                    className="w-full border rounded p-2 text-gray-800"
                                     required
                                 >
                                     <option value="">-- Select Manufacturer --</option>
@@ -142,9 +142,9 @@ export default function Form({ platforms, manufacturers, auth }) {
 
                     {step === 2 && (
                         <div>
-                            <h2 className="text-xl font-bold mb-4 text-gray-700">Step 2: Add Checklist Items</h2>
+                            <h2 className="text-xl font-bold mb-4 text-white">Step 2: Add Checklist Items</h2>
                             
-                            <div className="text-center border-b pb-2 mb-4 bg-gradient-to-r from-black to-gray-400">
+                            <div className="text-center border-b pb-2 mb-4 bg-gradient-to-r from-gray-600 to-black text-white rounded-t-2xl">
                                 <label
                                    className="block text-sm font-semibold mb-1"
                                     style={{
@@ -174,7 +174,7 @@ export default function Form({ platforms, manufacturers, auth }) {
                             {data.checklistGroups.map((group) => (
                                 <div
                                     key={group.id}
-                                    className="border rounded-lg p-4 mb-4 shadow-sm"
+                                    className="border rounded-lg p-4 mb-4 shadow-sm bg-white overflow-x-auto"
                                 >
                                     <div className="flex justify-between items-center mb-2">
                                         <input
@@ -191,7 +191,7 @@ export default function Form({ platforms, manufacturers, auth }) {
                                                     )
                                                 )
                                             }
-                                            className="border rounded p-2 flex-1 text-gray-700"
+                                            className="border rounded p-2 flex-1 text-gray-500"
                                             required
                                         />
                                         <button
@@ -202,10 +202,12 @@ export default function Form({ platforms, manufacturers, auth }) {
                                            <i className="fas fa-remove"></i>
                                         </button>
                                     </div>
-
-                                    <table className="w-full border mb-3">
+                                <div
+                                    className="border rounded-lg p-4 mb-4 shadow-sm bg-white overflow-x-auto"
+                                >
+                                    <table className="w-full border mb-3 text-center table-auto">
                                         <thead>
-                                            <tr className="bg-gradient-to-r from-black to-gray-400 text-sm text-white ">
+                                            <tr className="bg-gradient-to-r from-gray-600 to-black text-white rounded-t-2xl p-3">
                                                 <th>Description</th>
                                                 <th>Requirements</th>
                                                 <th>Activity 1</th>
@@ -315,6 +317,7 @@ export default function Form({ platforms, manufacturers, auth }) {
                                     >
                                         <i className="fas fa-plus"></i> Add Row
                                     </button>
+                                    </div>
                                 </div>
                             ))}
 

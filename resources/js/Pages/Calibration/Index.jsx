@@ -28,8 +28,8 @@ export default function Index({ checklist }) {
             <Head title="PM Checklist Activities" />
 
             <div className="card border rounded-lg shadow">
-                <div className="card-header bg-gray-100 p-3 flex justify-between">
-                    <h3 className="font-bold text-gray-700">
+                <div className="card-header bg-gray-100 p-3 flex justify-between bg-gradient-to-r from-gray-600 to-black text-white rounded-t-2xl">
+                    <h3 className="font-bold text-gray-700  text-white mt-2 ml-2">
                         <i className="fab fa-slack mr-1"></i> PM Checklist Activities
                     </h3>
                     <button
@@ -42,7 +42,7 @@ export default function Index({ checklist }) {
 
                 <div className="card-body">
                     <table className="table table-bordered text-center w-full">
-                        <thead className="bg-gray-200 text-gray-700">
+                        <thead className="bg-gray-200 text-gray-700 bg-gradient-to-r from-gray-600 to-black text-white rounded-t-2xl">
                             <tr>
                                 <th>#</th>
                                 <th>Platform</th>
@@ -78,13 +78,13 @@ export default function Index({ checklist }) {
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
         <div className="bg-white rounded-lg w-[95%] max-w-6xl p-5 shadow-lg max-h-[90vh] overflow-y-auto">
             {/* Header */}
-            <div className="flex justify-between items-center border-b pb-2 mb-3">
-                <h5 className="font-semibold text-gray-700 text-base md:text-lg">
+            <div className="flex justify-between items-center border-b pb-2 mb-3 bg-gradient-to-r from-gray-600 to-black text-white rounded-t-2xl">
+                <h5 className="font-semibold text-white text-base md:text-lg mt-2 ml-2">
                     <i className="fas fa-tasks"></i> Checklist Details (
                     {selected.platform} - {selected.manufacturer})
                 </h5>
                 <button
-                    className="text-red-500 hover:text-red-700 text-xl"
+                    className="text-red-400 hover:text-red-700 text-xl mr-3 font-bold"
                     onClick={() => setSelected(null)}
                 >
                     ✕
@@ -94,7 +94,7 @@ export default function Index({ checklist }) {
             {/* Responsive Table */}
             <div className="overflow-x-auto">
                 <table className="table-auto border-collapse border border-gray-300 w-full text-sm md:text-base">
-                    <thead className="bg-gray-200 text-gray-700">
+                    <thead className=" bg-gradient-to-r from-gray-600 to-black text-white rounded-t-2xl">
                         <tr>
                             <th className="border px-3 py-2">Assembly Item</th>
                             <th className="border px-3 py-2">Description</th>

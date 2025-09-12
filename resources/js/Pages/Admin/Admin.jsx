@@ -118,6 +118,7 @@ export default function Admin({ tableData, tableFilters, emp_data }) {
                                     </option>
                                     <option value="admin">Admin</option>
                                     <option value="moderator">Moderator</option>
+                                    <option value="approver">Approver</option>
                                 </select>
 
                                 <div className="flex justify-end gap-1 mt-5">

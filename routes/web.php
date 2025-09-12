@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\CalibrationController;
+use App\Http\Controllers\ChecklistController;
 use App\Http\Controllers\PdfController;
+use App\Http\Controllers\SchedulerController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -31,6 +33,17 @@ Route::put('/calibration/{id}', [CalibrationController::class, 'update'])
 
 Route::delete('/calibration/{id}', [CalibrationController::class, 'destroy'])
     ->name('calibration.destroy');
+
+Route::get('/tnr/scheduler-table', [SchedulerController::class, 'index'])
+    ->name('tnr.schedulerTable');
+
+Route::get('/checklist/{platform}', [ChecklistController::class, 'getByPlatform']);
+
+Route::post('/scheduler', [SchedulerController::class, 'store'])->name('scheduler.store');
+
+
+Route::put('/scheduler/{id}/verify', [SchedulerController::class, 'verify']);
+
 
 Route::fallback(function () {
     return Inertia::render('404');

@@ -80,12 +80,14 @@ export default function NewAdmin({ tableData, tableFilters, emp_data }) {
                         <select
                             onChange={(e) => setRole(e.target.value)}
                             className="mt-5 select"
+                            required
                         >
                             {/* <option value={null}></option> */}
-                            <option value={null}></option>
+                            <option value="" disabled selected>Select Role</option>
                             <option value="superadmin">Superadmin</option>
                             <option value="admin">Admin</option>
                             <option value="moderator">Moderator</option>
+                             <option value="approver">Approver</option>
                         </select>
 
                         <div className="flex justify-end mt-4">
