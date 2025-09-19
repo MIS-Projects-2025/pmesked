@@ -605,9 +605,9 @@ if (techTitles.includes(empData.emp_jobtitle)) {
         </button>
       </div>
  {selectedActivity?.tech_ack && selectedActivity?.qa_ack && (selectedActivity?.senior_ee_ack || selectedActivity?.section_ack) && (
-            <div className="flex justify-end mt-4 mb-4">
+            <div className="flex justify-end mt-4 mb-4 mr-4">
               <button
-                className="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-700 "
+                className="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-800 "
                onClick={() => window.open(`/scheduler/${selectedActivity.id}/pdf`, "_blank")}
               >
                 <i className="fa-solid fa-file-pdf"></i> View PDF

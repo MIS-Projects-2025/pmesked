@@ -23,6 +23,9 @@ export default function CalibrationReport({ machines, empData }) {
 
   // 🔹 Modal state
   const [showModal, setShowModal] = useState(false);
+  const [selectedReport, setSelectedReport] = useState(null);
+const [viewModal, setViewModal] = useState(false);
+
 
   // 🔹 Form state (Inertia form helper)
   // const { data, setData, post, processing, reset } = useForm({
@@ -320,11 +323,21 @@ const handleSubmit = () => {
 
 
 
-  // 🔹 Add "View" action to table
-  const dataWithAction = reports.data.map((r) => ({
-    ...r,
-    action: <button className="text-blue-600 hover:underline">View</button>,
-  }));
+const dataWithAction = reports.data.map((r) => ({
+  ...r,
+  action: (
+    <button
+       className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+      onClick={() => {
+        setSelectedReport(r);
+        setViewModal(true);
+      }}
+    >
+      <i className="fas fa-eye"></i> View
+    </button>
+  ),
+}));
+
 
   return (
     <AuthenticatedLayout>
@@ -370,10 +383,16 @@ const handleSubmit = () => {
         {showModal && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
             <div className="bg-white p-6 rounded shadow-lg w-10/12 max-h-[90vh] overflow-y-auto border-t-4 border-blue-600">
-              <div className="flex items-center mb-4 border-b pb-4 bg-gradient-to-r from-gray-600 to-black rounded-t-2xl">
+              <div className="flex justify-between items-center bg-gradient-to-r from-gray-600 to-black text-white p-4 rounded-t-lg sticky top-0 z-10">
                 <h2 className="text-lg font-bold mt-4 ml-4">
                   <i className="fas fa-list"></i> New Calibration Report
                 </h2>
+                 <button
+                  className="text-white text-xl"
+                  onClick={() => setShowModal(false)}
+                >
+                  <i className="fas fa-times text-red-500 hover:text-red-700"></i>
+                </button>
               </div>
 
               {/* 🔹 Machine Info */}
@@ -704,6 +723,95 @@ const handleSubmit = () => {
             </div>
           </div>
         )}
+
+        {viewModal && selectedReport && (
+  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div className="bg-white p-6 rounded shadow-lg w-10/12 max-h-[90vh] overflow-y-auto border-t-4 border-blue-600">
+       <div className="flex justify-between items-center bg-gradient-to-r from-gray-600 to-black text-white p-4 rounded-t-lg sticky top-0 z-10">
+        <h2 className="text-lg font-bold ml-4"> <i className="fa-regular fa-rectangle-list"></i> Calibration Report View</h2>
+        <button
+                  className="text-white text-xl"
+                  onClick={() => setViewModal(false)}
+                >
+                  <i className="fas fa-times text-red-500 hover:text-red-700"></i>
+                </button>
+      </div>
+
+      {/* Machine info - read only */}
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        {["equipment", "manufacturer", "control_no", "performed_by", "calibration_date", "calibration_due", "model", "serial", "temperature", "relative_humidity", "specs", "report_no", "cal_interval"].map((key) => (
+          <div key={key}>
+            <label className="block font-semibold text-gray-500">{key.replace(/_/g, " ")}</label>
+            <input
+              type="text"
+              value={selectedReport[key] || ""}
+              readOnly
+              className="border p-2 rounded w-full text-gray-600 bg-gray-100"
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Calibration Standard Used */}
+      <h3 className="text-md font-semibold text-gray-600 mb-2">Calibration Standard Used</h3>
+      
+      <table className="w-full border mb-3 text-sm">
+        <thead className="bg-gray-400">
+          <tr>
+            {Object.keys(selectedReport.cal_std_use?.[0] || {}).map((key) => (
+              <th key={key} className="border p-2">{key.replace(/_/g, " ")}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {selectedReport.cal_std_use?.map((row, i) => (
+            <tr key={i}>
+              {Object.keys(row).map((key) => (
+                <td key={key} className="border p-2 text-gray-500">
+                  <input type="text" value={row[key]} readOnly className="w-full border p-1 rounded bg-gray-100" />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* Calibration Details */}
+      <h3 className="text-md font-semibold text-gray-600 mb-2">Calibration Details</h3>
+      <table className="w-full border mb-3 text-sm">
+        <thead className="bg-gray-400">
+          <tr>
+            {Object.keys(selectedReport.cal_details?.[0] || {}).map((key) => (
+              <th key={key} className="border p-2">{key.replace(/_/g, " ")}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {selectedReport.cal_details?.map((row, i) => (
+            <tr key={i}>
+              {Object.keys(row).map((key) => (
+                <td key={key} className="border p-2 text-gray-500">
+                  <input type="text" value={row[key]} readOnly className="w-full border p-1 rounded bg-gray-100" />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div className="flex justify-end mt-4">
+        <button
+          type="button"
+          onClick={() => setViewModal(false)}
+          className="px-4 py-2 border rounded bg-red-500 text-white hover:bg-red-600"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
       </div>
     </AuthenticatedLayout>
   );
