@@ -2,8 +2,25 @@ import { useState } from "react";
 import { router, useForm } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import DataTable from "@/Components/DataTable"; // 👈 shared DataTable component
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 export default function SchedulerTable({ tableData, machines, empData, tableFilters }) {
+
+  // Function para i-download yung modal content
+const handleDownloadPDF = () => {
+  const input = document.getElementById("modal-content"); // target yung buong modal
+  html2canvas(input, { scale: 2 }).then((canvas) => {
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+    pdf.save("activity-details.pdf");
+  });
+};
   
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -16,6 +33,9 @@ export default function SchedulerTable({ tableData, machines, empData, tableFilt
     machinePlatform: "",
     quarter: "",
     progress_value: 0,
+    seniorTech: "",
+    esdTech: "",
+    pmEngineer: ""
   });
   const [selectedChecklist, setSelectedChecklist] = useState([]);
   const [answers, setAnswers] = useState({});
@@ -198,12 +218,15 @@ const dataWithProgressAndAction = (tableData?.data || []).map((row, index) => {
         machinePlatform: row.machine_platform,
         quarter: row.quarter,
         progress_value: row.progress_value,
+        seniorTech: row.tech_ack,
+        esdTech: row.qa_ack,
+        pmEngineer: row.senior_ee_ack
       });
       setSelectedActivity(row);
       setModalOpen(true); // ito yung view modal
     }}
   >
-    View
+    <i className="fas fa-eye"></i> View
   </button>
 ),
 
@@ -222,12 +245,12 @@ const handleVerify = (activityId) => {
   // 1. Technician verify
   const techTitles = [
   "Senior Equipment Technician",
-  "Equipment Technician 1",
+  // "Equipment Technician 1",
   "Equipment Technician 2",
   "Equipment Technician 3",
-  "PM Technician 1",
-  "PM Technician 2",
-  "Trainee - Equipment Technician 1"
+  // "PM Technician 1",
+  "PM Technician 2"
+  // "Trainee - Equipment Technician 1"
 ];
 
 if (techTitles.includes(empData.emp_jobtitle)) {
@@ -563,8 +586,11 @@ if (techTitles.includes(empData.emp_jobtitle)) {
         )}
 
         {modalOpen && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+            <div id="modal-content" className="bg-white w-full max-w-7xl rounded-lg shadow-lg max-h-screen overflow-y-auto">
     <div className="bg-white w-full max-w-7xl rounded-lg shadow-lg max-h-screen overflow-y-auto">
+
+    
       
       {/* Header */}
       <div className="flex justify-between items-center bg-gradient-to-r from-gray-600 to-black text-white p-4 rounded-t-lg">
@@ -578,7 +604,16 @@ if (techTitles.includes(empData.emp_jobtitle)) {
           <i className="fas fa-times text-red-500 hover:text-red-700"></i>
         </button>
       </div>
-
+ {selectedActivity?.tech_ack && selectedActivity?.qa_ack && (selectedActivity?.senior_ee_ack || selectedActivity?.section_ack) && (
+            <div className="flex justify-end mt-4 mb-4">
+              <button
+                className="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-700 "
+               onClick={() => window.open(`/scheduler/${selectedActivity.id}/pdf`, "_blank")}
+              >
+                <i className="fa-solid fa-file-pdf"></i> View PDF
+              </button>
+            </div>
+          )}
       {/* Body */}
       <div className="p-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -637,11 +672,42 @@ if (techTitles.includes(empData.emp_jobtitle)) {
             <input
               type="text"
               className="form-control border rounded w-full text-gray-600"
-              value={formData.performedBy || ""}
+              value={formData.performedBy || "Empty Field..."}
+              readOnly
+            />
+          </div>
+
+          <div>
+            <label className="block font-semibold text-gray-600">Senior Technician</label>
+            <input
+              type="text"
+              className="form-control border rounded w-full text-gray-600"
+              value={formData.seniorTech || "Waiting for Senior Technician..."}
+              readOnly
+            />
+          </div>
+
+          <div>
+            <label className="block font-semibold text-gray-600">ESD Technician</label>
+            <input
+              type="text"
+              className="form-control border rounded w-full text-gray-600"
+              value={formData.esdTech || "Waiting for ESD Technician..."}
+              readOnly
+            />
+          </div>
+
+          <div>
+            <label className="block font-semibold text-gray-600">Senior Engineer</label>
+            <input
+              type="text"
+              className="form-control border rounded w-full text-gray-600"
+              value={formData.pmEngineer || "Waiting for Senior Engineer/ Engineer..."}
               readOnly
             />
           </div>
         </div>
+        
 
         {/* Info callout */}
         <div className="bg-blue-50 border border-blue-200 rounded p-3 mt-4 text-center">
@@ -654,7 +720,8 @@ if (techTitles.includes(empData.emp_jobtitle)) {
 
         {/* Placeholder for answers table */}
        <div className="mt-4">
-  <h6 className="font-semibold text-gray-600">Answers:</h6>
+         
+  {/* <h6 className="font-semibold text-gray-600">Answers:</h6> */}
   <div className="border p-2 rounded overflow-x-auto">
     {selectedActivity?.answers ? (
       <table className="table-auto w-full text-sm border-collapse border border-gray-300">
@@ -678,7 +745,7 @@ if (techTitles.includes(empData.emp_jobtitle)) {
         </thead>
         <tbody>
           {JSON.parse(selectedActivity.answers).map((ans, i) => (
-            <tr key={i} className="hover:bg-gray-500 hover:text-white text-gray-500">
+            <tr key={i} className=" text-gray-500">
               <td className="border border-gray-300 px-2 py-1">{i + 1}</td>
               <td className="border border-gray-300 px-2 py-1">{ans.assy_item}</td>
               <td className="border border-gray-300 px-2 py-1">{ans.description}</td>
@@ -728,12 +795,12 @@ if (techTitles.includes(empData.emp_jobtitle)) {
 {empData && (() => {
  const isTech = [
   "Senior Equipment Technician",
-  "Equipment Technician 1",
+  // "Equipment Technician 1",
   "Equipment Technician 2",
   "Equipment Technician 3",
-  "PM Technician 1",
-  "PM Technician 2",
-  "Trainee - Equipment Technician 1"
+  // "PM Technician 1",
+  "PM Technician 2"
+  // "Trainee - Equipment Technician 1"
 ].includes(empData.emp_jobtitle);
   const isQA = ["ESD Technician 1", "ESD Technician 2"].includes(empData.emp_jobtitle);
   const isEngineer = [
@@ -781,13 +848,18 @@ if (techTitles.includes(empData.emp_jobtitle)) {
     );
   }
 
+  {/* ✅ Lalabas lang kung lahat ng tatlo ay verified */}
+
+
+
   return null; // hide if not allowed
 })()}
 
       </div>
     </div>
-  </div>
-)}
+          </div>
+        </div>
+        )}
 
       </div>
     </AuthenticatedLayout>

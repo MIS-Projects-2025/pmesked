@@ -222,12 +222,12 @@ const handleVerify = (activityId) => {
   // 1. Technician verify
   const techTitles = [
   "Senior Equipment Technician",
-  "Equipment Technician 1",
+  // "Equipment Technician 1",
   "Equipment Technician 2",
   "Equipment Technician 3",
-  "PM Technician 1",
-  "PM Technician 2",
-  "Trainee - Equipment Technician 1"
+  // "PM Technician 1",
+  "PM Technician 2"
+  // "Trainee - Equipment Technician 1"
 ];
 
 if (techTitles.includes(empData.emp_jobtitle)) {

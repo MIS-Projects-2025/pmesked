@@ -7,6 +7,7 @@ use App\Models\Machine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 use function Laravel\Prompts\progress;
 
@@ -178,5 +179,21 @@ class SchedulerController extends Controller
         $scheduler->save();
 
         return back()->with('success', 'Verified successfully');
+    }
+
+    public function viewPdf($id)
+    {
+        $scheduler = Scheduler::findOrFail($id);
+
+        // kung JSON string ang "answers", i-decode natin
+        $answers = $scheduler->answers ? json_decode($scheduler->answers, true) : [];
+
+        $pdf = Pdf::loadView('pdf.activity', [
+            'scheduler' => $scheduler,
+            'answers' => $answers,
+        ]);
+
+        // stream para makita sa browser (may toolbar)
+        return $pdf->stream("activity_$id.pdf");
     }
 }

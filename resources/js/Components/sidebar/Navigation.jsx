@@ -33,18 +33,18 @@ export default function NavLinks() {
                         // notification: true,
                     },
                     {
-                        href: route("admin"),
-                        label: "Calibration Checklist",
+                        href: route("calibration.calibrationReport"),
+                        label: "Calibration Report",
                         icon: (
                         <i className="far fa-square"></i>
                         ),
                         // notification: 125,
                     },
-                    {
-                        href: route("pdfs.index"),   // bagong link
-                        label: "PDF Fillup",
-                        icon:  <i className="far fa-square"></i>,
-                    },
+                    // {
+                    //     href: route("pdfs.index"),   // bagong link
+                    //     label: "PDF Fillup",
+                    //     icon:  <i className="far fa-square"></i>,
+                    // },
                 ]}
                 // notification={true}
             />
