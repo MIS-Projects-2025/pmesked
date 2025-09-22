@@ -738,10 +738,10 @@ const dataWithAction = reports.data.map((r) => ({
       </div>
 
       {/* Machine info - read only */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-4 gap-4 mb-6 mt-4 bg-gradient-to-r from-gray-600 to-black text-white p-4 rounded">
         {["equipment", "manufacturer", "control_no", "performed_by", "calibration_date", "calibration_due", "model", "serial", "temperature", "relative_humidity", "specs", "report_no", "cal_interval"].map((key) => (
           <div key={key}>
-            <label className="block font-semibold text-gray-500">{key.replace(/_/g, " ")}</label>
+            <label className="block font-semibold">{key.replace(/_/g, " ")}</label>
             <input
               type="text"
               value={selectedReport[key] || ""}
@@ -751,9 +751,9 @@ const dataWithAction = reports.data.map((r) => ({
           </div>
         ))}
       </div>
-
+    <div className="bg-gradient-to-r from-gray-600 to-black text-white p-4 rounded">
       {/* Calibration Standard Used */}
-      <h3 className="text-md font-semibold text-gray-600 mb-2">Calibration Standard Used</h3>
+      <h3 className="text-md font-semibold mb-2">Calibration Standard Used</h3>
       
       <table className="w-full border mb-3 text-sm">
         <thead className="bg-gray-400">
@@ -777,7 +777,7 @@ const dataWithAction = reports.data.map((r) => ({
       </table>
 
       {/* Calibration Details */}
-      <h3 className="text-md font-semibold text-gray-600 mb-2">Calibration Details</h3>
+      <h3 className="text-md font-semibold mb-2">Calibration Details</h3>
       <table className="w-full border mb-3 text-sm">
         <thead className="bg-gray-400">
           <tr>
@@ -799,12 +799,15 @@ const dataWithAction = reports.data.map((r) => ({
         </tbody>
       </table>
 
+      </div>
+
       <div className="flex justify-end mt-4">
         <button
           type="button"
           onClick={() => setViewModal(false)}
           className="px-4 py-2 border rounded bg-red-500 text-white hover:bg-red-600"
         >
+          <i className="fas fa-times mr-2"></i>
           Close
         </button>
       </div>

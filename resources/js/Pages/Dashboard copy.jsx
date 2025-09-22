@@ -34,13 +34,13 @@ export default function Dashboard(props) {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
   const [modalData, setModalData] = useState([]);
-  const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null); // para list -> detail
 
   const openModal = (title, data) => {
     if (!data || data.length === 0) return;
     setModalTitle(title);
     setModalData(data);
-    setSelectedItem(null);
+    setSelectedItem(null); // list view muna
     setModalOpen(true);
   };
 
@@ -129,7 +129,7 @@ export default function Dashboard(props) {
         </div>
       </div>
 
-      {/* 🔹 Latest Calibration Reports */}
+      {/* 🔹 Recent Reports */}
       <div className="bg-white p-4 shadow rounded-lg">
         <h3 className="text-lg font-semibold mb-4 text-gray-600">
           Latest Calibration Reports
@@ -176,7 +176,7 @@ export default function Dashboard(props) {
             {/* Body */}
             <div className="p-6">
               {!selectedItem ? (
-                // 🔹 List View
+                // 🔹 List View muna
                 <table className="w-full border text-sm">
                   <thead className="bg-gray-200 text-gray-600">
                     <tr>
@@ -218,7 +218,8 @@ export default function Dashboard(props) {
                           <button
                             className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
                             onClick={() => setSelectedItem(item)}
-                          > <i className="fa-regular fa-eye"></i> View
+                          >
+                            View
                           </button>
                         </td>
                       </tr>
@@ -229,9 +230,8 @@ export default function Dashboard(props) {
                 // 🔹 Detail View
                 <div>
                   {modalTitle === "Calibration Reports" ? (
-                    <div className="space-y-6">
-                      {/* Basic Fields */}
-                      <div className="grid grid-cols-4 gap-4">
+                    <div>
+                      <div className="grid grid-cols-4 gap-4 mb-6">
                         {[
                           "equipment",
                           "manufacturer",
@@ -260,92 +260,6 @@ export default function Dashboard(props) {
                           </div>
                         ))}
                       </div>
-
-                      {/* Calibration Standards Used */}
-                      {selectedItem.cal_std_use && (
-                        <div>
-                          <h4 className="font-semibold text-gray-700 mb-2">
-                            Calibration Standards Used
-                          </h4>
-                          <table className="table-auto w-full border text-sm">
-                            <thead className="bg-gray-200 text-gray-600">
-                              <tr>
-                                <th className="border p-2">Description</th>
-                                <th className="border p-2">Manufacturer</th>
-                                <th className="border p-2">Model</th>
-                                <th className="border p-2">Control No</th>
-                                <th className="border p-2">Serial No</th>
-                                <th className="border p-2">Accuracy</th>
-                                <th className="border p-2">Cal Date</th>
-                                <th className="border p-2">Cal Due</th>
-                                <th className="border p-2">Traceability</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {JSON.parse(selectedItem.cal_std_use).map(
-                                (std, i) => (
-                                  <tr
-                                    key={i}
-                                    className="text-gray-600 hover:bg-gray-50"
-                                  >
-                                    <td className="border p-2">{std.description}</td>
-                                    <td className="border p-2">{std.cal_manufacturer}</td>
-                                    <td className="border p-2">{std.model_no}</td>
-                                    <td className="border p-2">{std.cal_control_no}</td>
-                                    <td className="border p-2">{std.serial_no}</td>
-                                    <td className="border p-2">{std.accuracy}</td>
-                                    <td className="border p-2">{std.cal_date}</td>
-                                    <td className="border p-2">{std.cal_due}</td>
-                                    <td className="border p-2">{std.traceability}</td>
-                                  </tr>
-                                )
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-
-                      {/* Calibration Details */}
-                      {selectedItem.cal_details && (
-                        <div>
-                          <h4 className="font-semibold text-gray-700 mb-2">
-                            Calibration Details
-                          </h4>
-                          <table className="table-auto w-full border text-sm">
-                            <thead className="bg-gray-200 text-gray-600">
-                              <tr>
-                                <th className="border p-2">Function Tested</th>
-                                <th className="border p-2">Nominal</th>
-                                <th className="border p-2">Tolerance</th>
-                                <th className="border p-2">Unit Under Test</th>
-                                <th className="border p-2">Standard Instrument</th>
-                                <th className="border p-2">Disparity</th>
-                                <th className="border p-2">Correction</th>
-                                <th className="border p-2">Remarks</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {JSON.parse(selectedItem.cal_details).map(
-                                (d, i) => (
-                                  <tr
-                                    key={i}
-                                    className="text-gray-600 hover:bg-gray-50"
-                                  >
-                                    <td className="border p-2">{d.function_tested}</td>
-                                    <td className="border p-2">{d.nominal}</td>
-                                    <td className="border p-2">{d.tolerance}</td>
-                                    <td className="border p-2">{d.unit_under_test}</td>
-                                    <td className="border p-2">{d.standard_instrument}</td>
-                                    <td className="border p-2">{d.disparity}</td>
-                                    <td className="border p-2">{d.correction}</td>
-                                    <td className="border p-2">{d.remarks}</td>
-                                  </tr>
-                                )
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
                     </div>
                   ) : (
                     <div>
@@ -419,51 +333,26 @@ export default function Dashboard(props) {
                           />
                         </div>
                       </div>
-
-                      {/* PM Answers Table */}
-                      {selectedItem.answers && (
-                        <div className="mt-4">
-                          <div className="border p-2 rounded overflow-x-auto">
-                            <table className="table-auto w-full text-sm border-collapse border border-gray-300">
-                              <thead>
-                                <tr className="bg-gradient-to-r from-gray-600 to-black text-white">
-                                  <th className="border px-2 py-1">#</th>
-                                  <th className="border px-2 py-1">Assy Item</th>
-                                  <th className="border px-2 py-1">Description</th>
-                                  <th className="border px-2 py-1">Requirements</th>
-                                  <th className="border px-2 py-1">Activity</th>
-                                  <th className="border px-2 py-1">Compliance</th>
-                                  <th className="border px-2 py-1">Remarks</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {JSON.parse(selectedItem.answers).map(
-                                  (ans, i) => (
-                                    <tr key={i} className="text-gray-500">
-                                      <td className="border px-2 py-1">{i + 1}</td>
-                                      <td className="border px-2 py-1">{ans.assy_item}</td>
-                                      <td className="border px-2 py-1">{ans.description}</td>
-                                      <td className="border px-2 py-1">{ans.requirements}</td>
-                                      <td className="border px-2 py-1">{ans.activity_1}</td>
-                                      <td className="border px-2 py-1 text-center">
-                                        <input
-                                          type="checkbox"
-                                          checked={true}
-                                          readOnly
-                                          className="h-4 w-4 accent-green-600"
-                                        />
-                                      </td>
-                                      <td className="border px-2 py-1">{ans.remarks}</td>
-                                    </tr>
-                                  )
-                                )}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   )}
+
+                  {/* Footer for detail */}
+                  <div className="flex justify-between mt-6">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedItem(null)}
+                      className="px-4 py-2 border rounded bg-gray-400 text-white hover:bg-gray-500"
+                    >
+                      Back to List
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setModalOpen(false)}
+                      className="px-4 py-2 border rounded bg-red-500 text-white hover:bg-red-600"
+                    >
+                      Close
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

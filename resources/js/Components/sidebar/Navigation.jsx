@@ -48,6 +48,35 @@ export default function NavLinks() {
                 ]}
                 // notification={true}
             />
+            <Dropdown
+                label="Non-TNR"
+                icon={
+                    <i className="fas fa-file-contract"></i>
+                }
+                className='disabled'
+                links={[
+                    {
+                        href: '',
+                        label: "Checklist",
+                        icon: (
+                           <i className="far fa-square"></i>
+                        ),
+                        className: "opacity-50 pointer-events-none",
+                        // notification: true,
+                    },
+                    {
+                        href: '',
+                        label: "Calibration Report",
+                        icon: (
+                        <i className="far fa-square"></i>
+                        ),
+                        className: "opacity-50 pointer-events-none",
+                        // notification: 125,
+                    },
+                    
+                ]}
+                // notification={true}
+            />
             {["superadmin", "admin", "approver"].includes(emp_data?.emp_system_role) && (
                 <div>
 
