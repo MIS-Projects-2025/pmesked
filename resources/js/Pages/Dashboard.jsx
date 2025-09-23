@@ -1,5 +1,6 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head } from "@inertiajs/react";
+import { hrefToUrl } from "@inertiajs/inertia";
+import { Head, router } from "@inertiajs/react";
 import { useState } from "react";
 import {
   BarChart,
@@ -15,6 +16,46 @@ import {
 } from "recharts";
 
 export default function Dashboard(props) {
+
+  // Check kung due today
+// Parse WW format (ex: WW501) into a Date (start of that week)
+// Parse WW format (ex: WW501) into a Date (start of that week)
+const parseWWToDate = (ww) => {
+  if (!ww || typeof ww !== "string" || !ww.startsWith("WW")) return null;
+
+  const weekNum = parseInt(ww.slice(2)); // "WW501" -> 501
+  if (isNaN(weekNum)) return null;
+
+  const baseWeek = 501; // starting reference
+  const baseDate = new Date("2024-11-03"); // WW501 starts Nov 3, 2024
+
+  const diffWeeks = weekNum - baseWeek;
+  const result = new Date(baseDate);
+  result.setDate(baseDate.getDate() + diffWeeks * 7);
+  return result;
+};
+
+// Check if due today
+const isDueToday = (ww) => {
+  const dueDate = parseWWToDate(ww);
+  if (!dueDate) return false; // guard
+  const today = new Date().toISOString().split("T")[0];
+  return dueDate.toISOString().split("T")[0] === today;
+};
+
+// Check if overdue
+const isOverdue = (ww) => {
+  const dueDate = parseWWToDate(ww);
+  if (!dueDate) return false; // guard
+  const today = new Date().toISOString().split("T")[0];
+  return dueDate.toISOString().split("T")[0] < today;
+};
+
+
+
+
+
+
   const calibrationReportsCount = props.calibrationReportsCount ?? 0;
   const dueSoon = props.dueSoon ?? 0;
   const overdue = props.overdue ?? 0;
@@ -24,7 +65,7 @@ export default function Dashboard(props) {
   const checklistStatus = props.checklistStatus ?? [];
   const latestReports = props.latestReports ?? [];
 
-  const dueSoonReports = props.dueSoonReports ?? [];
+  const dueTodayReports = props.dueTodayReports ?? [];
   const overdueReports = props.overdueReports ?? [];
   const completedSchedulers = props.completedSchedulers ?? [];
 
@@ -43,6 +84,9 @@ export default function Dashboard(props) {
     setSelectedItem(null);
     setModalOpen(true);
   };
+
+ 
+ 
 
   return (
     <AuthenticatedLayout>
@@ -63,10 +107,10 @@ export default function Dashboard(props) {
         </div>
         <div
           className="p-4 bg-yellow-100 rounded-lg shadow text-center cursor-pointer hover:bg-yellow-200"
-          onClick={() => openModal("Due Soon", dueSoonReports)}
+          onClick={() => openModal("Due Soon", dueTodayReports)}
         >
           <h2 className="text-2xl font-bold text-yellow-500">{dueSoon}</h2>
-          <p className="text-gray-600">Due Soon</p>
+          <p className="text-gray-600">Due Today</p>
         </div>
         <div
           className="p-4 bg-red-100 rounded-lg shadow text-center cursor-pointer hover:bg-red-200"
@@ -77,7 +121,7 @@ export default function Dashboard(props) {
         </div>
         <div
           className="p-4 bg-green-100 rounded-lg shadow text-center cursor-pointer hover:bg-green-200"
-          onClick={() => openModal("TNR PM Completed", completedSchedulers)}
+          // onClick={() => openModal("TNR PM Completed", completedSchedulers)}
         >
           <h2 className="text-2xl font-bold text-green-500">{tnrCompleted}</h2>
           <p className="text-gray-600">TNR PM Completed</p>
@@ -434,6 +478,9 @@ export default function Dashboard(props) {
                                   <th className="border px-2 py-1">Activity</th>
                                   <th className="border px-2 py-1">Compliance</th>
                                   <th className="border px-2 py-1">Remarks</th>
+                                  <th className="border px-2 py-1">Activity</th>
+                                  <th className="border px-2 py-1">Compliance</th>
+                                  <th className="border px-2 py-1">Remarks</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -447,23 +494,66 @@ export default function Dashboard(props) {
                                       <td className="border px-2 py-1">{ans.activity_1}</td>
                                       <td className="border px-2 py-1 text-center">
                                         <input
+                                        type="checkbox"
+                                        checked={!!ans.compliance1} // force boolean
+                                        readOnly
+                                        className="h-4 w-4 accent-green-600 rounded-full"
+                                      />
+                                      </td>
+                                      <td className="border px-2 py-1">{ans.remarks1}</td>
+                                      <td className="border px-2 py-1">{ans.activity_2}</td>
+                                      <td className="border px-2 py-1 text-center">
+                                        <input
                                           type="checkbox"
-                                          checked={true}
+                                          checked={!!ans.compliance2} 
                                           readOnly
-                                          className="h-4 w-4 accent-green-600"
+                                          className="h-4 w-4 accent-green-600 rounded-full"
                                         />
                                       </td>
-                                      <td className="border px-2 py-1">{ans.remarks}</td>
+                                      <td className="border px-2 py-1">{ans.remarks2}</td>
                                     </tr>
                                   )
                                 )}
                               </tbody>
                             </table>
+                            <div className="flex justify-end mt-4">
+                      {(modalTitle !== "Calibration Reports" &&
+                      (isDueToday(selectedItem.pm_due) || isOverdue(selectedItem.pm_due))) && (
+                      <>
+                          <button
+                           className="text-white text-xl bg-sky-500 hover:bg-sky-600 rounded px-4 py-2 mr-2 btn-sm"
+                           onClick={() =>
+                          router.visit(route("tnr.fillup", { id: selectedItem.id }))
+                          }
+                          
+                          >
+                           <i className="fas fa-fill mr-1"></i> Fillup
+                          </button>
+
+                         <button
+                          className="text-white text-xl bg-green-400 hover:bg-green-600 rounded px-4 py-2"
+                            onClick={() =>
+                          router.visit(route("tnr.extend", { id: selectedItem.id }))
+                          }
+                          >
+                         <i className="fas fa-check mr-1"></i> Extend
+                        </button>
+
+                       </>
+                      
+                     )}
+                    </div>
                           </div>
+                          
                         </div>
                       )}
+                    
+
+
                     </div>
+
                   )}
+
                 </div>
               )}
             </div>

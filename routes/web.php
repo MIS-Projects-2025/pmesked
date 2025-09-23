@@ -5,6 +5,7 @@ use App\Http\Controllers\CalibrationReportController;
 use App\Http\Controllers\ChecklistController;
 use App\Http\Controllers\PdfController;
 use App\Http\Controllers\SchedulerController;
+use App\Http\Controllers\TnrController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -43,6 +44,20 @@ Route::put('/calibration-reports/{calibrationReport}', [CalibrationReportControl
     ->name('calibration-reports.update');
 Route::delete('/calibration-reports/{calibrationReport}', [CalibrationReportController::class, 'destroy'])
     ->name('calibration-reports.destroy');
+
+// Show Fillup form
+Route::get('/tnr/fillup/{id}', [TnrController::class, 'fillup'])->name('tnr.fillup');
+
+// Handle Fillup form submission
+Route::post('/tnr/fillup/{id}', [TnrController::class, 'updateFillup'])->name('tnr.fillup.update');
+
+// Show Extend form
+Route::get('/tnr/extend/{id}', [TnrController::class, 'extend'])->name('tnr.extend');
+
+// Handle Extend form submission
+Route::post('/tnr/extend/{id}', [TnrController::class, 'updateExtend'])->name('tnr.extend.update');
+
+
 
 // fallback
 Route::fallback(fn() => Inertia::render('404'))->name('404');

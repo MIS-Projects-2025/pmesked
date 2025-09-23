@@ -33,8 +33,8 @@ class DashboardController extends Controller
         $currentWeek = 501 + (int) $baseDate->diffInWeeks(now()->startOfDay());
 
         // 🔹 Scheduler (TNR PM Checklists)
-        $dueSoonReports = DB::table('scheduler_tbl')
-            ->whereRaw("CAST(SUBSTRING(pm_due, 3) AS UNSIGNED) = ?", [$currentWeek + 1]) // next WW
+        $dueTodayReports = DB::table('scheduler_tbl')
+            ->whereRaw("CAST(SUBSTRING(pm_due, 3) AS UNSIGNED) = ?", [$currentWeek]) // next WW
             ->get();
 
         $overdueReports = DB::table('scheduler_tbl')
@@ -69,7 +69,7 @@ class DashboardController extends Controller
         //         ->whereRaw("CAST(SUBSTRING(pm_due, 3) AS UNSIGNED) < ?", [$currentWeek])
         //         ->toSql(),
 
-        //     'dueSoonReports' => $dueSoonReports->pluck('pm_due'),
+        //     'dueTodayReports' => $dueTodayReports->pluck('pm_due'),
         //     'overdueReports' => $overdueReports->pluck('pm_due'),
         // ]);
 
@@ -82,7 +82,7 @@ class DashboardController extends Controller
         return inertia('Dashboard', [
             // Summary counts
             'calibrationReportsCount' => $calibrationReportsCount,
-            'dueSoon' => $dueSoonReports->count(),
+            'dueSoon' => $dueTodayReports->count(),
             'overdue' => $overdueReports->count(),
             'tnrCompleted' => $completedSchedulers->count(),
 
@@ -92,12 +92,25 @@ class DashboardController extends Controller
 
             // Data for modal tables
             'latestReports' => $latestReports,
-            'dueSoonReports' => $dueSoonReports,
+            'dueTodayReports' => $dueTodayReports,
             'overdueReports' => $overdueReports,
             'completedSchedulers' => $completedSchedulers,
 
             // Debug info
             'currentWeek' => $currentWeek,
+        ]);
+    }
+
+    public function extend($id)
+    {
+        $scheduler = DB::table('scheduler_tbl')->where('id', $id)->first();
+
+        if (!$scheduler) {
+            abort(404, 'Scheduler not found');
+        }
+
+        return inertia('Tnr/Extend', [
+            'scheduler' => $scheduler
         ]);
     }
 }

@@ -208,20 +208,27 @@ const dataWithProgressAndAction = (tableData?.data || []).map((row, index) => {
   <button
     className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
     onClick={() => {
-      setFormData({
-        machine: row.machine_num,
-        controlNo: row.pmnt_no,
-        serial: row.serial,
-        pmDate: row.first_cycle,
-        pmDue: row.pm_due,
-        performedBy: row.responsible_person,
-        machinePlatform: row.machine_platform,
-        quarter: row.quarter,
-        progress_value: row.progress_value,
-        seniorTech: row.tech_ack,
-        esdTech: row.qa_ack,
-        pmEngineer: row.senior_ee_ack
-      });
+     setFormData({
+  machine: row.machine_num,
+  controlNo: row.pmnt_no,
+  serial: row.serial,
+  pmDate: row.first_cycle,
+  pmDue: row.pm_due,
+  performedBy: row.responsible_person,
+  machinePlatform: row.machine_platform,
+  quarter: row.quarter,
+  progress_value: row.progress_value,
+  seniorTech: row.tech_ack && row.tech_ack_date
+               ? `${row.tech_ack} / ${row.tech_ack_date}` 
+               : '',
+  esdTech: row.qa_ack  && row.qa_ack_date
+               ? `${row.qa_ack} / ${row.qa_ack_date}` 
+               : '',
+  pmEngineer: row.senior_ee_ack && row.senior_ee_ack_date 
+               ? `${row.senior_ee_ack} / ${row.senior_ee_ack_date}` 
+               : ''
+});
+
       setSelectedActivity(row);
       setModalOpen(true); // ito yung view modal
     }}
@@ -239,7 +246,16 @@ const handleVerify = (activityId) => {
     return;
   }
 
-  const today = new Date().toISOString().slice(0, 19).replace("T", " ");
+  const now = new Date();
+const todayLocal = now.getFullYear() + '-' +
+                   String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                   String(now.getDate()).padStart(2, '0') + ' ' +
+                   String(now.getHours()).padStart(2, '0') + ':' +
+                   String(now.getMinutes()).padStart(2, '0') + ':' +
+                   String(now.getSeconds()).padStart(2, '0');
+
+console.log(todayLocal);
+
   let updateFields = {};
 
   // 1. Technician verify
@@ -260,12 +276,12 @@ if (techTitles.includes(empData.emp_jobtitle)) {
   }
   updateFields = {
     tech_ack: empData.emp_name,
-    tech_ack_date: today,
+    tech_ack_date: todayLocal,
     progress_value: (selectedActivity.progress_value || 0) + 25,
   };
 }
   // 2. ESD verify
-  else if (["ESD Technician 1", "ESD Technician 2"].includes(empData.emp_jobtitle)) {
+  else if (["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer"].includes(empData.emp_jobtitle)) {
     if (!selectedActivity.tech_ack) {
       alert("⚠️ Technician must verify first.");
       return;
@@ -276,7 +292,7 @@ if (techTitles.includes(empData.emp_jobtitle)) {
     }
     updateFields = {
       qa_ack: empData.emp_name,
-      qa_ack_date: today,
+      qa_ack_date: todayLocal,
       progress_value: (selectedActivity.progress_value || 0) + 25,
     };
   }
@@ -301,7 +317,7 @@ if (techTitles.includes(empData.emp_jobtitle)) {
     }
     updateFields = {
       senior_ee_ack: empData.emp_name,
-      senior_ee_ack_date: today,
+      senior_ee_ack_date: todayLocal,
       progress_value: (selectedActivity.progress_value || 0) + 25,
     };
   } else {
@@ -681,7 +697,7 @@ if (techTitles.includes(empData.emp_jobtitle)) {
             <label className="block font-semibold text-gray-600">Senior Technician</label>
             <input
               type="text"
-              className="form-control border rounded w-full text-gray-600"
+              className="form-control border rounded w-full text-gray-600 text-sm"
               value={formData.seniorTech || "Waiting for Senior Technician..."}
               readOnly
             />
@@ -691,7 +707,7 @@ if (techTitles.includes(empData.emp_jobtitle)) {
             <label className="block font-semibold text-gray-600">ESD Technician</label>
             <input
               type="text"
-              className="form-control border rounded w-full text-gray-600"
+              className="form-control border rounded w-full text-gray-600 text-sm"
               value={formData.esdTech || "Waiting for ESD Technician..."}
               readOnly
             />
@@ -701,7 +717,7 @@ if (techTitles.includes(empData.emp_jobtitle)) {
             <label className="block font-semibold text-gray-600">Senior Engineer</label>
             <input
               type="text"
-              className="form-control border rounded w-full text-gray-600"
+              className="form-control border rounded w-full text-gray-600 text-sm"
               value={formData.pmEngineer || "Waiting for Senior Engineer/ Engineer..."}
               readOnly
             />
@@ -756,7 +772,7 @@ if (techTitles.includes(empData.emp_jobtitle)) {
                     type="checkbox"
                    checked={true}
                     readOnly
-                   className="h-4 w-4 accent-green-600"
+                    className="h-4 w-4 accent-green-600 rounded-full"
                  />
               </td>
               <td className="border border-gray-300 px-2 py-1">{ans.remarks1}</td>
@@ -766,7 +782,7 @@ if (techTitles.includes(empData.emp_jobtitle)) {
                    type="checkbox"
                     checked={ans.compliance2 == 1}
                     readOnly
-                   className="h-4 w-4 accent-green-600"
+                   className="h-4 w-4 accent-green-600 rounded-full"
                   />
               </td>
               <td className="border border-gray-300 px-2 py-1">{ans.remarks2}</td>
@@ -802,7 +818,7 @@ if (techTitles.includes(empData.emp_jobtitle)) {
   "PM Technician 2"
   // "Trainee - Equipment Technician 1"
 ].includes(empData.emp_jobtitle);
-  const isQA = ["ESD Technician 1", "ESD Technician 2"].includes(empData.emp_jobtitle);
+  const isQA = ["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer"].includes(empData.emp_jobtitle);
   const isEngineer = [
     "Equipment Engineer",
     "Supervisor - Equipment Technician",

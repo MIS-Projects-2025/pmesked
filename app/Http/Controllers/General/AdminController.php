@@ -61,6 +61,7 @@ class AdminController extends Controller
                 'conditions' => function ($query) {
                     return $query
                         ->where('ACCSTATUS', 1)
+                        ->where('DEPARTMENT', 'Equipment Engineering')
                         ->whereNot('EMPLOYID', 0);
                 },
 

@@ -103,7 +103,7 @@ export default function Admin({ tableData, tableFilters, emp_data }) {
                         <p>
                             <strong>Role:</strong> {row.emp_role}
                         </p>
-                        {["superadmin", "admin"].includes(
+                        {["superadmin"].includes(
                             emp_data?.emp_system_role
                         ) && (
                             <div>

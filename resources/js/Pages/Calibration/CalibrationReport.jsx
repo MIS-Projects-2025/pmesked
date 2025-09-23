@@ -738,7 +738,7 @@ const dataWithAction = reports.data.map((r) => ({
       </div>
 
       {/* Machine info - read only */}
-      <div className="grid grid-cols-4 gap-4 mb-6 mt-4 bg-gradient-to-r from-gray-600 to-black text-white p-4 rounded">
+      <div className="grid grid-cols-4 gap-4 mb-6 mt-4 text-gray-500 ">
         {["equipment", "manufacturer", "control_no", "performed_by", "calibration_date", "calibration_due", "model", "serial", "temperature", "relative_humidity", "specs", "report_no", "cal_interval"].map((key) => (
           <div key={key}>
             <label className="block font-semibold">{key.replace(/_/g, " ")}</label>
@@ -751,9 +751,9 @@ const dataWithAction = reports.data.map((r) => ({
           </div>
         ))}
       </div>
-    <div className="bg-gradient-to-r from-gray-600 to-black text-white p-4 rounded">
+    
       {/* Calibration Standard Used */}
-      <h3 className="text-md font-semibold mb-2">Calibration Standard Used</h3>
+      <h3 className="text-md font-semibold mb-2 text-gray-500">Calibration Standard Used</h3>
       
       <table className="w-full border mb-3 text-sm">
         <thead className="bg-gray-400">
@@ -777,7 +777,7 @@ const dataWithAction = reports.data.map((r) => ({
       </table>
 
       {/* Calibration Details */}
-      <h3 className="text-md font-semibold mb-2">Calibration Details</h3>
+      <h3 className="text-md font-semibold mb-2 text-gray-500">Calibration Details</h3>
       <table className="w-full border mb-3 text-sm">
         <thead className="bg-gray-400">
           <tr>
@@ -799,7 +799,7 @@ const dataWithAction = reports.data.map((r) => ({
         </tbody>
       </table>
 
-      </div>
+      
 
       <div className="flex justify-end mt-4">
         <button

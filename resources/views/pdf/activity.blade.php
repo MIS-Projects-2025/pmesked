@@ -115,9 +115,22 @@
             <th>Sr. Engineer/ Engineer</th>
         </tr>
         <tr>
-            <td>{{ $scheduler->tech_ack ?? 'Waiting...'}}</td>
-            <td>{{ $scheduler->qa_ack ?? 'Waiting...'}}</td>
-            <td>{{ $scheduler->senior_ee_ack ?? 'Waiting...'}}</td>
+            <td>
+                {{ $scheduler->tech_ack 
+        ? $scheduler->tech_ack . ' / ' . $scheduler->tech_ack_date 
+        : 'Waiting...' }}
+            </td>
+            <td>
+                {{ $scheduler->qa_ack 
+        ? $scheduler->qa_ack . ' / ' . $scheduler->qa_ack_date 
+        : 'Waiting...' }}
+            </td>
+            <td>
+                {{ $scheduler->senior_ee_ack 
+        ? $scheduler->senior_ee_ack . ' / ' . $scheduler->senior_ee_ack_date 
+        : 'Waiting...' }}
+            </td>
+
         </tr>
     </table>
     <div class="activity-code">
