@@ -6,6 +6,7 @@ use App\Models\Machine;
 use App\Models\CalibrationReport;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class CalibrationReportController extends Controller
 {
@@ -116,5 +117,46 @@ class CalibrationReportController extends Controller
             'cal_std_use' => 'nullable|array',
             'cal_details' => 'nullable|array',
         ]);
+    }
+
+    public function verifyQA(CalibrationReport $report)
+    {
+        $report->qa_sign = session('emp_data')['emp_name'] ?? null;
+        $report->qa_sign_date = now();
+        $report->save();
+
+        return back()->with([
+            'success' => 'Report verified by QA!',
+            'updatedReport' => $report
+        ]);
+    }
+
+    public function verifyReviewer(CalibrationReport $report)
+    {
+        $report->review_by = session('emp_data')['emp_name'] ?? null;
+        $report->review_date = now();
+        $report->save();
+
+        return back()->with([
+            'success' => 'Report verified by Reviewer!',
+            'updatedReport' => $report
+        ]);
+    }
+
+    public function viewPdf($id)
+    {
+        $calibration = CalibrationReport::findOrFail($id);
+
+        $cal_std_use = $calibration->cal_std_use ? json_decode($calibration->cal_std_use, true) : [];
+        $cal_details = $calibration->cal_details ? json_decode($calibration->cal_details, true) : [];
+
+        $pdf = Pdf::loadView('pdf.calibration', [
+            'report'  => $calibration,
+            'calibration'  => $calibration,
+            'cal_std_use'  => $cal_std_use,
+            'cal_details'  => $cal_details,
+        ]);
+
+        return $pdf->stream("calibration_$id.pdf");
     }
 }

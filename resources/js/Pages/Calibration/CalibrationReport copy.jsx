@@ -1,26 +1,9 @@
 import { useState, useEffect } from "react";
-import { useForm, usePage, router } from "@inertiajs/react";
+import { useForm, usePage } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import DataTable from "@/Components/DataTable";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 
 export default function CalibrationReport({ machines, empData }) {
-
-  const handleDownloadPDF = () => {
-  const input = document.getElementById("modal-content"); // target yung buong modal
-  html2canvas(input, { scale: 2 }).then((canvas) => {
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF("p", "mm", "a4");
-    const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-    pdf.save("calibration-details.pdf");
-  });
-};
-
   const { props } = usePage();
   const reports = props.reports;
   const filters = props.filters || {};
@@ -43,6 +26,23 @@ export default function CalibrationReport({ machines, empData }) {
   const [selectedReport, setSelectedReport] = useState(null);
 const [viewModal, setViewModal] = useState(false);
 
+
+  // 🔹 Form state (Inertia form helper)
+  // const { data, setData, post, processing, reset } = useForm({
+  //   equipment: "",
+  //   model: "",
+  //   serial: "",
+  //   manufacturer: "",
+  //   control_no: "",
+  //   calibration_date: "",
+  //   calibration_due: "",
+  //   performed_by: empData?.emp_name || user?.name || "",
+  //   temperature: "",
+  //   relative_humidity: "",
+  //   specs: "",
+  //   report_no: "",
+  //   cal_interval: "",
+  // });
 
   const { data, setData, post, processing, reset } = useForm({
   equipment: "",
@@ -219,6 +219,54 @@ const handleDetailChange = (index, e) => {
     setDetails(updated);
   };
 
+  // 🔹 Submit form
+// const handleSubmit = () => {
+
+//   post(route("calibration-reports.store"), {
+//     preserveScroll: true,
+//     data: {
+//       ...data,
+//       cal_std_use: standards,
+//       cal_details: details,
+//     },
+//     onSuccess: () => {
+//       alert("✅ Calibration Report saved successfully!");
+
+//       reset();
+//       setStandards([
+//         {
+//           description: "",
+//           cal_manufacturer: "",
+//           model_no: "",
+//           cal_control_no: "",
+//           serial_no: "",
+//           accuracy: "",
+//           cal_date: "",
+//           cal_due: "",
+//           traceability: "",
+//         },
+//       ]);
+//       setDetails([
+//         {
+//           function_tested: "",
+//           nominal: "",
+//           tolerance: "",
+//           unit_under_test: "",
+//           standard_instrument: "",
+//           disparity: "",
+//           correction: "",
+//           remarks: "",
+//         },
+//       ]);
+//       setShowModal(false);
+//     },
+//     onError: (errors) => {
+//       console.error(errors);
+//       alert("❌ Failed to save Calibration Report!");
+//     },
+//   });
+// };
+
 const handleSubmit = () => {
   const filteredStandards = standards.filter(
     (s) => Object.values(s).some((v) => v !== "")
@@ -289,67 +337,6 @@ const dataWithAction = reports.data.map((r) => ({
     </button>
   ),
 }));
-
-// State
-const [isVerifiedByESD, setIsVerifiedByESD] = useState(false);
-const [isVerifiedByReviewer, setIsVerifiedByReviewer] = useState(false);
-
-// Update verification state from report data if available
-useEffect(() => {
-  if (selectedReport) {
-    setIsVerifiedByESD(!!selectedReport.verified_by_esd);
-    setIsVerifiedByReviewer(!!selectedReport.verified_by_reviewer);
-  }
-}, [selectedReport]);
-
-
-const [report, setReport] = useState(selectedReport);
-
-  const isQA = ["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer"].includes(empData.emp_jobtitle);
-  const isEngineer = [
-    "Equipment Engineer",
-    "Supervisor - Equipment Technician",
-    "Senior Equipment Engineer",
-    "Sr. Equipment Engineer",
-    "Equipment Engineering Section Head",
-    "Section Head - Equipment Engineering"
-  ].includes(empData.emp_jobtitle);
-
-const handleVerifyQA = () => {
-  if (!selectedReport) return;
-  router.post(
-    route("calibration-reports.verify-qa", selectedReport.id),
-    {},
-    {
-      preserveScroll: true,
-      onSuccess: (page) => {
-        // update state from server response kung may flash or props
-        setSelectedReport(page.props.updatedReport ?? selectedReport);
-        window.location.reload();
-      },
-    }
-  );
-};
-
-
-
-const handleVerifyReviewer = () => {
-  if (!selectedReport) return;
-  router.post(
-    route("calibration-reports.verify-reviewer", selectedReport.id),
-    {},
-    {
-      preserveScroll: true,
-      onSuccess: (page) => {
-        setSelectedReport(page.props.updatedReport ?? selectedReport);
-        window.location.reload();
-      },
-    }
-  );
-};
-
-
-
 
 
   return (
@@ -740,86 +727,39 @@ const handleVerifyReviewer = () => {
         {viewModal && selectedReport && (
   <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
     <div className="bg-white p-6 rounded shadow-lg w-10/12 max-h-[90vh] overflow-y-auto border-t-4 border-blue-600">
-      
-      {/* Header */}
-      <div className="flex justify-between items-center bg-gradient-to-r from-gray-600 to-black text-white p-4 rounded-t-lg sticky top-0 z-10">
-        <h2 className="text-lg font-bold ml-4">
-          <i className="fa-regular fa-rectangle-list"></i> Calibration Report View
-        </h2>
-        <div className="flex space-x-2">
-        
-          {/* Close */}
-          <button
-            className="text-white text-xl"
-            onClick={() => setViewModal(false)}
-          >
-            <i className="fas fa-times text-red-500 hover:text-red-700"></i>
-          </button>
-        </div>
-      </div>
-    <div className="flex space-x-2 justify-end mt-4 ">
-      {selectedReport?.qa_sign && selectedReport?.review_by && (
-        // <button
-        //   onClick={() => window.open(`/calibration/${selectedReport.id}/pdf`, "_blank")}
-        //   className="px-4 py-2 border rounded-md bg-blue-600 text-white hover:bg-blue-700"
-        //    >
-        //   <i className="fas fa-file-pdf mr-2"></i>
-        //   View as PDF
-        // </button>
-
+       <div className="flex justify-between items-center bg-gradient-to-r from-gray-600 to-black text-white p-4 rounded-t-lg sticky top-0 z-10">
+        <h2 className="text-lg font-bold ml-4"> <i className="fa-regular fa-rectangle-list"></i> Calibration Report View</h2>
         <button
-  onClick={() => window.open(`/pdf/calibration/${selectedReport.id}`, "_blank")}
-  className="px-4 py-2 border rounded-md bg-blue-600 text-white hover:bg-blue-700"
->
-  <i className="fas fa-file-pdf mr-2"></i>
-  View as PDF
-</button>
+                  className="text-white text-xl"
+                  onClick={() => setViewModal(false)}
+                >
+                  <i className="fas fa-times text-red-500 hover:text-red-700"></i>
+                </button>
+      </div>
 
-
-        )}
-    </div>
-      {/* Machine info */}
-      <div className="grid grid-cols-4 gap-4 mb-6 mt-4 text-gray-500 border p-4">
-        {[
-          "equipment",
-          "manufacturer",
-          "control_no",
-          "performed_by",
-          "calibration_date",
-          "calibration_due",
-          "model",
-          "serial",
-          "temperature",
-          "relative_humidity",
-          "specs",
-          "report_no",
-          "cal_interval",
-          "review_by",
-          "review_date",
-        ].map((key) => (
+      {/* Machine info - read only */}
+      <div className="grid grid-cols-4 gap-4 mb-6 mt-4 text-gray-500 ">
+        {["equipment", "manufacturer", "control_no", "performed_by", "calibration_date", "calibration_due", "model", "serial", "temperature", "relative_humidity", "specs", "report_no", "cal_interval"].map((key) => (
           <div key={key}>
-            <label className="block font-semibold" style={{ textTransform: "capitalize" }}>
-              {key.replace(/_/g, " ")}
-            </label>
+            <label className="block font-semibold">{key.replace(/_/g, " ")}</label>
             <input
               type="text"
-              value={selectedReport[key] || "Wait for Signature..."}
+              value={selectedReport[key] || ""}
               readOnly
               className="border p-2 rounded w-full text-gray-600 bg-gray-100"
             />
           </div>
         ))}
-        
       </div>
-
-
+    
       {/* Calibration Standard Used */}
       <h3 className="text-md font-semibold mb-2 text-gray-500">Calibration Standard Used</h3>
+      
       <table className="w-full border mb-3 text-sm">
         <thead className="bg-gray-400">
           <tr>
             {Object.keys(selectedReport.cal_std_use?.[0] || {}).map((key) => (
-              <th key={key} className="border p-2" style={{ textTransform: "capitalize" }}>{key.replace(/_/g, " ")}</th>
+              <th key={key} className="border p-2">{key.replace(/_/g, " ")}</th>
             ))}
           </tr>
         </thead>
@@ -828,8 +768,7 @@ const handleVerifyReviewer = () => {
             <tr key={i}>
               {Object.keys(row).map((key) => (
                 <td key={key} className="border p-2 text-gray-500">
-                  {/* <input type="text" value={row[key]} readOnly className="w-full border p-1 rounded bg-gray-100" /> */}
-                  {row[key]}
+                  <input type="text" value={row[key]} readOnly className="w-full border p-1 rounded bg-gray-100" />
                 </td>
               ))}
             </tr>
@@ -843,7 +782,7 @@ const handleVerifyReviewer = () => {
         <thead className="bg-gray-400">
           <tr>
             {Object.keys(selectedReport.cal_details?.[0] || {}).map((key) => (
-              <th key={key} className="border p-2" style={{ textTransform: "capitalize" }}>{key.replace(/_/g, " ")}</th>
+              <th key={key} className="border p-2">{key.replace(/_/g, " ")}</th>
             ))}
           </tr>
         </thead>
@@ -852,58 +791,17 @@ const handleVerifyReviewer = () => {
             <tr key={i}>
               {Object.keys(row).map((key) => (
                 <td key={key} className="border p-2 text-gray-500">
-                  {/* <input type="text" value={row[key]} readOnly className="w-full border p-1 rounded bg-gray-100" /> */}
-                  {row[key]}
+                  <input type="text" value={row[key]} readOnly className="w-full border p-1 rounded bg-gray-100" />
                 </td>
               ))}
             </tr>
           ))}
         </tbody>
       </table>
-      <div className="grid grid-cols-4 gap-4 mb-6 mt-4 text-gray-500 border p-4">
-        {[
-          "qa_sign",
-          "qa_sign_date",
-        ].map((key) => (
-          <div key={key}>
-            <label className="block font-semibold" style={{ textTransform: "capitalize" }}>
-              {key.replace(/_/g, " ")}
-            </label>
-            <input
-              type="text"
-              value={selectedReport[key] || "Wait for Signature..."}
-              readOnly
-              className="border p-2 rounded w-full text-gray-600 bg-gray-100"
-            />
-          </div>
-        ))}
-        
-      </div>
 
-      {/* Footer Close (redundant but okay) */}
+      
+
       <div className="flex justify-end mt-4">
-          {/* Verification button logic */}
-          {isQA && !selectedReport?.qa_sign && (
-           <button
-             onClick={handleVerifyQA}
-             className="px-4 py-2 border rounded bg-green-500 text-white hover:bg-green-600 mr-2"
-           >
-             <i className="fas fa-check mr-2"></i>
-             Verify (ESD)
-            </button>
-          )}
-
-          {isEngineer && selectedReport?.qa_sign && !selectedReport?.review_by && (
-            <button
-             onClick={handleVerifyReviewer}
-             className="px-4 py-2 border rounded bg-blue-500 text-white hover:bg-blue-600 mr-2"
-            >
-             <i className="fas fa-user-cog mr-2"></i>
-             Verify (Reviewer)
-            </button>
-          )}
-
-        {/* Close */}
         <button
           type="button"
           onClick={() => setViewModal(false)}
@@ -916,7 +814,6 @@ const handleVerifyReviewer = () => {
     </div>
   </div>
         )}
-
 
       </div>
     </AuthenticatedLayout>

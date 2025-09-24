@@ -626,7 +626,7 @@ if (techTitles.includes(empData.emp_jobtitle)) {
                 className="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-800 "
                onClick={() => window.open(`/scheduler/${selectedActivity.id}/pdf`, "_blank")}
               >
-                <i className="fa-solid fa-file-pdf"></i> View PDF
+                <i className="fa-solid fa-file-pdf"></i> View as PDF
               </button>
             </div>
           )}

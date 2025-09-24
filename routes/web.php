@@ -4,6 +4,7 @@ use App\Http\Controllers\CalibrationController;
 use App\Http\Controllers\CalibrationReportController;
 use App\Http\Controllers\ChecklistController;
 use App\Http\Controllers\PdfController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SchedulerController;
 use App\Http\Controllers\TnrController;
 use Illuminate\Support\Facades\Route;
@@ -56,6 +57,21 @@ Route::get('/tnr/extend/{id}', [TnrController::class, 'extend'])->name('tnr.exte
 
 // Handle Extend form submission
 Route::post('/tnr/extend/{id}', [TnrController::class, 'updateExtend'])->name('tnr.extend.update');
+
+Route::post('/calibration-reports/{report}/verify-qa', [CalibrationReportController::class, 'verifyQA'])
+    ->name('calibration-reports.verify-qa');
+Route::post('/calibration-reports/{report}/verify-reviewer', [CalibrationReportController::class, 'verifyReviewer'])
+    ->name('calibration-reports.verify-reviewer');
+
+
+
+
+Route::get('/pdf/calibration/{id}', [ReportController::class, 'viewPDF'])->name('pdf.calibration');
+
+
+
+
+
 
 
 
