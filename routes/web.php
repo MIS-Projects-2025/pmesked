@@ -3,6 +3,7 @@
 use App\Http\Controllers\CalibrationController;
 use App\Http\Controllers\CalibrationReportController;
 use App\Http\Controllers\ChecklistController;
+use App\Http\Controllers\MassApprovalController;
 use App\Http\Controllers\PdfController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SchedulerController;
@@ -60,20 +61,34 @@ Route::post('/tnr/extend/{id}', [TnrController::class, 'updateExtend'])->name('t
 
 Route::post('/calibration-reports/{report}/verify-qa', [CalibrationReportController::class, 'verifyQA'])
     ->name('calibration-reports.verify-qa');
+
 Route::post('/calibration-reports/{report}/verify-reviewer', [CalibrationReportController::class, 'verifyReviewer'])
     ->name('calibration-reports.verify-reviewer');
 
-
-
-
 Route::get('/pdf/calibration/{id}', [ReportController::class, 'viewPDF'])->name('pdf.calibration');
 
+// TNR Mass Approved page
+Route::get('/tnr/mass-approved', [MassApprovalController::class, 'index'])
+    ->name('tnr.massApproved');
 
-
-
+Route::post('/tnr/mass-approved/approve', [MassApprovalController::class, 'approved'])
+    ->name('mass.approval.approve');
 
 
 
 
 // fallback
 Route::fallback(fn() => Inertia::render('404'))->name('404');
+
+// Route::fallback(fn() => redirect()->route('dashboard'));
+
+// Route::fallback(function () {
+//     dd([
+//         'message' => 'Route not found - hitting fallback',
+//         'url' => request()->fullUrl(),
+//         'method' => request()->method(),
+//         'path' => request()->path(),
+//         'all_parameters' => request()->all(),
+//         'app_name' => env('APP_NAME', 'not-set'),
+//     ]);
+// });

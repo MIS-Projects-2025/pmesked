@@ -17,8 +17,9 @@ export default function NavLinks() {
                 }
                 // notifications={5}
             />
-
-            <Dropdown
+            {["Equipment Engineering"].includes(emp_data?.emp_dept) && !["Equipment Engineering Section Head", "Section Head - Equipment Engineering",].includes(emp_data?.emp_jobtitle) && (
+                <div>
+                     <Dropdown
                 label="TNR"
                 icon={
                     <i className="fas fa-file-contract"></i>
@@ -47,8 +48,32 @@ export default function NavLinks() {
                     // },
                 ]}
                 // notification={true}
+                />
+                </div>
+            )}
+           
+            {[
+                "Senior Equipment Technician", "Equipment Technician 2", "Equipment Technician 3", "PM Technician 2",
+                "ESD Technician 1", "ESD Technician 2", "Senior QA Engineer",
+                 "Equipment Engineer",  "Supervisor - Equipment Technician",  "Senior Equipment Engineer",  "Sr. Equipment Engineer",  "Equipment Engineering Section Head",  "Section Head - Equipment Engineering"
+
+
+            ].includes(emp_data?.emp_jobtitle) && (
+                <div>
+            <SidebarLink
+                href={route("tnr.massApproved")}
+                label="TNR Mass Approved"
+                icon={
+                    <i className="fa-regular fa-thumbs-up"></i>
+                }
+                // notifications={5}
             />
-            <Dropdown
+                </div>
+            )}
+
+            {["Equipment Engineering"].includes(emp_data?.emp_dept) && !["Equipment Engineering Section Head", "Section Head - Equipment Engineering",].includes(emp_data?.emp_jobtitle) && (
+                <div>
+                    <Dropdown
                 label="Non-TNR"
                 icon={
                     <i className="fas fa-file-contract"></i>
@@ -77,7 +102,10 @@ export default function NavLinks() {
                 ]}
                 // notification={true}
             />
-            {["superadmin", "admin", "approver"].includes(emp_data?.emp_system_role) && (
+                </div>
+            )}
+            
+            {["Equipment Engineering"].includes(emp_data?.emp_dept) && !["Equipment Engineering Section Head", "Section Head - Equipment Engineering",].includes(emp_data?.emp_jobtitle) && (
                 <div>
 
                     <SidebarLink

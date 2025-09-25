@@ -1,6 +1,6 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { hrefToUrl } from "@inertiajs/inertia";
-import { Head, router } from "@inertiajs/react";
+import { Head, router, usePage } from "@inertiajs/react";
 import { useState } from "react";
 import {
   BarChart,
@@ -15,7 +15,8 @@ import {
   Legend,
 } from "recharts";
 
-export default function Dashboard(props) {
+export default function Dashboard(props,) {
+   const { emp_data } = usePage().props;
 
   // Check kung due today
 // Parse WW format (ex: WW501) into a Date (start of that week)
@@ -90,10 +91,12 @@ const isOverdue = (ww) => {
 
   return (
     <AuthenticatedLayout>
+     
       <Head title="Dashboard" />
 
       <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
-
+ {["Equipment Engineering"].includes(emp_data?.emp_dept) && (
+        <div>
       {/* 🔹 Summary Cards */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         <div
@@ -559,6 +562,8 @@ const isOverdue = (ww) => {
             </div>
           </div>
         </div>
+      )}
+      </div>  
       )}
     </AuthenticatedLayout>
   );
