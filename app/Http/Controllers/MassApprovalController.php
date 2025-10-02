@@ -24,8 +24,10 @@ class MassApprovalController extends Controller
         // Role-based filtering
         if (in_array($role, [
             'Senior Equipment Technician',
+            'Equipment Technician 1',
             'Equipment Technician 2',
             'Equipment Technician 3',
+            'PM Technician 1',
             'PM Technician 2',
         ])) {
             // ipakita lang kung wala pang tech_ack (NULL o empty string)
@@ -37,6 +39,7 @@ class MassApprovalController extends Controller
             'ESD Technician 1',
             'ESD Technician 2',
             'Senior QA Engineer',
+            'DIC Clerk 1',
         ])) {
             // may tech_ack na pero wala pang qa_ack
             $query->where(function ($q) {
@@ -179,8 +182,10 @@ class MassApprovalController extends Controller
     {
         return in_array($empData['emp_jobtitle'] ?? '', [
             "Senior Equipment Technician",
+            "Equipment Technician 1",
             "Equipment Technician 2",
             "Equipment Technician 3",
+            "PM Technician 1",
             "PM Technician 2",
         ]);
     }
@@ -191,6 +196,7 @@ class MassApprovalController extends Controller
             "ESD Technician 1",
             "ESD Technician 2",
             "Senior QA Engineer",
+            "DIC Clerk 1",
         ]);
     }
 

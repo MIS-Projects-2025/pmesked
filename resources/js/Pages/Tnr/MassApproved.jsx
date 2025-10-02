@@ -106,9 +106,9 @@ console.log(todayLocal);
   // "Equipment Technician 1",
   "Equipment Technician 2",
   "Equipment Technician 3",
-  // "PM Technician 1",
-  "PM Technician 2"
-  // "Trainee - Equipment Technician 1"
+  "PM Technician 1",
+  "PM Technician 2",
+  "Trainee - Equipment Technician 1"
 ];
 
 if (techTitles.includes(empData.emp_jobtitle)) {
@@ -123,7 +123,7 @@ if (techTitles.includes(empData.emp_jobtitle)) {
   };
 }
   // 2. ESD verify
-  else if (["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer"].includes(empData.emp_jobtitle)) {
+  else if (["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer", "DIC Clerk 1"].includes(empData.emp_jobtitle)) {
     if (!selectedActivity.tech_ack) {
       alert("⚠️ Technician must verify first.");
       return;
@@ -194,7 +194,7 @@ if (techTitles.includes(empData.emp_jobtitle)) {
               onClick={handleMassApprove}
               className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
             >
-              <i className="fa-solid fa-check"></i> Mass Approve Selected (
+              <i className="fa-solid fa-check"></i>Approve Selected (
               {selected.length})
             </button>
           )}
@@ -571,14 +571,14 @@ if (techTitles.includes(empData.emp_jobtitle)) {
 {empData && (() => {
  const isTech = [
   "Senior Equipment Technician",
-  // "Equipment Technician 1",
+  "Equipment Technician 1",
   "Equipment Technician 2",
   "Equipment Technician 3",
-  // "PM Technician 1",
-  "PM Technician 2"
-  // "Trainee - Equipment Technician 1"
+  "PM Technician 1",
+  "PM Technician 2",
+  "Trainee - Equipment Technician 1"
 ].includes(empData.emp_jobtitle);
-  const isQA = ["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer"].includes(empData.emp_jobtitle);
+  const isQA = ["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer","DIC Clerk 1"].includes(empData.emp_jobtitle);
   const isEngineer = [
     "Equipment Engineer",
     "Supervisor - Equipment Technician",

@@ -5,7 +5,7 @@ import DataTable from "@/Components/DataTable";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
-export default function CalibrationReport({ machines, empData }) {
+export default function NonTnrCalibrationReport({ machines, empData }) {
 
   const handleDownloadPDF = () => {
   const input = document.getElementById("modal-content"); // target yung buong modal
@@ -116,23 +116,22 @@ export default function CalibrationReport({ machines, empData }) {
 
   // 🔹 Compute work week
  const getWorkWeek = (date) => {
-  const start = new Date("2024-11-03"); // Base reference (WW501)
+  const start = new Date("2024-11-03"); // Base reference
   const diffMs = date - start;
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  const totalWeeks = Math.floor(diffDays / 7);
 
-  // Base year series
-  const baseYear = 500;
+  // Gawing actual date by adding days sa base
+  const targetDate = new Date(start);
+  targetDate.setDate(start.getDate() + diffDays);
 
-  // Ilang taon (sets of 52 weeks) ang lumipas
-  const yearOffset = Math.floor(totalWeeks / 52);
+  // Format: YYYY-MM-DD
+  const year = targetDate.getFullYear();
+  const month = String(targetDate.getMonth() + 1).padStart(2, "0");
+  const day = String(targetDate.getDate()).padStart(2, "0");
 
-  // Week number sa loob ng taon (1 → 52)
-  const weekInYear = (totalWeeks % 52) + 1;
-
-  // Final formatted WW code (e.g., WW501, WW652, etc.)
-  return `WW${baseYear + yearOffset * 100 + weekInYear}`;
+  return `${month}/${day}/${year}`;
 };
+
 
   // 🔹 Autofill when selecting machine
   const handleMachineChange = (e) => {
@@ -143,7 +142,7 @@ export default function CalibrationReport({ machines, empData }) {
     const today = new Date();
     const pmDateWW = getWorkWeek(today);
     const dueDate = new Date(today);
-    dueDate.setDate(today.getDate() + 13 * 7);
+    dueDate.setDate(today.getDate() + 7 );
     const pmDueWW = getWorkWeek(dueDate);
 
     setData((prev) => ({
@@ -239,7 +238,7 @@ const handleSubmit = () => {
     (d) => Object.values(d).some((v) => v !== "")
   );
 
-  post(route("calibration-reports.store"), {
+  post(route("calibration-reports.non-tnr.store"), {
     preserveScroll: true,
     data: {
       ...data,
@@ -247,7 +246,7 @@ const handleSubmit = () => {
       cal_details: filteredDetails,
     },
     onSuccess: () => {
-      alert("✅ Calibration Report saved successfully!");
+      alert("✅ Non TNR Calibration Report saved successfully!");
       reset();
       setStandards([
         {
@@ -330,7 +329,7 @@ const [report, setReport] = useState(selectedReport);
 const handleVerifyQA = () => {
   if (!selectedReport) return;
   router.post(
-    route("calibration-reports.verify-qa", selectedReport.id),
+    route("calibration-reports.non-tnr.verify-qa", selectedReport.id),
     {},
     {
       preserveScroll: true,
@@ -348,7 +347,7 @@ const handleVerifyQA = () => {
 const handleVerifyReviewer = () => {
   if (!selectedReport) return;
   router.post(
-    route("calibration-reports.verify-reviewer", selectedReport.id),
+    route("calibration-reports.non-tnr.verify-reviewer", selectedReport.id),
     {},
     {
       preserveScroll: true,
@@ -368,7 +367,7 @@ const handleVerifyReviewer = () => {
     <AuthenticatedLayout>
       <div className="p-6">
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-xl font-bold">Calibration Report</h1>
+          <h1 className="text-xl font-bold"><i className="fa-solid fa-fan"></i> Non-TnR Calibration Report</h1>
           <button
             onClick={() => setShowModal(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded"
@@ -397,7 +396,7 @@ const handleVerifyReviewer = () => {
             currentPage: reports.current_page,
             lastPage: reports.last_page,
           }}
-          routeName={route("calibration.calibrationReport")}
+          routeName={route("calibration.calibrationReportNontnr")}
           filters={filters}
           rowKey="id"
           sortBy="id"
@@ -410,7 +409,7 @@ const handleVerifyReviewer = () => {
             <div className="bg-white p-6 rounded shadow-lg w-10/12 max-h-[90vh] overflow-y-auto border-t-4 border-blue-600">
               <div className="flex justify-between items-center bg-gradient-to-r from-gray-600 to-black text-white p-4 rounded-t-lg sticky top-0 z-10">
                 <h2 className="text-lg font-bold mt-4 ml-4">
-                  <i className="fas fa-list"></i> New Calibration Report
+                  <i className="fas fa-list"></i> Non-TnR Calibration Report
                 </h2>
                  <button
                   className="text-white text-xl"
@@ -421,7 +420,7 @@ const handleVerifyReviewer = () => {
               </div>
 
               {/* 🔹 Machine Info */}
-              <div className="grid grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-4 gap-4 mb-6 mt-4">
                 <div>
                   <label className="block font-semibold text-gray-500">
                     Machine
@@ -774,12 +773,12 @@ const handleVerifyReviewer = () => {
         
 
         <button
-          onClick={() => window.open(`/pdf/calibration/${selectedReport.id}`, "_blank")}
-          className="px-4 py-2 border rounded-md bg-blue-600 text-white hover:bg-blue-700"
-          >
-          <i className="fas fa-file-pdf mr-2"></i>
-          View as PDF
-        </button>
+  onClick={() => window.open(`/pdf/calibration/${selectedReport.id}`, "_blank")}
+  className="px-4 py-2 border rounded-md bg-blue-600 text-white hover:bg-blue-700"
+>
+  <i className="fas fa-file-pdf mr-2"></i>
+  View as PDF
+</button>
 
 
         )}

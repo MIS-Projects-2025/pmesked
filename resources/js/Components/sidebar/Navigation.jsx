@@ -17,7 +17,7 @@ export default function NavLinks() {
                 }
                 // notifications={5}
             />
-            {["Equipment Engineering"].includes(emp_data?.emp_dept) && !["Equipment Engineering Section Head", "Section Head - Equipment Engineering",].includes(emp_data?.emp_jobtitle) && (
+            {["Equipment Engineering"].includes(emp_data?.emp_dept) && !["Equipment Engineer",  "Supervisor - Equipment Technician",  "Senior Equipment Engineer",  "Sr. Equipment Engineer",  "Equipment Engineering Section Head",  "Section Head - Equipment Engineering"].includes(emp_data?.emp_jobtitle) && (
                 <div>
                      <Dropdown
                 label="TNR"
@@ -53,8 +53,8 @@ export default function NavLinks() {
             )}
            
             {[
-                "Senior Equipment Technician", "Equipment Technician 2", "Equipment Technician 3", "PM Technician 2",
-                "ESD Technician 1", "ESD Technician 2", "Senior QA Engineer",
+                "Senior Equipment Technician", "Equipment Technician 1", "Equipment Technician 2", "Equipment Technician 3", "PM Technician 1", "PM Technician 2" ,
+                "ESD Technician 1", "ESD Technician 2", "Senior QA Engineer", "DIC Clerk 1",
                  "Equipment Engineer",  "Supervisor - Equipment Technician",  "Senior Equipment Engineer",  "Sr. Equipment Engineer",  "Equipment Engineering Section Head",  "Section Head - Equipment Engineering"
 
 
@@ -68,15 +68,52 @@ export default function NavLinks() {
                 }
                 // notifications={5}
             />
+            
+
                 </div>
             )}
+                {[
+                "ESD Technician 1", "ESD Technician 2", "Senior QA Engineer", "DIC Clerk 1",
+                 "Equipment Engineer",  "Supervisor - Equipment Technician",  "Senior Equipment Engineer",  "Sr. Equipment Engineer",  "Equipment Engineering Section Head",  "Section Head - Equipment Engineering"
 
-            {["Equipment Engineering"].includes(emp_data?.emp_dept) && !["Equipment Engineering Section Head", "Section Head - Equipment Engineering",].includes(emp_data?.emp_jobtitle) && (
+
+            ].includes(emp_data?.emp_jobtitle) && (
+                <div>
+                     <SidebarLink
+                href={route("calibration.mass.approval")}
+                label="Calibration Mass Approved"
+                fontSize="10px"
+                icon={
+                    <i className="fa-solid fa-check-to-slot"></i>
+                }
+                // notifications={5}
+            />
+
+               <SidebarLink
+                href={route("ionizer.index")}
+                label="Ionizer Checklist"
+                fontSize="10px"
+                icon={<i className="fas fa-fan"></i>}
+                // notifications={5}
+            />
+
+            <SidebarLink
+                href={route("calibration.IonizerCalibrationReport")}
+                label="Ionizer Calibration Report"
+                fontSize="10px"
+                icon={<i className="fa-solid fa-pen-fancy"></i>}
+                // notifications={5}
+            />
+                </div>
+            )}
+           
+
+            {["Equipment Engineering"].includes(emp_data?.emp_dept) && !["Equipment Engineer",  "Supervisor - Equipment Technician",  "Senior Equipment Engineer",  "Sr. Equipment Engineer",  "Equipment Engineering Section Head",  "Section Head - Equipment Engineering"].includes(emp_data?.emp_jobtitle) && (
                 <div>
                     <Dropdown
                 label="Non-TNR"
                 icon={
-                    <i className="fas fa-file-contract"></i>
+                    <i className="fa-solid fa-rectangle-list"></i>
                 }
                 className='disabled'
                 links={[
@@ -90,7 +127,7 @@ export default function NavLinks() {
                         // notification: true,
                     },
                     {
-                        href: '',
+                        href: route("calibration.calibrationReportNontnr"),
                         label: "Calibration Report",
                         icon: (
                         <i className="far fa-square"></i>
@@ -104,14 +141,55 @@ export default function NavLinks() {
             />
                 </div>
             )}
+
+             {["Equipment Engineering"].includes(emp_data?.emp_dept) && !["Equipment Engineer",  "Supervisor - Equipment Technician",  "Senior Equipment Engineer",  "Sr. Equipment Engineer",  "Equipment Engineering Section Head",  "Section Head - Equipment Engineering"].includes(emp_data?.emp_jobtitle) && (
+                <div>
+                    <Dropdown
+                label="Air Ionizer"
+                icon={
+                    <i className="fas fa-fan"></i>
+                }
+                className='disabled'
+                links={[
+                    {
+                        href: route("ionizer.index"),
+                        label: "Checklist",
+                        icon: (
+                           <i className="far fa-square"></i>
+                        ),
+                        className: "opacity-50 pointer-events-none",
+                        // notification: true,
+                    },
+
+                    {
+                        href: route("calibration.IonizerCalibrationReport"),
+                        label: "Ionizer Calibration Report",
+                        icon: (
+                        <i className="far fa-square"></i>
+                        ),
+                        className: "opacity-50 pointer-events-none",
+                        // notification: 125,
+                    },
+                    
+                ]}
+                // notification={true}
+            />
+                </div>
+            )}
             
-            {["Equipment Engineering"].includes(emp_data?.emp_dept) && !["Equipment Engineering Section Head", "Section Head - Equipment Engineering",].includes(emp_data?.emp_jobtitle) && (
+            {["Equipment Engineering"].includes(emp_data?.emp_dept) && !["Equipment Engineering Section Head", "Section Head - Equipment Engineering", "Equipment Technician 1", "Equipment Technician 2", "Equipment Technician 3"].includes(emp_data?.emp_jobtitle) && (
                 <div>
 
                     <SidebarLink
                         href={route("calibration.index")}
-                        label="Calibration Checklist"
-                        icon={<i className="fas fa-list"></i>}
+                        label="TNR PM Checklist"
+                        icon={<i className="fa-solid fa-list"></i>}
+                    />
+
+                    <SidebarLink
+                        href={route("ionizer-items.index")}
+                        label="Checklist Ionizer Items"
+                        icon={<i className="fa-solid fa-table-list"></i>}
                     />
                     </div>
             )}

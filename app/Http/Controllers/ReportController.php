@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CalibrationReport;
+use App\Models\IonizerCalibrationReport;
 use Illuminate\Http\Request;
 use App\Models\Report;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -45,6 +46,26 @@ class ReportController extends Controller
     public function viewPDF($id)
     {
         $report = CalibrationReport::findOrFail($id);
+
+        $pdf = Pdf::loadView('reports.pdf', compact('report'))
+            ->setPaper('A4', 'portrait');
+
+        return $pdf->stream("report_$id.pdf");
+    }
+
+    public function ionizerGeneratePDF($id)
+    {
+        $report = IonizerCalibrationReport::findOrFail($id);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.pdf', compact('report'))
+            ->setPaper('A4', 'portrait');
+
+        return $pdf->stream("calibration_report_{$id}.pdf");
+    }
+
+    public function ionizerViewPDF($id)
+    {
+        $report = IonizerCalibrationReport::findOrFail($id);
 
         $pdf = Pdf::loadView('reports.pdf', compact('report'))
             ->setPaper('A4', 'portrait');

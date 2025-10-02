@@ -53,12 +53,6 @@ const handleDownloadPDF = () => {
   else quarter = `4Q${String(currentYear).slice(-2)}`;
 
   // 🔹 Compute Work Week
-  const getWorkWeek = (date) => {
-    const start = new Date("2024-11-03");
-    const diffMs = date - start;
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    return 501 + Math.floor(diffDays / 7);
-  };
 
   const handleAnswerChange = (id, field, value) => {
     setAnswers((prev) => ({
@@ -66,65 +60,82 @@ const handleDownloadPDF = () => {
       [id]: { ...prev[id], [field]: value },
     }));
   };
+  
+  const getWorkWeek = (date) => {
+  const start = new Date("2024-11-03"); // Base reference (WW501)
+  const diffMs = date - start;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const totalWeeks = Math.floor(diffDays / 7);
+
+  // Base year series
+  const baseYear = 500;
+
+  // Ilang taon (sets of 52 weeks) ang lumipas
+  const yearOffset = Math.floor(totalWeeks / 52);
+
+  // Week number sa loob ng taon (1 → 52)
+  const weekInYear = (totalWeeks % 52) + 1;
+
+  // Final formatted WW code (e.g., WW501, WW652, etc.)
+  return `WW${baseYear + yearOffset * 100 + weekInYear}`;
+};
 
 
+const handleMachineChange = async (e) => {
+  const selected = e.target.value;
+  const machine = machines.find((m) => m.machine_num === selected);
+  if (!machine) return;
 
+  const today = new Date();
+  const pmDateWW = getWorkWeek(today);
+  const dueDate = new Date(today);
+  dueDate.setDate(today.getDate() + 13 * 7);
+  const pmDueWW = getWorkWeek(dueDate);
 
-  const handleMachineChange = async (e) => {
-    const selected = e.target.value;
-    const machine = machines.find((m) => m.machine_num === selected);
-    if (!machine) return;
+  let progress_value = 25;
 
-    const today = new Date();
-    const pmDateWW = getWorkWeek(today);
-    const dueDate = new Date(today);
-    dueDate.setDate(today.getDate() + 5 * 7);
-    const pmDueWW = getWorkWeek(dueDate);
-    
+  setFormData({
+    machine: selected,
+    controlNo: machine?.pmnt_no || "",
+    serial: machine?.serial || "",
+    machinePlatform: machine?.machine_platform || "",
+    pmDate: pmDateWW,
+    pmDue: pmDueWW,
+    quarter,
+    progress_value,
+    performedBy: empData?.emp_name || "",
+  });
 
-    let progress_value = 25;
+  if (machine?.machine_platform) {
+    try {
+      const res = await fetch(`/checklist/${machine.machine_platform}`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+      setSelectedChecklist(data);
 
-    setFormData({
-      machine: selected,
-      controlNo: machine?.pmnt_no || "",
-      serial: machine?.serial || "",
-      machinePlatform: machine?.machine_platform || "",
-      pmDate: `WW${pmDateWW}`,
-      pmDue: `WW${pmDueWW}`,
-      quarter,
-      progress_value,
-      performedBy: empData?.emp_name || "",
-    });
-
-    if (machine?.machine_platform) {
-      try {
-        const res = await fetch(`/checklist/${machine.machine_platform}`);
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        const data = await res.json();
-        setSelectedChecklist(data);
-
-        const initialAnswers = {};
-        data.forEach((row) => {
-          initialAnswers[row.id] = {
-            assy_item: row.assy_item,
-            description: row.description,
-            requirements: row.requirements,
-            activity_1: row.activity_1,
-            compliance1: 0,
-            remarks1: "",
-            activity_2: row.activity_2,
-            compliance2: 0,
-            remarks2: "",
-          };
-        });
-        setAnswers(initialAnswers);
-      } catch (err) {
-        console.error("❌ Error fetching checklist:", err.message);
-        setSelectedChecklist([]);
-        setAnswers({});
-      }
+      const initialAnswers = {};
+      data.forEach((row) => {
+        initialAnswers[row.id] = {
+          assy_item: row.assy_item,
+          description: row.description,
+          requirements: row.requirements,
+          activity_1: row.activity_1,
+          compliance1: 0,
+          remarks1: "",
+          activity_2: row.activity_2,
+          compliance2: 0,
+          remarks2: "",
+        };
+      });
+      setAnswers(initialAnswers);
+    } catch (err) {
+      console.error("❌ Error fetching checklist:", err.message);
+      setSelectedChecklist([]);
+      setAnswers({});
     }
-  };
+  }
+};
+
 
   const saveSchedule = (e) => {
     e.preventDefault();
@@ -261,12 +272,12 @@ console.log(todayLocal);
   // 1. Technician verify
   const techTitles = [
   "Senior Equipment Technician",
-  // "Equipment Technician 1",
+  "Equipment Technician 1",
   "Equipment Technician 2",
   "Equipment Technician 3",
-  // "PM Technician 1",
-  "PM Technician 2"
-  // "Trainee - Equipment Technician 1"
+  "PM Technician 1",
+  "PM Technician 2",
+  "Trainee - Equipment Technician 1"
 ];
 
 if (techTitles.includes(empData.emp_jobtitle)) {
@@ -281,7 +292,7 @@ if (techTitles.includes(empData.emp_jobtitle)) {
   };
 }
   // 2. ESD verify
-  else if (["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer"].includes(empData.emp_jobtitle)) {
+  else if (["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer", "DIC Clerk 1"].includes(empData.emp_jobtitle)) {
     if (!selectedActivity.tech_ack) {
       alert("⚠️ Technician must verify first.");
       return;
@@ -811,14 +822,14 @@ if (techTitles.includes(empData.emp_jobtitle)) {
 {empData && (() => {
  const isTech = [
   "Senior Equipment Technician",
-  // "Equipment Technician 1",
+  "Equipment Technician 1",
   "Equipment Technician 2",
   "Equipment Technician 3",
-  // "PM Technician 1",
-  "PM Technician 2"
-  // "Trainee - Equipment Technician 1"
+  "PM Technician 1",
+  "PM Technician 2",
+  "Trainee - Equipment Technician 1"
 ].includes(empData.emp_jobtitle);
-  const isQA = ["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer"].includes(empData.emp_jobtitle);
+  const isQA = ["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer", "DIC Clerk 1"].includes(empData.emp_jobtitle);
   const isEngineer = [
     "Equipment Engineer",
     "Supervisor - Equipment Technician",
