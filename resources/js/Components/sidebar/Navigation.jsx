@@ -79,15 +79,21 @@ export default function NavLinks() {
 
             ].includes(emp_data?.emp_jobtitle) && (
                 <div>
-                     <SidebarLink
-                href={route("calibration.mass.approval")}
+
+                <SidebarLink
+                href={route("calibration.tnr.mass.approval")}
                 label="Calibration Mass Approved"
                 fontSize="10px"
-                icon={
-                    <i className="fa-solid fa-check-to-slot"></i>
-                }
-                // notifications={5}
-            />
+                icon={<i className="fa-solid fa-check-to-slot"></i>}
+                />
+
+                <SidebarLink
+                href={route("calibration.non-tnr.mass.approval")}
+                label="Non-TNR Calibration Mass Approved"
+                fontSize="10px"
+                icon={<i className="fa-solid fa-check"></i>}
+                />
+
 
                <SidebarLink
                 href={route("ionizer.index")}
@@ -95,7 +101,7 @@ export default function NavLinks() {
                 fontSize="10px"
                 icon={<i className="fas fa-fan"></i>}
                 // notifications={5}
-            />
+                />
 
             <SidebarLink
                 href={route("calibration.IonizerCalibrationReport")}
@@ -118,7 +124,8 @@ export default function NavLinks() {
                 className='disabled'
                 links={[
                     {
-                        href: '',
+                        
+                        href: route("non-tnr-checklists.index"),
                         label: "Checklist",
                         icon: (
                            <i className="far fa-square"></i>
@@ -188,7 +195,13 @@ export default function NavLinks() {
 
                     <SidebarLink
                         href={route("ionizer-items.index")}
-                        label="Checklist Ionizer Items"
+                        label="Ionizer Checklist Items"
+                        icon={<i className="fa-solid fa-table-list"></i>}
+                    />
+
+                    <SidebarLink
+                        href={route("non-tnr-items.index")}
+                        label="Non-TNR Checklist Items"
                         icon={<i className="fa-solid fa-table-list"></i>}
                     />
                     </div>

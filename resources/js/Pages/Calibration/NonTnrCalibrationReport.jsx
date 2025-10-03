@@ -773,12 +773,12 @@ const handleVerifyReviewer = () => {
         
 
         <button
-  onClick={() => window.open(`/pdf/calibration/${selectedReport.id}`, "_blank")}
-  className="px-4 py-2 border rounded-md bg-blue-600 text-white hover:bg-blue-700"
->
-  <i className="fas fa-file-pdf mr-2"></i>
-  View as PDF
-</button>
+         onClick={() => window.open(`/pdf/nonTnrCalibration/${selectedReport.id}`, "_blank")}
+          className="px-3 py-2 bg-gray-100 text-red-600 rounded shadow hover:bg-red-700 hover:text-white border-2 border-red-600 hover:border-gray-500 flex items-center text-bold"
+        >
+         <i className="fas fa-file-pdf mr-2"></i>
+          View as PDF
+        </button>
 
 
         )}

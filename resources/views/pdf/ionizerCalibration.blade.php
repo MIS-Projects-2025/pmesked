@@ -29,8 +29,9 @@
 </head>
 
 <body>
-    <h2>Calibration Report</h2>
-
+    <div style="text-align: center;">
+        <h2>Calibration Report</h2>
+    </div>
     {{-- 🔹 Calibration Standards Used --}}
     @if(!empty($report->cal_std_use))
     <h3>Calibration Standards Used</h3>
@@ -57,8 +58,8 @@
                 <td>{{ $std['cal_control_no'] ?? '' }}</td>
                 <td>{{ $std['serial_no'] ?? '' }}</td>
                 <td>{{ $std['accuracy'] ?? '' }}</td>
-                <td>{{ $std['cal_date'] ?? '' }}</td>
-                <td>{{ $std['cal_due'] ?? '' }}</td>
+                <td>{{ \Carbon\Carbon::parse($std['cal_date'])->format('m/d/Y H:i:s') ?? '' }}</td>
+                <td>{{ \Carbon\Carbon::parse($std['cal_due'])->format('m/d/Y H:i:s') ?? '' }}</td>
                 <td>{{ $std['traceability'] ?? '' }}</td>
             </tr>
             @endforeach

@@ -149,7 +149,7 @@ const handleSubmit = (e) => {
             <div className="flex justify-between items-center mb-3 bg-gradient-to-r from-white to-gray-500 p-2 rounded">
                 <h3 className="text-lg font-bold text-gray-700">
                   <i className="fas fa-info-circle mr-1 "></i>
-                  {editData ? "Edit Checklist Item" : "Add Checklist Item"}
+                  {editData ? "Edit Ionizer Checklist Item" : "Add Ionizer Checklist Item"}
                 </h3>
                 <button
                   onClick={() => setShowForm(false)}

@@ -41,7 +41,7 @@
 </head>
 
 <body>
-    <h2 style="color: #790d0dff; margin-top: -20px; margin-bottom: 30px;"><i class="fa-solid fa-t"></i> Calibration Report</h2>
+    <h2 style="color: #790d0dff; margin-top: -20px; margin-bottom: 30px; text-align: center;"><i class="fa-solid fa-t"></i> Calibration Report</h2>
 
     {{-- 🔹 Report Summary --}}
     <table>
@@ -72,6 +72,7 @@
         <tr>
             <th>Calibration Date</th>
             <td>{{ $report->calibration_date ?? '' }}</td>
+            </td>
             <th>Calibration Due</th>
             <td>{{ $report->calibration_due ?? '' }}</td>
         </tr>
@@ -85,21 +86,33 @@
             <th>Calibrated By</th>
             <td>{{ $report->performed_by ?? '' }}</td>
             <th>Date Calibrated</th>
-            <td>{{ $report->created_at ?? '' }}</td>
+            <td>
+                {{ !empty($report['created_at']) 
+        ? \Carbon\Carbon::parse($report['created_at'])->format('m/d/Y h:i A') 
+        : '' }}
+            </td>
 
         </tr>
         <tr>
             <th>Reviewed By</th>
             <td>{{ $report->review_by ?? '' }}</td>
             <th>Review Date</th>
-            <td>{{ $report->review_date ?? '' }}</td>
+            <td>
+                {{ !empty($report['review_date']) 
+        ? \Carbon\Carbon::parse($report['review_date'])->format('m/d/Y h:i A') 
+        : '' }}
+            </td>
 
         </tr>
         <tr>
             <th>QA Sign</th>
             <td>{{ $report->qa_sign ?? '' }}</td>
             <th>QA Sign Date</th>
-            <td>{{ $report->qa_sign_date ?? '' }}</td>
+            <td>
+                {{ !empty($report['qa_sign_date']) 
+        ? \Carbon\Carbon::parse($report['qa_sign_date'])->format('m/d/Y h:i A') 
+        : '' }}
+            </td>
         </tr>
     </table>
 
@@ -129,8 +142,16 @@
                 <td>{{ $std['cal_control_no'] ?? '' }}</td>
                 <td>{{ $std['serial_no'] ?? '' }}</td>
                 <td>{{ $std['accuracy'] ?? '' }}</td>
-                <td>{{ $std['cal_date'] ?? '' }}</td>
-                <td>{{ $std['cal_due'] ?? '' }}</td>
+                <td>
+                    {{ !empty($std['cal_date']) 
+        ? \Carbon\Carbon::parse($std['cal_date'])->format('m/d/Y') 
+        : '' }}
+                </td>
+                <td>
+                    {{ !empty($std['cal_due']) 
+        ? \Carbon\Carbon::parse($std['cal_due'])->format('m/d/Y') 
+        : '' }}
+                </td>
                 <td>{{ $std['traceability'] ?? '' }}</td>
             </tr>
             @endforeach

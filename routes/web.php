@@ -8,7 +8,10 @@ use App\Http\Controllers\Ionizer\IonizerCalibrationReportController;
 use App\Http\Controllers\Ionizer\IonizerChecklistItemController;
 use App\Http\Controllers\Ionizer\IonizerChecklistController;
 use App\Http\Controllers\MassApprovalController;
+use App\Http\Controllers\nonTnr\NonTnrCalibrationMassApprovedController;
 use App\Http\Controllers\nonTnr\NonTnrCalibrationReportController;
+use App\Http\Controllers\nonTnr\NonTnrChecklistController;
+use App\Http\Controllers\nonTnr\NonTnrChecklistItemController;
 use App\Http\Controllers\PdfController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SchedulerController;
@@ -52,6 +55,7 @@ Route::post('/calibration-reports', [CalibrationReportController::class, 'store'
 //     ->name('calibration-reports.destroy');
 Route::post('/calibration-reports/{report}/verify-qa', [CalibrationReportController::class, 'verifyQA'])
     ->name('calibration-reports.verify-qa');
+
 Route::post('/calibration-reports/{report}/verify-reviewer', [CalibrationReportController::class, 'verifyReviewer'])
     ->name('calibration-reports.verify-reviewer');
 
@@ -89,8 +93,12 @@ Route::get('/tnr/extend/{id}', [TnrController::class, 'extend'])->name('tnr.exte
 Route::post('/tnr/extend/{id}', [TnrController::class, 'updateExtend'])->name('tnr.extend.update');
 
 
-
+// TNR
 Route::get('/pdf/calibration/{id}', [ReportController::class, 'viewPDF'])->name('pdf.calibration');
+// Ionizer
+Route::get('/pdf/ionizerCalibration/{id}', [ReportController::class, 'ionizerViewPDF'])->name('pdf.ionizerCalibration');
+// non-TNR
+Route::get('/pdf/nonTnrCalibration/{id}', [ReportController::class, 'nonTnrViewPDF'])->name('pdf.nonTnrCalibration');
 
 // TNR Mass Approved page
 Route::get('/tnr/mass-approved', [MassApprovalController::class, 'index'])
@@ -99,12 +107,26 @@ Route::get('/tnr/mass-approved', [MassApprovalController::class, 'index'])
 Route::post('/tnr/mass-approved/approve', [MassApprovalController::class, 'approved'])
     ->name('mass.approval.approve');
 
-
+// TNR
 Route::get('/calibration/mass-approval', [CalibrationMassApprovedController::class, 'index'])
-    ->name('calibration.mass.approval');
+    ->name('calibration.tnr.mass.approval');
 
-Route::post('/calibration/mass-approve', [CalibrationMassApprovedController::class, 'approve'])
-    ->name('calibration.mass.approve');
+Route::post('/calibration/tnr/mass-approval/approve', [CalibrationMassApprovedController::class, 'approve'])
+    ->name('calibration.tnr.mass.approve');
+
+// Non-TNR
+Route::get('/calibration/non-tnr-mass-approval', [NonTnrCalibrationMassApprovedController::class, 'index'])
+    ->name('calibration.non-tnr.mass.approval');
+
+// QA
+Route::post('/calibration/non-tnr-mass-approval.approve.qa', [NonTnrCalibrationMassApprovedController::class, 'nonTnrapproveQA'])
+    ->name('calibration.non-tnr.mass.approve_qa');
+
+// EE
+Route::post('/calibration/non-tnr-mass-approval.approve.ee', [NonTnrCalibrationMassApprovedController::class, 'nonTnrapproveEE'])
+    ->name('calibration.non-tnr.mass.approve_ee');
+
+
 
 Route::resource('ionizer-checklist-items', IonizerChecklistItemController::class)->names([
     'index' => 'ionizer-items.index',
@@ -113,7 +135,7 @@ Route::resource('ionizer-checklist-items', IonizerChecklistItemController::class
     'destroy' => 'ionizer-items.destroy',
 ]);
 
-Route::get('/pdf/ionizerCalibration/{id}', [ReportController::class, 'ionizerViewPDF'])->name('pdf.ionizerCalibration');
+
 
 
 Route::get('/ionizer-checklists', [IonizerChecklistController::class, 'index'])->name('ionizer.index');
@@ -127,6 +149,21 @@ Route::post('/ionizer-checklist/{id}/verify', [IonizerChecklistController::class
 
 Route::post('/ionizer-checklist/bulk-verify', [IonizerChecklistController::class, 'bulkVerify']);
 
+
+Route::prefix('non-tnr-checklist-items')->group(function () {
+    Route::get('/', [NonTnrChecklistItemController::class, 'index'])->name('non-tnr-items.index');
+    Route::post('/', [NonTnrChecklistItemController::class, 'store']);
+    Route::put('/{id}', [NonTnrChecklistItemController::class, 'update']);
+    Route::delete('/{id}', [NonTnrChecklistItemController::class, 'destroy']);
+});
+
+Route::get('/non-tnr-checklists', [NonTnrChecklistController::class, 'index'])->name('non-tnr-checklists.index');
+Route::post('/non-tnr-checklists', [NonTnrChecklistController::class, 'store'])->name('non-tnr-checklists.store');
+Route::put('/non-tnr-checklists/{id}', [NonTnrChecklistController::class, 'update'])->name('non-tnr-checklists.update');
+Route::delete('/non-tnr-checklists/{id}', [NonTnrChecklistController::class, 'destroy'])->name('non-tnr-checklists.destroy');
+
+// verification
+Route::post('/non-tnr-checklists/{id}/verify', [NonTnrChecklistController::class, 'verify'])->name('non-tnr-checklists.verify');
 
 
 

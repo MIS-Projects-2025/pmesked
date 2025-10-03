@@ -2,7 +2,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, usePage, router } from "@inertiajs/react";
 import { useState } from "react";
 
-export default function calibrationReportMassApproved({ reports, empData }) {
+export default function NonTnrcalibrationReportMassApproved({ reports, empData }) {
   const [selected, setSelected] = useState([]);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -29,13 +29,29 @@ export default function calibrationReportMassApproved({ reports, empData }) {
   };
 
   // Mass approve selected reports
-  const handleMassApprove = (ids = selected) => {
+  const handleMassApproveQA = (ids = selected) => {
     if (!ids.length) return alert("No reports selected!");
     router.post(
-      route("calibration.tnr.mass.approve"),
+      route("calibration.non-tnr.mass.approve_qa"),
       { ids },
       {
         onSuccess: () => {
+          alert("✅ Selected reports approved!");
+          window.location.reload();
+        },
+        onError: () => alert("Something went wrong!"),
+      }
+    );
+  };
+
+  const handleMassApproveEE = (ids = selected) => {
+    if (!ids.length) return alert("No reports selected!");
+    router.post(
+      route("calibration.non-tnr.mass.approve_ee"),
+      { ids },
+      {
+        onSuccess: () => {
+          alert("✅ Selected reports approved!");
           window.location.reload();
         },
         onError: () => alert("Something went wrong!"),
@@ -73,7 +89,7 @@ export default function calibrationReportMassApproved({ reports, empData }) {
 const handleVerifyQA = () => {
   if (!selectedReport) return;
   router.post(
-    route("calibration-reports.verify-qa", selectedReport.id),
+    route("calibration-reports.non-tnr.verify-qa", selectedReport.id),
     {},
     {
       preserveScroll: true,
@@ -89,7 +105,7 @@ const handleVerifyQA = () => {
 const handleVerifyReviewer = () => {
   if (!selectedReport) return;
   router.post(
-    route("calibration-reports.verify-reviewer", selectedReport.id),
+    route("calibration-reports.non-tnr.verify-reviewer", selectedReport.id),
     {},
     {
       preserveScroll: true,
@@ -114,12 +130,21 @@ console.log(reports);
             <i className="fas fa-check-circle"></i> Calibration Mass Approval
           </h1>
 
-          {selected.length > 0 && canApprove &&(
+          {selected.length > 0 && canApprove && isQA && (
             <button
-              onClick={() => handleMassApprove()}
+              onClick={() => handleMassApproveQA()}
               className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
             >
-              <i className="fa-solid fa-check"></i> Mass Approve ({selected.length})
+              <i className="fa-solid fa-check"></i> Mass Approve ESD ({selected.length})
+            </button>
+          )}
+
+          {selected.length > 0 && canApprove && isEngineer && (
+            <button
+              onClick={() => handleMassApproveEE()}
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            >
+              <i className="fa-solid fa-check"></i> Mass Approve EE ({selected.length})
             </button>
           )}
         </div>
@@ -252,7 +277,7 @@ console.log(reports);
       {/* Header */}
       <div className="flex justify-between items-center bg-gradient-to-r from-gray-600 to-black text-white p-4 rounded-t-lg sticky top-0 z-10">
         <h2 className="text-lg font-bold ml-4">
-          <i className="fa-regular fa-rectangle-list"></i> Calibration Report View
+          <i className="fa-regular fa-rectangle-list"></i> Non-TnR Calibration Report View
         </h2>
         <div className="flex space-x-2">
         
@@ -270,12 +295,12 @@ console.log(reports);
         
 
         <button
-  onClick={() => window.open(`/pdf/calibration/${selectedReport.id}`, "_blank")}
-  className="px-4 py-2 border rounded-md bg-blue-600 text-white hover:bg-blue-700"
->
-  <i className="fas fa-file-pdf mr-2"></i>
-  View as PDF
-</button>
+        onClick={() => window.open(`/pdf/nonTnrCalibration/${selectedReport.id}`, "_blank")}
+        className="px-4 py-2 border rounded-md bg-blue-600 text-white hover:bg-blue-700"
+        >
+        <i className="fas fa-file-pdf mr-2"></i>
+          View as PDF
+        </button>
 
 
         )}
