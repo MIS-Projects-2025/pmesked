@@ -7,6 +7,7 @@ use App\Models\Machine;
 use App\Models\NonTnrChecklist;
 use App\Models\NonTnrChecklistItem;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Inertia\Inertia;
 
 class NonTnrChecklistController extends Controller
@@ -104,23 +105,94 @@ class NonTnrChecklistController extends Controller
     }
 
     // ✅ Verification (tech / qa)
-    public function verify(Request $request, $id)
-    {
-        $checklist = NonTnrChecklist::findOrFail($id);
-        $type = $request->input('type');
+    // public function verify(Request $request, $id)
+    // {
+    //     $checklist = NonTnrChecklist::findOrFail($id);
+    //     $type = $request->input('type');
 
-        if ($type === 'tech') {
-            $checklist->update([
-                'tech_sign' => session('emp_data')['emp_name'] ?? null,
-                'tech_sign_date' => now(),
-            ]);
-        } elseif ($type === 'qa') {
-            $checklist->update([
-                'qa_sign' => session('emp_data')['emp_name'] ?? null,
-                'qa_sign_date' => now(),
-            ]);
+    //     if ($type === 'tech') {
+    //         $checklist->update([
+    //             'tech_sign' => session('emp_data')['emp_name'] ?? null,
+    //             'tech_sign_date' => now(),
+    //         ]);
+    //     } elseif ($type === 'qa') {
+    //         $checklist->update([
+    //             'qa_sign' => session('emp_data')['emp_name'] ?? null,
+    //             'qa_sign_date' => now(),
+    //         ]);
+    //     }
+
+    //     return back()->with('success', ucfirst($type) . ' verified successfully!');
+    // }
+
+    public function verify($id)
+    {
+        $user = session('emp_data');
+        $jobTitle = $user['emp_jobtitle'] ?? null;
+        $name = $user['emp_name'] ?? null;
+
+        $report = NonTnrChecklist::findOrFail($id);
+
+        // Define roles
+        $techRoles = [
+            "Senior Equipment Technician",
+            "Equipment Technician 1",
+            "Equipment Technician 2",
+            "Equipment Technician 3",
+            "PM Technician 1",
+            "PM Technician 2",
+            "Trainee - Equipment Technician 1"
+        ];
+
+        $qaRoles = ["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer", "DIC Clerk 1"];
+
+        $seniorRoles = [
+            "Equipment Engineer",
+            "Supervisor - Equipment Technician",
+            "Senior Equipment Engineer",
+            "Sr. Equipment Engineer",
+            "Equipment Engineering Section Head",
+            "Section Head - Equipment Engineering"
+        ];
+
+        // ✅ Verification Logic with Date Tracking
+        if (in_array($jobTitle, $techRoles) && !$report->tech_sign) {
+            $report->tech_sign = $name;
+            $report->tech_sign_date = now();
+        } elseif (in_array($jobTitle, $qaRoles) && $report->tech_sign && !$report->qa_sign) {
+            $report->qa_sign = $name;
+            $report->qa_sign_date = now();
+        } elseif (in_array($jobTitle, $seniorRoles) && $report->tech_sign && $report->qa_sign && !$report->senior_ee_sign) {
+            $report->senior_ee_sign = $name;
+            $report->senior_ee_sign_date = now();
+        } else {
+            return back()->with('error', 'Verification not allowed.');
         }
 
-        return back()->with('success', ucfirst($type) . ' verified successfully!');
+        $report->save();
+
+        return back()->with('success', 'Verified successfully.');
+    }
+
+    public function viewPdf($id)
+    {
+        $checklist = NonTnrChecklist::findOrFail($id);
+
+        // Decode arrays kung JSON string pa rin
+        $checkItems = is_string($checklist->check_item)
+            ? json_decode($checklist->check_item, true)
+            : $checklist->check_item;
+
+        $stdVerifications = is_string($checklist->std_use_verification)
+            ? json_decode($checklist->std_use_verification, true)
+            : $checklist->std_use_verification;
+
+        $pdf = Pdf::loadView('pdf.non_tnr_checklist', [
+            'checklist' => $checklist,
+            'checkItems' => $checkItems,
+            'stdVerifications' => $stdVerifications,
+        ]);
+
+        return $pdf->stream("non_tnr_checklist_$id.pdf");
     }
 }

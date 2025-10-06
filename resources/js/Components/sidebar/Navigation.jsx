@@ -35,43 +35,24 @@ export default function NavLinks() {
                     },
                     {
                         href: route("calibration.calibrationReport"),
-                        label: "Calibration Report",
+                        label: "TNR Calibration Report",
                         icon: (
                         <i className="far fa-square"></i>
                         ),
                         // notification: 125,
                     },
-                    // {
-                    //     href: route("pdfs.index"),   // bagong link
-                    //     label: "PDF Fillup",
-                    //     icon:  <i className="far fa-square"></i>,
-                    // },
+
+                    {
+                        href: route("tnr.massApproved"),   // bagong link
+                        label: "Tnr Mass Approved",
+                        icon:  <i className="far fa-square"></i>,
+                    },
                 ]}
                 // notification={true}
                 />
                 </div>
             )}
            
-            {[
-                "Senior Equipment Technician", "Equipment Technician 1", "Equipment Technician 2", "Equipment Technician 3", "PM Technician 1", "PM Technician 2" ,
-                "ESD Technician 1", "ESD Technician 2", "Senior QA Engineer", "DIC Clerk 1",
-                 "Equipment Engineer",  "Supervisor - Equipment Technician",  "Senior Equipment Engineer",  "Sr. Equipment Engineer",  "Equipment Engineering Section Head",  "Section Head - Equipment Engineering"
-
-
-            ].includes(emp_data?.emp_jobtitle) && (
-                <div>
-            <SidebarLink
-                href={route("tnr.massApproved")}
-                label="TNR Mass Approved"
-                icon={
-                    <i className="fa-regular fa-thumbs-up"></i>
-                }
-                // notifications={5}
-            />
-            
-
-                </div>
-            )}
                 {[
                 "ESD Technician 1", "ESD Technician 2", "Senior QA Engineer", "DIC Clerk 1",
                  "Equipment Engineer",  "Supervisor - Equipment Technician",  "Senior Equipment Engineer",  "Sr. Equipment Engineer",  "Equipment Engineering Section Head",  "Section Head - Equipment Engineering"
@@ -80,36 +61,96 @@ export default function NavLinks() {
             ].includes(emp_data?.emp_jobtitle) && (
                 <div>
 
-                <SidebarLink
-                href={route("calibration.tnr.mass.approval")}
-                label="Calibration Mass Approved"
-                fontSize="10px"
-                icon={<i className="fa-solid fa-check-to-slot"></i>}
+                <Dropdown
+                label="Tnr MassApproved"
+                icon={
+                    <i className="fas fa-file-contract"></i>
+                }
+                links={[
+                    {
+                        href: route("tnr.massApproved"),
+                        label: "TNR Checklist",
+                        icon: (
+                           <i className="far fa-square"></i>
+                        ),
+                        className: "opacity-50 pointer-events-none",
+                        // notification: true,
+                    },
+
+                    {
+                        href: route("calibration.tnr.mass.approval"),
+                        label: "TNR Calibration Report",
+                        icon: (
+                        <i className="far fa-square"></i>
+                        ),
+                        className: "opacity-50 pointer-events-none",
+                        // notification: 125,
+                    },
+                    
+                ]}
+                // notification={true}
                 />
 
-                <SidebarLink
-                href={route("calibration.non-tnr.mass.approval")}
-                label="Non-TNR Calibration Mass Approved"
-                fontSize="10px"
-                icon={<i className="fa-solid fa-check"></i>}
+                <Dropdown
+                label="NonTnr MassApproved"
+                icon={
+                    <i className="fas fa-file"></i>
+                }
+                links={[
+                    {
+                        href: route("non_tnr.mass.index"),
+                        label: "Non Tnr Checklist",
+                        icon: (
+                           <i className="far fa-square"></i>
+                        ),
+                        className: "opacity-50 pointer-events-none",
+                        // notification: true,
+                    },
+
+                    {
+                        href: route("calibration.non-tnr.mass.approval"),
+                        label: "Non Tnr Calibration Report",
+                        icon: (
+                        <i className="far fa-square"></i>
+                        ),
+                        className: "opacity-50 pointer-events-none",
+                        // notification: 125,
+                    },
+                    
+                ]}
+                // notification={true}
                 />
 
+                <Dropdown
+                label="Ionizer MassApproved"
+                icon={
+                    <i className="fas fa-fan"></i>
+                }
+                links={[
+                    {
+                        href: route("ionizer.mass.index"),
+                        label: "Ionizer Checklist",
+                        icon: (
+                           <i className="far fa-square"></i>
+                        ),
+                        className: "opacity-50 pointer-events-none",
+                        // notification: true,
+                    },
 
-               <SidebarLink
-                href={route("ionizer.index")}
-                label="Ionizer Checklist"
-                fontSize="10px"
-                icon={<i className="fas fa-fan"></i>}
-                // notifications={5}
+                    {
+                        href: route("calibration.non-tnr.mass.approval"),
+                        label: "Ionizer Calibration Report",
+                        icon: (
+                        <i className="far fa-square"></i>
+                        ),
+                        className: "opacity-50 pointer-events-none",
+                        // notification: 125,
+                    },
+                    
+                ]}
+                // notification={true}
                 />
 
-            <SidebarLink
-                href={route("calibration.IonizerCalibrationReport")}
-                label="Ionizer Calibration Report"
-                fontSize="10px"
-                icon={<i className="fa-solid fa-pen-fancy"></i>}
-                // notifications={5}
-            />
                 </div>
             )}
            
@@ -138,6 +179,16 @@ export default function NavLinks() {
                         label: "Calibration Report",
                         icon: (
                         <i className="far fa-square"></i>
+                        ),
+                        className: "opacity-50 pointer-events-none",
+                        // notification: 125,
+                    },
+
+                    {
+                        href: route("non_tnr.mass.index"),
+                        label: "Non Tnr Mass Approved",
+                        icon: (
+                       <i className="far fa-square"></i>
                         ),
                         className: "opacity-50 pointer-events-none",
                         // notification: 125,
@@ -176,6 +227,16 @@ export default function NavLinks() {
                         ),
                         className: "opacity-50 pointer-events-none",
                         // notification: 125,
+                    },
+
+                    {
+                        href: route("ionizer.mass.index"),
+                        label: "Ionizer Mass Approved Checklist",
+                        icon: (
+                           <i className="far fa-square"></i>
+                        ),
+                        className: "opacity-50 pointer-events-none",
+                        // notification: true,
                     },
                     
                 ]}

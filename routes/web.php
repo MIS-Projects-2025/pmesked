@@ -7,11 +7,13 @@ use App\Http\Controllers\ChecklistController;
 use App\Http\Controllers\Ionizer\IonizerCalibrationReportController;
 use App\Http\Controllers\Ionizer\IonizerChecklistItemController;
 use App\Http\Controllers\Ionizer\IonizerChecklistController;
+use App\Http\Controllers\ionizer\IonizerMassApprovedController;
 use App\Http\Controllers\MassApprovalController;
 use App\Http\Controllers\nonTnr\NonTnrCalibrationMassApprovedController;
 use App\Http\Controllers\nonTnr\NonTnrCalibrationReportController;
 use App\Http\Controllers\nonTnr\NonTnrChecklistController;
 use App\Http\Controllers\nonTnr\NonTnrChecklistItemController;
+use App\Http\Controllers\nonTnr\NonTnrMassAprovedController;
 use App\Http\Controllers\PdfController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SchedulerController;
@@ -164,6 +166,21 @@ Route::delete('/non-tnr-checklists/{id}', [NonTnrChecklistController::class, 'de
 
 // verification
 Route::post('/non-tnr-checklists/{id}/verify', [NonTnrChecklistController::class, 'verify'])->name('non-tnr-checklists.verify');
+
+Route::get('/non-tnr/view-pdf/{id}', [NonTnrChecklistController::class, 'viewPdf'])
+    ->name('non_tnr.view_pdf');
+
+Route::prefix('non-tnr')->group(function () {
+    Route::get('/mass-approve', [NonTnrMassAprovedController::class, 'index'])->name('non_tnr.mass.index');
+    Route::post('/mass-approve', [NonTnrMassAprovedController::class, 'massApprove'])->name('non_tnr.mass.approve');
+});
+
+Route::prefix('ionizer')->group(function () {
+    Route::get('/mass-approve', [IonizerMassApprovedController::class, 'index'])->name('ionizer.mass.index');
+    Route::post('/tech-verify', [IonizerMassApprovedController::class, 'techVerify'])->name('ionizer.tech.verify');
+    Route::post('/qa-verify', [IonizerMassApprovedController::class, 'qaVerify'])->name('ionizer.qa.verify');
+});
+
 
 
 

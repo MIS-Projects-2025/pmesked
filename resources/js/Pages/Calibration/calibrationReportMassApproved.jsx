@@ -111,7 +111,7 @@ console.log(reports);
         {/* Header */}
         <div className="flex justify-between items-center mb-3 p-4 bg-gradient-to-r from-gray-600 to-black rounded-t-2xl text-white">
           <h1 className="text-2xl font-bold">
-            <i className="fas fa-check-circle"></i> Calibration Mass Approval
+            <i className="fas fa-check-circle"></i> TNR Calibration Mass Approval
           </h1>
 
           {selected.length > 0 && canApprove &&(

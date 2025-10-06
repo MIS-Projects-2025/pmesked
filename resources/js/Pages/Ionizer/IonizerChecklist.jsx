@@ -349,16 +349,6 @@ export default function Index({ reports, filters, machines, empData, items }) {
 
         <DataTable
           columns={[
-            {
-              key: "select",
-              label: (
-                <input
-                  type="checkbox"
-                  onChange={(e) => toggleSelectAll(e.target.checked)}
-                  checked={selectedIds.length === filteredReports.length}
-                />
-              ),
-            },
             { key: "control_no", label: "Control No" },
             { key: "pm_date", label: "PM Date" },
             { key: "pm_due", label: "PM Due" },

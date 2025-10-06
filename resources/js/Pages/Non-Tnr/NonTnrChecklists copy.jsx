@@ -636,236 +636,193 @@ const handleVerify = (id) => {
           </div>
         )}
 
-       {/* View Modal */}
-{showView && viewData && (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-40">
-    <div className="bg-white p-5 rounded-lg shadow-lg w-[95%] md:max-w-7xl overflow-y-auto max-h-[95vh]">
-      <div className="flex justify-between items-center mb-3 bg-gradient-to-r from-white to-gray-500 p-2 rounded">
-        <h3 className="text-lg font-bold text-violet-800 pt-4 pb-4">
-          <i className="fas fa-eye mr-2"></i> View Entry
-        </h3>
+        {/* View Modal */}
+        {showView && viewData && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-40">
+            <div className="bg-white p-5 rounded-lg shadow-lg w-[95%] md:max-w-7xl overflow-y-auto max-h-[95vh]">
+              <div className="flex justify-between items-center mb-3 bg-gradient-to-r from-white to-gray-500 p-2 rounded">
+                <h3 className="text-lg font-bold text-violet-800 pt-4 pb-4">
+                  <i className="fas fa-eye mr-2"></i> View Entry
+                </h3>
+                <button
+                  onClick={() => setShowView(false)}
+                  className="text-red-400 hover:text-red-600 pr-2 font-bold text-2xl"
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+              </div>
+
+              {/* Header */}
+              <table className="w-full border text-sm text-gray-600 mb-4 rounded-lg">
+                <tbody>
+                  <tr>
+                    <td className="border p-2">Control No</td>
+                    <td className="border p-2">{viewData.control_no}</td>
+                    <td className="border p-2">Serial</td>
+                    <td className="border p-2">{viewData.serial}</td>
+                  </tr>
+                  <tr>
+                    <td className="border p-2">Description</td>
+                    <td className="border p-2">{viewData.description}</td>
+                    <td className="border p-2">Frequency</td>
+                    <td className="border p-2">{viewData.frequency}</td>
+                  </tr>
+                  <tr>
+                    <td className="border p-2">PM Date</td>
+                    <td className="border p-2">{viewData.pm_date}</td>
+                    <td className="border p-2">PM Due</td>
+                    <td className="border p-2">{viewData.pm_due}</td>
+                  </tr>
+                  <tr>
+                    <td className="border p-2">Performed By</td>
+                    <td className="border p-2">{viewData.performed_by}</td>
+                    <td className="border p-2">Platform</td>
+                    <td className="border p-2 text-red-800 font-bold">{viewData.platform}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              {/* Check Items */}
+              {viewData.check_item?.length > 0 && (
+                <>
+                  <h3 className="font-bold text-violet-700">Check Items</h3>
+                  <table className="w-full border text-sm text-gray-600 mb-4">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="border p-2">Assembly Items</th>
+                        <th className="border p-2">Requirement</th>
+                        <th className="border p-2">Activity</th>
+                        <th className="border p-2">Compliance</th>
+                        <th className="border p-2">Date</th>
+                        <th className="border p-2">Remarks</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {viewData.check_item.map((row, idx) => (
+                        <tr key={idx}>
+                          <td className="border p-2">{row.assy_item}</td>
+                          <td className="border p-2">{row.requirement}</td>
+                          <td className="border p-2">{row.activity}</td>
+                          <td className="border p-2 text-center">
+                            {row.compliance === 1 ? "✔" : "✘"}
+                          </td>
+                          <td className="border p-2">{row.date}</td>
+                          <td className="border p-2">{row.remarks}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              )}
+
+              {/* Standard Use Verification */}
+              {viewData.std_use_verification?.length > 0 && (
+                <>
+                  <h3 className="font-bold text-violet-700">Standard Use Verification</h3>
+                  <table className="w-full border text-sm text-gray-600 mb-4">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="border p-2">Description</th>
+                        <th className="border p-2">Instrument 1</th>
+                        <th className="border p-2">Instrument 2</th>
+                        <th className="border p-2">Instrument 3</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {viewData.std_use_verification.map((sv, idx) => (
+                        <tr key={idx}>
+                          <td className="border p-2">{sv.description}</td>
+                          <td className="border p-2">{sv.instrument1}</td>
+                          <td className="border p-2">{sv.instrument2}</td>
+                          <td className="border p-2">{sv.instrument3}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              )}
+
+<div className="flex justify-end mt-4 gap-2">
+  {/* Verify Button */}
+  <div>
+    {(() => {
+      const techRoles = [
+        "Senior Equipment Technician",
+        "Equipment Technician 1",
+        "Equipment Technician 2",
+        "Equipment Technician 3",
+        "PM Technician 1",
+        "PM Technician 2",
+        "Trainee - Equipment Technician 1",
+      ];
+      const qaRoles = [
+        "ESD Technician 1",
+        "ESD Technician 2",
+        "Senior QA Engineer",
+        "DIC Clerk 1",
+      ];
+      const seniorRoles = [
+        "Equipment Engineer",
+        "Supervisor - Equipment Technician",
+        "Senior Equipment Engineer",
+        "Sr. Equipment Engineer",
+        "Equipment Engineering Section Head",
+        "Section Head - Equipment Engineering",
+      ];
+
+      const isTech = techRoles.includes(emp_data?.emp_jobtitle);
+      const isQA = qaRoles.includes(emp_data?.emp_jobtitle);
+      const isSenior = seniorRoles.includes(emp_data?.emp_jobtitle);
+
+      const canVerifyTech = isTech && !viewData.tech_sign;
+      const canVerifyQA = isQA && viewData.tech_sign && !viewData.qa_sign;
+      const canVerifySenior =
+        isSenior && viewData.tech_sign && viewData.qa_sign && !viewData.senior_ee_sign;
+
+      if (canVerifyTech || canVerifyQA || canVerifySenior) {
+        return (
+          <button
+            onClick={() => handleVerify(viewData.id)}
+            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+          >
+            <i className="fas fa-check mr-2"></i> Verify
+          </button>
+        );
+      }
+
+      return (
         <button
-          onClick={() => setShowView(false)}
-          className="text-red-400 hover:text-red-600 pr-2 font-bold text-2xl"
+          disabled
+          className="px-4 py-2 bg-gray-300 text-gray-600 rounded cursor-not-allowed"
         >
-          <i className="fas fa-times"></i>
+          <i className="fas fa-lock mr-2"></i> Not Eligible to Verify
         </button>
-      </div>
- <div className="flex justify-end mb-4  rounded-t-2xl">
-          {/* View PDF Button */}
-{viewData.tech_sign && viewData.qa_sign && viewData.senior_ee_sign && (
-  <a
-    href={`/non-tnr/view-pdf/${viewData.id}`}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="px-3 py-2 bg-gray-100 text-red-600 rounded shadow hover:bg-red-700 hover:text-white border-2 border-red-600 hover:border-gray-500 flex items-center text-bold"
-  >
-    <i className="fas fa-file-pdf mr-2"></i> View as PDF
-  </a>
-)}
-
-          </div>
-      {/* Header */}
-      <table className="w-full border text-sm text-gray-600 mb-4 rounded-lg">
-       
-        <tbody>
-          <tr>
-            <td className="border p-2">Control No</td>
-            <td className="border p-2">{viewData.control_no}</td>
-            <td className="border p-2">Serial</td>
-            <td className="border p-2">{viewData.serial}</td>
-          </tr>
-          <tr>
-            <td className="border p-2">Description</td>
-            <td className="border p-2">{viewData.description}</td>
-            <td className="border p-2">Frequency</td>
-            <td className="border p-2">{viewData.frequency}</td>
-          </tr>
-          <tr>
-            <td className="border p-2">PM Date</td>
-            <td className="border p-2">{viewData.pm_date}</td>
-            <td className="border p-2">PM Due</td>
-            <td className="border p-2">{viewData.pm_due}</td>
-          </tr>
-          <tr>
-            <td className="border p-2">Performed By</td>
-            <td className="border p-2">{viewData.performed_by}</td>
-            <td className="border p-2">Platform</td>
-            <td className="border p-2 text-red-800 font-bold">{viewData.platform}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      {/* Check Items */}
-      {viewData.check_item?.length > 0 && (
-        <>
-          <h3 className="font-bold text-violet-700">Check Items</h3>
-          <table className="w-full border text-sm text-gray-600 mb-4">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="border p-2">Assembly Items</th>
-                <th className="border p-2">Requirement</th>
-                <th className="border p-2">Activity</th>
-                <th className="border p-2">Compliance</th>
-                <th className="border p-2">Date</th>
-                <th className="border p-2">Remarks</th>
-              </tr>
-            </thead>
-            <tbody>
-              {viewData.check_item.map((row, idx) => (
-                <tr key={idx}>
-                  <td className="border p-2">{row.assy_item}</td>
-                  <td className="border p-2">{row.requirement}</td>
-                  <td className="border p-2">{row.activity}</td>
-                  <td className="border p-2 text-center">
-                    {row.compliance === 1 ? "✔" : "✘"}
-                  </td>
-                  <td className="border p-2">{row.date}</td>
-                  <td className="border p-2">{row.remarks}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </>
-      )}
-
-      {/* Standard Use Verification */}
-      {viewData.std_use_verification?.length > 0 && (
-        <>
-          <h3 className="font-bold text-violet-700">Standard Use Verification</h3>
-          <table className="w-full border text-sm text-gray-600 mb-4">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="border p-2">Description</th>
-                <th className="border p-2">Instrument 1</th>
-                <th className="border p-2">Instrument 2</th>
-                <th className="border p-2">Instrument 3</th>
-              </tr>
-            </thead>
-            <tbody>
-              {viewData.std_use_verification.map((sv, idx) => (
-                <tr key={idx}>
-                  <td className="border p-2">{sv.description}</td>
-                  <td className="border p-2">{sv.instrument1}</td>
-                  <td className="border p-2">{sv.instrument2}</td>
-                  <td className="border p-2">{sv.instrument3}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </>
-      )}
-
-      {/* Signatures */}
-      <h3 className="font-bold text-violet-700 mt-4">Signatures</h3>
-      <table className="w-full border text-sm text-gray-600 mb-4">
-        <tbody>
-          <tr>
-            <td className="border p-2 font-semibold">Technician</td>
-            <td className="border p-2">{viewData.tech_sign || "-"}</td>
-            <td className="border p-2 font-semibold">Date</td>
-            <td className="border p-2">{viewData.tech_sign_date || "-"}</td>
-          </tr>
-          <tr>
-            <td className="border p-2 font-semibold">QA</td>
-            <td className="border p-2">{viewData.qa_sign || "-"}</td>
-            <td className="border p-2 font-semibold">Date</td>
-            <td className="border p-2">{viewData.qa_sign_date || "-"}</td>
-          </tr>
-          <tr>
-            <td className="border p-2 font-semibold">Senior EE</td>
-            <td className="border p-2">{viewData.senior_ee_sign || "-"}</td>
-            <td className="border p-2 font-semibold">Date</td>
-            <td className="border p-2">{viewData.senior_ee_sign_date || "-"}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      {/* ✅ Action Buttons */}
-      <div className="flex justify-end mt-4 gap-2">
-
-        {/* ✅ Conditional Verify Button */}
-        {(() => {
-          const techRoles = [
-            "Senior Equipment Technician",
-            "Equipment Technician 1",
-            "Equipment Technician 2",
-            "Equipment Technician 3",
-            "PM Technician 1",
-            "PM Technician 2",
-            "Trainee - Equipment Technician 1",
-          ];
-          const qaRoles = [
-            "ESD Technician 1",
-            "ESD Technician 2",
-            "Senior QA Engineer",
-            "DIC Clerk 1",
-          ];
-          const seniorRoles = [
-            "Equipment Engineer",
-            "Supervisor - Equipment Technician",
-            "Senior Equipment Engineer",
-            "Sr. Equipment Engineer",
-            "Equipment Engineering Section Head",
-            "Section Head - Equipment Engineering",
-          ];
-
-          const isTech = techRoles.includes(emp_data?.emp_jobtitle);
-          const isQA = qaRoles.includes(emp_data?.emp_jobtitle);
-          const isSenior = seniorRoles.includes(emp_data?.emp_jobtitle);
-
-          // ✅ Technician verify visible only if no tech_sign
-          if (isTech && !viewData.tech_sign) {
-            return (
-              <button
-                onClick={() => handleVerify(viewData.id)}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-              >
-                <i className="fas fa-check mr-2"></i> Verify
-              </button>
-            );
-          }
-
-          // ✅ QA verify visible only if tech signed but no QA yet
-          if (isQA && viewData.tech_sign && !viewData.qa_sign) {
-            return (
-              <button
-                onClick={() => handleVerify(viewData.id)}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-              >
-                <i className="fas fa-check mr-2"></i> Verify
-              </button>
-            );
-          }
-
-          // ✅ Senior verify visible only if tech + QA signed but no Senior yet
-          if (isSenior && viewData.tech_sign && viewData.qa_sign && !viewData.senior_ee_sign) {
-            return (
-              <button
-                onClick={() => handleVerify(viewData.id)}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-              >
-                <i className="fas fa-check mr-2"></i> Verify
-              </button>
-            );
-          }
-
-          return null; // hide completely if already verified or not eligible
-        })()}
-
-        {/* Close Button */}
-        <button
-          type="button"
-          onClick={() => setShowView(false)}
-          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-        >
-          <i className="fa fa-times mr-2"></i> Close
-        </button>
-      </div>
-    </div>
+      );
+    })()}
   </div>
-)}
 
+  {/* Close Button */}
+  <button
+    type="button"
+    onClick={() => setShowView(false)}
+    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+  >
+    <i className="fa fa-times mr-2"></i> Close
+  </button>
+</div>
+
+              {/* <div className="text-right">
+                <button
+                  type="button"
+                  onClick={() => setShowView(false)}
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                >
+                  <i className="fa fa-times mr-2"></i> Close
+                </button>
+              </div> */}
+            </div>
+          </div>
+        )}
 
       </div>
     </AuthenticatedLayout>

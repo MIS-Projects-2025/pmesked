@@ -186,7 +186,7 @@ if (techTitles.includes(empData.emp_jobtitle)) {
       <div className="p-6">
         <div className="flex justify-between items-center mb-2 p-4 bg-gradient-to-r from-gray-600 to-black rounded-t-2xl">
           <h1 className="text-2xl font-bold text-white">
-            <i className="fas fa-tasks"></i> TNR Mass Approval
+            <i className="fas fa-tasks"></i> TNR Checklist Mass Approval
           </h1>
 
           {showButton && selected.length > 0 && (
