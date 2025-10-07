@@ -265,12 +265,12 @@ export default function NavLinks() {
                 </div>
             )}
             
-            {["Equipment Engineering"].includes(emp_data?.emp_dept) && !["Equipment Engineering Section Head", "Section Head - Equipment Engineering", "Equipment Technician 1", "Equipment Technician 2", "Equipment Technician 3"].includes(emp_data?.emp_jobtitle) && (
+            {["Equipment Engineering"].includes(emp_data?.emp_dept) && !["Equipment Engineering Section Head", "Section Head - Equipment Engineering"].includes(emp_data?.emp_jobtitle) && (
                 <div>
 
                     <SidebarLink
                         href={route("calibration.index")}
-                        label="TNR PM Checklist"
+                        label="TNR PM Checklist Items"
                         icon={<i className="fa-solid fa-list"></i>}
                     />
 

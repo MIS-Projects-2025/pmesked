@@ -154,39 +154,75 @@ export default function Index({ reports, filters, machines, empData, items }) {
     setFormData({ ...formData, std_use_verification: updated });
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  // const handleChange = (e) => {
+  //   const { name, value } = e.target;
 
-    if (name === "control_no") {
-      const machine = machines.find((m) => m.pmnt_no === value);
-      if (machine) {
-        setFormData({
-          ...formData,
-          control_no: value,
-          serial: machine.serial,
-          description: "AIR IONIZER",
-          frequency: "Weekly",
-          days: "",
-        });
-        setError("");
-      } else {
-        setFormData({
-          ...formData,
-          control_no: value,
-          serial: "",
-          description: "",
-          performed_by: empData?.emp_name || "",
-          frequency: "",
-          days: "",
-        });
-        setError(`Machine "${value}" not found. Please add it first in the inventory.`);
-      }
-    } else {
-      setFormData({ ...formData, [name]: value });
-    }
-  };
+  //   if (name === "control_no") {
+  //     const machine = machines.find((m) => m.pmnt_no === value);
+  //     if (machine) {
+  //       setFormData({
+  //         ...formData,
+  //         control_no: value,
+  //         serial: machine.serial,
+  //         description: "AIR IONIZER",
+  //         frequency: "Weekly",
+  //         days: "",
+  //       });
+  //       setError("");
+  //     } else {
+  //       setFormData({
+  //         ...formData,
+  //         control_no: value,
+  //         serial: "",
+  //         description: "",
+  //         performed_by: empData?.emp_name || "",
+  //         frequency: "",
+  //         days: "",
+  //       });
+  //       setError(`Machine "${value}" not found. Please add it first in the inventory.`);
+  //     }
+  //   } else {
+  //     setFormData({ ...formData, [name]: value });
+  //   }
+  // };
 
   // --- Submit Handler ---
+  
+  const handleChange = (e) => {
+  const { name, value } = e.target;
+
+  // Helper: format date as YYYY-MM-DD
+  const formatDate = (date) => {
+    const d = new Date(date);
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${year}-${month}-${day}`;
+  };
+
+  if (name === "pm_date") {
+    const date = new Date(value);
+
+    if (!isNaN(date)) {
+      const dueDate = new Date(date);
+      dueDate.setDate(date.getDate() + 7); // add 7 days
+
+      setFormData({
+        ...formData,
+        pm_date: formatDate(date),
+        pm_due: formatDate(dueDate),
+      });
+    } else {
+      // kung invalid input (e.g. empty)
+      setFormData({ ...formData, pm_date: value });
+    }
+  } else {
+    setFormData({ ...formData, [name]: value });
+  }
+};
+
+  
+  
   const handleSubmit = (e) => {
     e.preventDefault();
     if (error) {
@@ -470,18 +506,18 @@ export default function Index({ reports, filters, machines, empData, items }) {
                       <td className="border p-2">PM Date</td>
                       <td className="border p-2">
                         <input
-                          type="text"
+                          type="date"
                           name="pm_date"
                           value={formData.pm_date}
                           onChange={handleChange}
                           className="w-full border rounded p-1 bg-gray-100"
-                          readOnly
+                          required
                         />
                       </td>
                       <td className="border p-2">PM Due</td>
                       <td className="border p-2">
                         <input
-                          type="text"
+                          type="date"
                           name="pm_due"
                           value={formData.pm_due}
                           onChange={handleChange}
@@ -642,7 +678,7 @@ export default function Index({ reports, filters, machines, empData, items }) {
 
                 {/* --- Verification Reading --- */}
                 <h3 className="text-violet-800 mb-2 font-bold">
-                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <i className="fa-solid fa-magnifying-glass"></i>
                   Verification Reading
                 </h3>
                 <table className="w-full border text-sm text-gray-600 mb-4 bordered">

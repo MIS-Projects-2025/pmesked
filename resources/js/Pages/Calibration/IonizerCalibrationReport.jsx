@@ -368,14 +368,14 @@ const handleVerifyReviewer = () => {
       <div className="p-6">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-xl font-bold"><i class="fa-solid fa-fan"></i> Ionizer Calibration Report</h1>
-{isEngineer &&(
+
           <button
             onClick={() => setShowModal(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded"
           >
             + New Report
           </button>
-)}
+
         </div>
 
         {/* DataTable */}
