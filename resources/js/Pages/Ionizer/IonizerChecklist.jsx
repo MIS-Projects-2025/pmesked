@@ -862,6 +862,7 @@ const handleChange = (e) => {
                                 )
                               }
                               className="border p-1 rounded w-full"
+                              required
                             />
                         </td>
                         <td className="border p-2 w-1/12">
@@ -877,6 +878,7 @@ const handleChange = (e) => {
                                 )
                               }
                               className="border p-1 rounded w-full"
+                              required
                             />
                         </td>
                         <td className="border p-2 w-1/12">
@@ -892,6 +894,7 @@ const handleChange = (e) => {
                                 )
                               }
                               className="border p-1 rounded w-full"
+                              required
                             />
                         </td>
                       </tr>
