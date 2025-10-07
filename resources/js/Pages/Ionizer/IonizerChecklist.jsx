@@ -154,44 +154,10 @@ export default function Index({ reports, filters, machines, empData, items }) {
     setFormData({ ...formData, std_use_verification: updated });
   };
 
-  // const handleChange = (e) => {
-  //   const { name, value } = e.target;
-
-  //   if (name === "control_no") {
-  //     const machine = machines.find((m) => m.pmnt_no === value);
-  //     if (machine) {
-  //       setFormData({
-  //         ...formData,
-  //         control_no: value,
-  //         serial: machine.serial,
-  //         description: "AIR IONIZER",
-  //         frequency: "Weekly",
-  //         days: "",
-  //       });
-  //       setError("");
-  //     } else {
-  //       setFormData({
-  //         ...formData,
-  //         control_no: value,
-  //         serial: "",
-  //         description: "",
-  //         performed_by: empData?.emp_name || "",
-  //         frequency: "",
-  //         days: "",
-  //       });
-  //       setError(`Machine "${value}" not found. Please add it first in the inventory.`);
-  //     }
-  //   } else {
-  //     setFormData({ ...formData, [name]: value });
-  //   }
-  // };
-
-  // --- Submit Handler ---
-  
-  const handleChange = (e) => {
+const handleChange = (e) => {
   const { name, value } = e.target;
 
-  // Helper: format date as YYYY-MM-DD
+  // helper for formatting date as YYYY-MM-DD
   const formatDate = (date) => {
     const d = new Date(date);
     const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -200,12 +166,43 @@ export default function Index({ reports, filters, machines, empData, items }) {
     return `${year}-${month}-${day}`;
   };
 
+  // 🔹 1. kapag nagbago ang CONTROL NO
+  if (name === "control_no") {
+    const machine = machines.find((m) => m.pmnt_no === value);
+
+    if (machine) {
+      setFormData({
+        ...formData,
+        control_no: value,
+        serial: machine.serial,
+        description: "AIR IONIZER",
+        frequency: "Weekly",
+        days: "",
+        performed_by: empData?.emp_name || "",
+      });
+      setError("");
+    } else {
+      setFormData({
+        ...formData,
+        control_no: value,
+        serial: "",
+        description: "",
+        frequency: "",
+        days: "",
+        performed_by: empData?.emp_name || "",
+      });
+      setError(`Machine "${value}" not found. Please add it first in the inventory.`);
+    }
+    return; // ✅ stop here para hindi tuloy sa ibang logic
+  }
+
+  // 🔹 2. kapag nagbago ang PM DATE → auto +7 days
   if (name === "pm_date") {
     const date = new Date(value);
 
     if (!isNaN(date)) {
       const dueDate = new Date(date);
-      dueDate.setDate(date.getDate() + 7); // add 7 days
+      dueDate.setDate(date.getDate() + 7);
 
       setFormData({
         ...formData,
@@ -213,16 +210,17 @@ export default function Index({ reports, filters, machines, empData, items }) {
         pm_due: formatDate(dueDate),
       });
     } else {
-      // kung invalid input (e.g. empty)
       setFormData({ ...formData, pm_date: value });
     }
-  } else {
-    setFormData({ ...formData, [name]: value });
+    return;
   }
+
+  // 🔹 3. other fields
+  setFormData({ ...formData, [name]: value });
 };
 
-  
-  
+
+  // --- Submit Handler ---  
   const handleSubmit = (e) => {
     e.preventDefault();
     if (error) {
