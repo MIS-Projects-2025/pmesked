@@ -137,6 +137,7 @@ class SchedulerController extends Controller
             'quarter' => 'nullable|string',
             'progress_value' => 'nullable|numeric', // 🔹 mas ok kung numeric
             'answers' => 'nullable|json',
+            'tool_life' => 'nullable|json',
         ]);
 
 
@@ -187,10 +188,12 @@ class SchedulerController extends Controller
 
         // kung JSON string ang "answers", i-decode natin
         $answers = $scheduler->answers ? json_decode($scheduler->answers, true) : [];
+        $tool_life = $scheduler->tool_life ? json_decode($scheduler->tool_life, true) : [];
 
         $pdf = Pdf::loadView('pdf.activity', [
             'scheduler' => $scheduler,
             'answers' => $answers,
+            'tool_life' => $tool_life,
         ]);
 
         // stream para makita sa browser (may toolbar)

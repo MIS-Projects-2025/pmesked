@@ -65,8 +65,6 @@
             <td>{{ $checklist->control_no }}</td>
             <td>{{ $checklist->serial }}</td>
         </tr>
-    </table>
-    <table class="table-head">
         <tr>
             <th>PM Date</th>
             <th>PM Due</th>
@@ -77,31 +75,27 @@
             <td>{{ $checklist->pm_due }}</td>
             <td>{{ $checklist->frequency }}</td>
         </tr>
-    </table>
-    <table class="table-head">
         <tr>
             <th>Performed By</th>
-            <th>Date Performed</th>
+            <th colspan="2">Date Performed</th>
         </tr>
         <tr>
             <td>{{ $checklist->performed_by }}</td>
-            <td>{{ $checklist->created_at }}</td>
+            <td colspan="2">{{ $checklist->created_at }} <br> {{ \Carbon\Carbon::parse($checklist['created_at'])->format('m/d/Y h:i A') }}</td>
         </tr>
-    </table>
-    <table class="table-head">
         <tr>
             <th>Technician</th>
             <th>QA/ ESD</th>
             <th>Engineer</th>
         </tr>
         <tr>
-            <td>{{ $checklist->tech_sign }} <br> {{ $checklist->tech_sign_date }}</td>
-            <td>{{ $checklist->qa_sign }} <br> {{ $checklist->qa_sign_date }}</td>
-            <td>{{ $checklist->senior_ee_sign }} <br> {{ $checklist->senior_ee_sign_date }}</td>
+            <td>{{ $checklist->tech_sign }} <br> {{ \Carbon\Carbon::parse($checklist['tech_sign_date'])->format('m/d/Y h:i A') }}</td>
+            <td>{{ $checklist->qa_sign }} <br> {{ \Carbon\Carbon::parse($checklist['qa_sign_date'])->format('m/d/Y h:i A') }}</td>
+            <td>{{ $checklist->senior_ee_sign }} <br> {{ \Carbon\Carbon::parse($checklist['senior_ee_sign_date'])->format('m/d/Y h:i A') }}</td>
         </tr>
     </table>
 
-    <table class="activity-code">
+    <!-- <table class="activity-code">
         <tr>
             <th>Technician Sign:</th>
             <td>{{ $checklist->tech_sign }} <br> {{ $checklist->tech_sign_date }} </td>
@@ -114,7 +108,7 @@
             <th>Engineer Sign:</th>
             <td>{{ $checklist->senior_ee_sign }} <br> {{ $checklist->senior_ee_sign_date }} </td>
         </tr>
-    </table>
+    </table> -->
     <div class="activity-code">
         <label><strong>Activity Code:</strong></label>
         <p>

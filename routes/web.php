@@ -4,6 +4,8 @@ use App\Http\Controllers\CalibrationController;
 use App\Http\Controllers\Tnr\CalibrationMassApprovedController;
 use App\Http\Controllers\CalibrationReportController;
 use App\Http\Controllers\ChecklistController;
+use App\Http\Controllers\ionizer\DthmController;
+use App\Http\Controllers\ionizer\IonizerCalibrationMassApprovedController;
 use App\Http\Controllers\Ionizer\IonizerCalibrationReportController;
 use App\Http\Controllers\Ionizer\IonizerChecklistItemController;
 use App\Http\Controllers\Ionizer\IonizerChecklistController;
@@ -65,6 +67,7 @@ Route::get('/calibration-report/ionizer', [IonizerCalibrationReportController::c
     ->name('calibration.IonizerCalibrationReport');
 Route::post('/calibration-reports/ionizer', [IonizerCalibrationReportController::class, 'store'])
     ->name('calibration-reports.ionizer.store');
+
 Route::post('/calibration-reports/ionizer/{report}/verify-qa', [IonizerCalibrationReportController::class, 'verifyQA'])
     ->name('calibration-reports.ionizer.verify-qa');
 Route::post('/calibration-reports/ionizer/{report}/verify-reviewer', [IonizerCalibrationReportController::class, 'verifyReviewer'])
@@ -181,7 +184,24 @@ Route::prefix('ionizer')->group(function () {
     Route::post('/qa-verify', [IonizerMassApprovedController::class, 'qaVerify'])->name('ionizer.qa.verify');
 });
 
+// Mass ionizer approval index
+Route::get('/ionizer/ionizer-mass-approval', [IonizerCalibrationMassApprovedController::class, 'index'])
+    ->name('ionizer.ionizer.mass.approval');
 
+// QA
+Route::post('/ionizer/ionizer-mass-approval.approve.qa', [IonizerCalibrationMassApprovedController::class, 'nonTnrapproveQA'])
+    ->name('ionizer.ionizer.mass.approve_qa');
+
+// EE
+Route::post('/ionizer/ionizer-mass-approval.approve.ee', [IonizerCalibrationMassApprovedController::class, 'nonTnrapproveEE'])
+    ->name('ionizer.ionizer.mass.approve_ee');
+
+// 🧾 DTHM Calibration
+Route::prefix('calibration')->group(function () {
+    Route::get('/dthm', [DthmController::class, 'index'])->name('calibration.dthm.index');
+    Route::post('/dthm/store', [DthmController::class, 'store'])->name('calibration.dthm.store');
+    Route::post('/dthm/qa-verify', [DthmController::class, 'qaVerify'])->name('calibration.dthm.qa.verify');
+});
 
 
 

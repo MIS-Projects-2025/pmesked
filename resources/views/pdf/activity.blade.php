@@ -117,17 +117,17 @@
         <tr>
             <td>
                 {{ $scheduler->tech_ack 
-        ? $scheduler->tech_ack . ' / ' . $scheduler->tech_ack_date 
+        ? $scheduler->tech_ack . ' / ' . \Carbon\Carbon::parse($scheduler['tecjh_ack_date'])->format('m/d/Y h:i A') 
         : 'Waiting...' }}
             </td>
             <td>
                 {{ $scheduler->qa_ack 
-        ? $scheduler->qa_ack . ' / ' . $scheduler->qa_ack_date 
+        ? $scheduler->qa_ack . ' / ' . \Carbon\Carbon::parse($scheduler['qa_ack_date'])->format('m/d/Y h:i A') 
         : 'Waiting...' }}
             </td>
             <td>
                 {{ $scheduler->senior_ee_ack 
-        ? $scheduler->senior_ee_ack . ' / ' . $scheduler->senior_ee_ack_date 
+        ? $scheduler->senior_ee_ack . ' / ' . \Carbon\Carbon::parse($scheduler['senior_ee_ack_date'])->format('m/d/Y h:i A') 
         : 'Waiting...' }}
             </td>
 
@@ -177,6 +177,35 @@
     </table>
     @else
     <p>No answers available.</p>
+    @endif
+
+    @if(count($tool_life))
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Description</th>
+                <th>Part Number</th>
+                <th>Duration of Usage (Day)</th>
+                <th>Expected Tool Life</th>
+                <th>Remarks</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($tool_life as $i => $tl)
+            <tr>
+                <td>{{ $i+1 }}</td>
+                <td>{{ $tl['description'] ?? '' }}</td>
+                <td>{{ $tl['partnumber'] ?? '' }}</td>
+                <td>{{ $tl['duration_usage'] ?? '' }}</td>
+                <td>{{ $tl['expected_tool_life'] ?? '' }}</td>
+                <td>{{ $tl['remarks'] ?? '' }}</td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+    @else
+    <p>No tool_life available.</p>
     @endif
 </body>
 

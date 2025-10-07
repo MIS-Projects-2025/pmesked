@@ -60,6 +60,16 @@ const handleDownloadPDF = () => {
       [id]: { ...prev[id], [field]: value },
     }));
   };
+
+  const [tool_life, setToolLifeData] = useState({});
+
+const handleToolLifeChange = (id, field, value) => {
+  setToolLifeData((prev) => ({
+    ...prev,
+    [id]: { ...prev[id], [field]: value },
+  }));
+};
+
   
   const getWorkWeek = (date) => {
   const start = new Date("2024-11-03"); // Base reference (WW501)
@@ -140,22 +150,29 @@ const handleMachineChange = async (e) => {
   const saveSchedule = (e) => {
     e.preventDefault();
 
-    const answersArray = Object.keys(answers).map((key) => ({
-      id: key,
-      ...answers[key],
-    }));
+    const tool_lifeArray = Object.keys(tool_life).map((key) => ({
+  id: key,
+  ...tool_life[key],
+}));
 
-    const payload = {
-      machine_num: formData.machine,
-      pmnt_no: formData.controlNo,
-      serial: formData.serial,
-      first_cycle: formData.pmDate,
-      pm_due: formData.pmDue,
-      responsible_person: formData.performedBy,
-      quarter: formData.quarter,
-      answers: JSON.stringify(answersArray),
-      progress_value: formData.progress_value
-    };
+const answersArray = Object.keys(answers).map((key) => ({
+  id: key,
+  ...answers[key],
+}));
+
+const payload = {
+  machine_num: formData.machine,
+  pmnt_no: formData.controlNo,
+  serial: formData.serial,
+  first_cycle: formData.pmDate,
+  pm_due: formData.pmDue,
+  responsible_person: formData.performedBy,
+  quarter: formData.quarter,
+  progress_value: formData.progress_value,
+  answers: JSON.stringify(answersArray),
+  tool_life: JSON.stringify(tool_lifeArray),
+};
+
 
     router.post("/scheduler", payload, {
       onSuccess: () => {
@@ -593,6 +610,65 @@ if (techTitles.includes(empData.emp_jobtitle)) {
                 </div>
               )}
 
+             <table className="table-auto w-full text-sm border-collapse border border-gray-300 mt-4">
+  <thead className="bg-gray-200 sticky top-0 z-10">
+    <tr className="bg-gradient-to-r from-gray-600 to-black text-white">
+      <th className="border border-gray-200 px-2 py-1">Description</th>
+      <th className="border border-gray-200 px-2 py-1">Partnumber</th>
+      <th className="border border-gray-200 px-2 py-1">Duration usage (Days)</th>
+      <th className="border border-gray-200 px-2 py-1">Expected Tool Life</th>
+      <th className="border border-gray-200 px-2 py-1">Remarks</th>
+    </tr>
+  </thead>
+  <tbody>
+    {selectedChecklist.map((row) => (
+      <tr key={row.id} className="hover:bg-gray-400 hover:text-white text-gray-700">
+        <td className="border border-gray-300 px-2 py-1">
+          <input
+            type="text"
+            className="border rounded w-full border-gray-300 px-2 py-1 text-gray-700"
+            value={tool_life[row.id]?.description || ""}
+            onChange={(e) => handleToolLifeChange(row.id, "description", e.target.value)}
+          />
+        </td>
+        <td className="border border-gray-300 px-2 py-1">
+          <input
+            type="text"
+            className="border rounded w-full border-gray-300 px-2 py-1 text-gray-700"
+            value={tool_life[row.id]?.partnumber || ""}
+            onChange={(e) => handleToolLifeChange(row.id, "partnumber", e.target.value)}
+          />
+        </td>
+        <td className="border border-gray-300 px-2 py-1">
+          <input
+            type="text"
+            className="border rounded w-full border-gray-300 px-2 py-1 text-gray-700"
+            value={tool_life[row.id]?.duration_usage || ""}
+            onChange={(e) => handleToolLifeChange(row.id, "duration_usage", e.target.value)}
+          />
+        </td>
+        <td className="border border-gray-300 px-2 py-1">
+          <input
+            type="text"
+            className="border rounded w-full border-gray-300 px-2 py-1 text-gray-700"
+            value={tool_life[row.id]?.expected_tool_life || ""}
+            onChange={(e) => handleToolLifeChange(row.id, "expected_tool_life", e.target.value)}
+          />
+        </td>
+        <td className="border border-gray-300 px-2 py-1">
+          <input
+            type="text"
+            className="border rounded w-full border-gray-300 px-2 py-1 text-gray-700"
+            value={tool_life[row.id]?.remarks || ""}
+            onChange={(e) => handleToolLifeChange(row.id, "remarks", e.target.value)}
+          />
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+
+
               {/* Footer */}
               <div className="flex flex-col sm:flex-row justify-end gap-2 p-4 border-t">
                 <button
@@ -612,13 +688,9 @@ if (techTitles.includes(empData.emp_jobtitle)) {
           </div>
         )}
 
-        {modalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-            <div id="modal-content" className="bg-white w-full max-w-7xl rounded-lg shadow-lg max-h-screen overflow-y-auto">
-    <div className="bg-white w-full max-w-7xl rounded-lg shadow-lg max-h-screen overflow-y-auto">
-
-    
-      
+       {modalOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+    <div id="modal-content" className="bg-white w-full max-w-7xl rounded-lg shadow-lg max-h-screen overflow-y-auto">
       {/* Header */}
       <div className="flex justify-between items-center bg-gradient-to-r from-gray-600 to-black text-white p-4 rounded-t-lg">
         <h5 className="text-lg font-bold">
@@ -631,110 +703,68 @@ if (techTitles.includes(empData.emp_jobtitle)) {
           <i className="fas fa-times text-red-500 hover:text-red-700"></i>
         </button>
       </div>
- {selectedActivity?.tech_ack && selectedActivity?.qa_ack && (selectedActivity?.senior_ee_ack || selectedActivity?.section_ack) && (
-            <div className="flex justify-end mt-4 mb-4 mr-4">
-              <button
-                className="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-800 "
-               onClick={() => window.open(`/scheduler/${selectedActivity.id}/pdf`, "_blank")}
-              >
-                <i className="fa-solid fa-file-pdf"></i> View as PDF
-              </button>
-            </div>
-          )}
+
+      {/* PDF button */}
+      {selectedActivity?.tech_ack && selectedActivity?.qa_ack && (selectedActivity?.senior_ee_ack || selectedActivity?.section_ack) && (
+        <div className="flex justify-end mt-4 mb-4 mr-4">
+          <button
+            className="px-3 py-2 bg-gray-100 text-red-600 rounded shadow hover:bg-red-700 hover:text-white border-2 border-red-600 hover:border-gray-500 flex items-center text-bold"
+            onClick={() => window.open(`/scheduler/${selectedActivity.id}/pdf`, "_blank")}
+          >
+            <i className="fa-solid fa-file-pdf"></i> View as PDF
+          </button>
+        </div>
+      )}
+
       {/* Body */}
       <div className="p-6">
+        {/* Info Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           <div>
             <label className="block font-semibold text-gray-600">Machine</label>
-            <input
-              type="text"
-              className="form-control border rounded w-full text-gray-600"
-              value={formData.machine || ""}
-              readOnly
-            />
+            <input type="text" className="form-control border rounded w-full text-gray-600" value={formData.machine || ""} readOnly />
           </div>
 
           <div>
             <label className="block font-semibold text-gray-600">Control Number</label>
-            <input
-              type="text"
-              className="form-control border rounded w-full text-gray-600"
-              value={formData.controlNo || ""}
-              readOnly
-            />
+            <input type="text" className="form-control border rounded w-full text-gray-600" value={formData.controlNo || ""} readOnly />
           </div>
 
           <div>
             <label className="block font-semibold text-gray-600">Serial Number</label>
-            <input
-              type="text"
-              className="form-control border rounded w-full text-gray-600"
-              value={formData.serial || ""}
-              readOnly
-            />
+            <input type="text" className="form-control border rounded w-full text-gray-600" value={formData.serial || ""} readOnly />
           </div>
 
           <div>
             <label className="block font-semibold text-gray-600">PM Date</label>
-            <input
-              type="text"
-              className="form-control border rounded w-full text-gray-600"
-              value={formData.pmDate || ""}
-              readOnly
-            />
+            <input type="text" className="form-control border rounded w-full text-gray-600" value={formData.pmDate || ""} readOnly />
           </div>
 
           <div>
             <label className="block font-semibold text-gray-600">PM Due</label>
-            <input
-              type="text"
-              className="form-control border rounded w-full text-gray-600"
-              value={formData.pmDue || ""}
-              readOnly
-            />
+            <input type="text" className="form-control border rounded w-full text-gray-600" value={formData.pmDue || ""} readOnly />
           </div>
 
           <div>
             <label className="block font-semibold text-gray-600">Technician</label>
-            <input
-              type="text"
-              className="form-control border rounded w-full text-gray-600"
-              value={formData.performedBy || "Empty Field..."}
-              readOnly
-            />
+            <input type="text" className="form-control border rounded w-full text-gray-600" value={formData.performedBy || "Empty Field..."} readOnly />
           </div>
 
           <div>
             <label className="block font-semibold text-gray-600">Senior Technician</label>
-            <input
-              type="text"
-              className="form-control border rounded w-full text-gray-600 text-sm"
-              value={formData.seniorTech || "Waiting for Senior Technician..."}
-              readOnly
-            />
+            <input type="text" className="form-control border rounded w-full text-gray-600 text-sm" value={formData.seniorTech || "Waiting for Senior Technician..."} readOnly />
           </div>
 
           <div>
             <label className="block font-semibold text-gray-600">ESD Technician</label>
-            <input
-              type="text"
-              className="form-control border rounded w-full text-gray-600 text-sm"
-              value={formData.esdTech || "Waiting for ESD Technician..."}
-              readOnly
-            />
+            <input type="text" className="form-control border rounded w-full text-gray-600 text-sm" value={formData.esdTech || "Waiting for ESD Technician..."} readOnly />
           </div>
 
           <div>
             <label className="block font-semibold text-gray-600">Senior Engineer</label>
-            <input
-              type="text"
-              className="form-control border rounded w-full text-gray-600 text-sm"
-              value={formData.pmEngineer || "Waiting for Senior Engineer/ Engineer..."}
-              readOnly
-            />
+            <input type="text" className="form-control border rounded w-full text-gray-600 text-sm" value={formData.pmEngineer || "Waiting for Senior Engineer/ Engineer..."} readOnly />
           </div>
         </div>
-        
 
         {/* Info callout */}
         <div className="bg-blue-50 border border-blue-200 rounded p-3 mt-4 text-center">
@@ -745,148 +775,150 @@ if (techTitles.includes(empData.emp_jobtitle)) {
           </p>
         </div>
 
-        {/* Placeholder for answers table */}
-       <div className="mt-4">
-         
-  {/* <h6 className="font-semibold text-gray-600">Answers:</h6> */}
-  <div className="border p-2 rounded overflow-x-auto">
-    {selectedActivity?.answers ? (
-      <table className="table-auto w-full text-sm border-collapse border border-gray-300">
-        <thead>
-          <tr  className="bg-gradient-to-r from-gray-600 to-black text-white">
-            <th rowSpan="2" className="border border-gray-300 px-2 py-1">#</th>
-            <th rowSpan="2" className="border border-gray-300 px-2 py-1">Assy Item</th>
-            <th rowSpan="2" className="border border-gray-300 px-2 py-1">Description</th>
-            <th rowSpan="2" className="border border-gray-300 px-2 py-1">Requirements</th>
-            <th colSpan="3" className="border border-gray-300 px-2 py-1">First Cycle</th>
-            <th colSpan="3" className="border border-gray-300 px-2 py-1">Second Cycle</th>
-          </tr>
-          <tr>
-            <th className="border border-gray-300 px-2 py-1 bg-gradient-to-r from-gray-700 to-slate-400 text-white">Activity</th>
-            <th className="border border-gray-300 px-2 py-1 bg-gradient-to-r from-gray-600 to-slate-400 text-white">Compliance</th>
-            <th className="border border-gray-300 px-2 py-1 bg-gradient-to-r from-gray-600 to-slate-400 text-white">Remarks</th>
-            <th className="border border-gray-300 px-2 py-1 bg-gradient-to-r from-gray-600 to-slate-400 text-white">Activity</th>
-            <th className="border border-gray-300 px-2 py-1 bg-gradient-to-r from-gray-600 to-slate-400 text-white">Compliance</th>
-            <th className="border border-gray-300 px-2 py-1 bg-gradient-to-r from-gray-600 to-slate-400 text-white">Remarks</th>
-          </tr>
-        </thead>
-        <tbody>
-          {JSON.parse(selectedActivity.answers).map((ans, i) => (
-            <tr key={i} className=" text-gray-500">
-              <td className="border border-gray-300 px-2 py-1">{i + 1}</td>
-              <td className="border border-gray-300 px-2 py-1">{ans.assy_item}</td>
-              <td className="border border-gray-300 px-2 py-1">{ans.description}</td>
-              <td className="border border-gray-300 px-2 py-1">{ans.requirements}</td>
-              <td className="border border-gray-300 px-2 py-1">{ans.activity_1}</td>
-              <td className="border border-gray-300 px-2 py-1 text-center">
-                 <input
-                    type="checkbox"
-                   checked={true}
-                    readOnly
-                    className="h-4 w-4 accent-green-600 rounded-full"
-                 />
-              </td>
-              <td className="border border-gray-300 px-2 py-1">{ans.remarks1}</td>
-                <td className="border border-gray-300 px-2 py-1">{ans.activity_2}</td>
-              <td className="border border-gray-300 px-2 py-1 text-center">
-                 <input
-                   type="checkbox"
-                    checked={ans.compliance2 == 1}
-                    readOnly
-                   className="h-4 w-4 accent-green-600 rounded-full"
-                  />
-              </td>
-              <td className="border border-gray-300 px-2 py-1">{ans.remarks2}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    ) : (
-      <p className="text-gray-500 italic">No answers found.</p>
-    )}
-  </div>
-</div>
+        {/* Answers Table */}
+        <div className="mt-4">
+          <div className="border p-2 rounded overflow-x-auto">
+            {selectedActivity?.answers ? (
+              <table className="table-auto w-full text-sm border-collapse border border-gray-300">
+                <thead>
+                  <tr className="bg-gradient-to-r from-gray-600 to-black text-white">
+                    <th rowSpan="2" className="border border-gray-300 px-2 py-1">#</th>
+                    <th rowSpan="2" className="border border-gray-300 px-2 py-1">Assy Item</th>
+                    <th rowSpan="2" className="border border-gray-300 px-2 py-1">Description</th>
+                    <th rowSpan="2" className="border border-gray-300 px-2 py-1">Requirements</th>
+                    <th colSpan="3" className="border border-gray-300 px-2 py-1">First Cycle</th>
+                    <th colSpan="3" className="border border-gray-300 px-2 py-1">Second Cycle</th>
+                  </tr>
+                  <tr>
+                    <th className="border border-gray-300 px-2 py-1 bg-gradient-to-r from-gray-700 to-slate-400 text-white">Activity</th>
+                    <th className="border border-gray-300 px-2 py-1 bg-gradient-to-r from-gray-600 to-slate-400 text-white">Compliance</th>
+                    <th className="border border-gray-300 px-2 py-1 bg-gradient-to-r from-gray-600 to-slate-400 text-white">Remarks</th>
+                    <th className="border border-gray-300 px-2 py-1 bg-gradient-to-r from-gray-600 to-slate-400 text-white">Activity</th>
+                    <th className="border border-gray-300 px-2 py-1 bg-gradient-to-r from-gray-600 to-slate-400 text-white">Compliance</th>
+                    <th className="border border-gray-300 px-2 py-1 bg-gradient-to-r from-gray-600 to-slate-400 text-white">Remarks</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {JSON.parse(selectedActivity.answers).map((ans, i) => (
+                    <tr key={i} className="text-gray-500">
+                      <td className="border border-gray-300 px-2 py-1">{i + 1}</td>
+                      <td className="border border-gray-300 px-2 py-1">{ans.assy_item}</td>
+                      <td className="border border-gray-300 px-2 py-1">{ans.description}</td>
+                      <td className="border border-gray-300 px-2 py-1">{ans.requirements}</td>
+                      <td className="border border-gray-300 px-2 py-1">{ans.activity_1}</td>
+                      <td className="border border-gray-300 px-2 py-1 text-center">
+                        <input type="checkbox" checked={true} readOnly className="h-4 w-4 accent-green-600 rounded-full" />
+                      </td>
+                      <td className="border border-gray-300 px-2 py-1">{ans.remarks1}</td>
+                      <td className="border border-gray-300 px-2 py-1">{ans.activity_2}</td>
+                      <td className="border border-gray-300 px-2 py-1 text-center">
+                        <input type="checkbox" checked={ans.compliance2 == 1} readOnly className="h-4 w-4 accent-green-600 rounded-full" />
+                      </td>
+                      <td className="border border-gray-300 px-2 py-1">{ans.remarks2}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="text-gray-500 italic">No answers found.</p>
+            )}
+          </div>
+        </div>
 
+        {/* ✅ Tool Life Table */}
+        <div className="mt-6">
+          <h6 className="font-semibold text-gray-600 mb-2">Tool Life Data:</h6>
+          <div className="border p-2 rounded overflow-x-auto">
+            {selectedActivity?.tool_life ? (
+              <table className="table-auto w-full text-sm border-collapse border border-gray-300">
+                <thead>
+                  <tr className="bg-gradient-to-r from-gray-600 to-black text-white">
+                    <th className="border border-gray-300 px-2 py-1">#</th>
+                    <th className="border border-gray-300 px-2 py-1">Description</th>
+                    <th className="border border-gray-300 px-2 py-1">Part Number</th>
+                    <th className="border border-gray-300 px-2 py-1">Duration Usage</th>
+                    <th className="border border-gray-300 px-2 py-1">Expected Tool Life</th>
+                    <th className="border border-gray-300 px-2 py-1">Remarks</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {JSON.parse(selectedActivity.tool_life).map((tool, i) => (
+                    <tr key={i} className="text-gray-500">
+                      <td className="border border-gray-300 px-2 py-1 text-center">{i + 1}</td>
+                      <td className="border border-gray-300 px-2 py-1">{tool.description}</td>
+                      <td className="border border-gray-300 px-2 py-1">{tool.partnumber}</td>
+                      <td className="border border-gray-300 px-2 py-1 text-center">{tool.duration_usage}</td>
+                      <td className="border border-gray-300 px-2 py-1 text-center">{tool.expected_tool_life}</td>
+                      <td className="border border-gray-300 px-2 py-1">{tool.remarks}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="text-gray-500 italic">No tool life data found.</p>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Footer */}
       <div className="flex justify-end gap-2 p-4 border-t">
-        <button
-          className="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-600"
-          onClick={() => setModalOpen(false)}
-        >
+        <button className="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-600" onClick={() => setModalOpen(false)}>
           <i className="fa-solid fa-xmark"></i> Close
         </button>
 
-        {/* ✅ Show Verify button only if empData is allowed */}
-{empData && (() => {
- const isTech = [
-  "Senior Equipment Technician",
-  "Equipment Technician 1",
-  "Equipment Technician 2",
-  "Equipment Technician 3",
-  "PM Technician 1",
-  "PM Technician 2",
-  "Trainee - Equipment Technician 1"
-].includes(empData.emp_jobtitle);
-  const isQA = ["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer", "DIC Clerk 1"].includes(empData.emp_jobtitle);
-  const isEngineer = [
-    "Equipment Engineer",
-    "Supervisor - Equipment Technician",
-    "Senior Equipment Engineer",
-    "Sr. Equipment Engineer",
-    "Equipment Engineering Section Head",
-    "Section Head - Equipment Engineering"
-  ].includes(empData.emp_jobtitle);
+        {/* ✅ Verify Buttons */}
+        {empData && (() => {
+          const isTech = [
+            "Senior Equipment Technician",
+            "Equipment Technician 1",
+            "Equipment Technician 2",
+            "Equipment Technician 3",
+            "PM Technician 1",
+            "PM Technician 2",
+            "Trainee - Equipment Technician 1"
+          ].includes(empData.emp_jobtitle);
+          const isQA = ["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer", "DIC Clerk 1"].includes(empData.emp_jobtitle);
+          const isEngineer = [
+            "Equipment Engineer",
+            "Supervisor - Equipment Technician",
+            "Senior Equipment Engineer",
+            "Sr. Equipment Engineer",
+            "Equipment Engineering Section Head",
+            "Section Head - Equipment Engineering"
+          ].includes(empData.emp_jobtitle);
 
-  // 🔹 1. Technician can verify if no tech_ack yet
-  if (isTech && !selectedActivity.tech_ack) {
-    return (
-      <button
-        className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
-        onClick={() => handleVerify(selectedActivity.id)}
-      >
-        <i className="fa-solid fa-check"></i> Verify
-      </button>
-    );
-  }
+          if (isTech && !selectedActivity.tech_ack) {
+            return (
+              <button className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700" onClick={() => handleVerify(selectedActivity.id)}>
+                <i className="fa-solid fa-check"></i> Verify
+              </button>
+            );
+          }
 
-  // 🔹 2. ESD can verify if tech already verified but no qa_ack yet
-  if (isQA && selectedActivity.tech_ack && !selectedActivity.qa_ack) {
-    return (
-      <button
-        className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
-        onClick={() => handleVerify(selectedActivity.id)}
-      >
-        <i className="fa-solid fa-check"></i> Verify
-      </button>
-    );
-  }
+          if (isQA && selectedActivity.tech_ack && !selectedActivity.qa_ack) {
+            return (
+              <button className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700" onClick={() => handleVerify(selectedActivity.id)}>
+                <i className="fa-solid fa-check"></i> Verify
+              </button>
+            );
+          }
 
-  // 🔹 3. Engineer/Section Head can verify if ESD already verified but no engineer/section ack yet
-  if (isEngineer && selectedActivity.qa_ack && !selectedActivity.senior_ee_ack && !selectedActivity.section_ack) {
-    return (
-      <button
-        className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
-        onClick={() => handleVerify(selectedActivity.id)}
-      >
-        <i className="fa-solid fa-check"></i> Verify
-      </button>
-    );
-  }
+          if (isEngineer && selectedActivity.qa_ack && !selectedActivity.senior_ee_ack && !selectedActivity.section_ack) {
+            return (
+              <button className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700" onClick={() => handleVerify(selectedActivity.id)}>
+                <i className="fa-solid fa-check"></i> Verify
+              </button>
+            );
+          }
 
-  {/* ✅ Lalabas lang kung lahat ng tatlo ay verified */}
-
-
-
-  return null; // hide if not allowed
-})()}
-
+          return null;
+        })()}
       </div>
     </div>
-          </div>
-        </div>
+  </div>
         )}
+
 
       </div>
     </AuthenticatedLayout>

@@ -29,6 +29,7 @@ class Scheduler extends Model
         'pm_due',
         'progress_value',
         'answers',
+        'tool_life',
         'status',
         'senior_ee_ack',
         'senior_ee_ack_date',

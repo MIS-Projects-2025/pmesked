@@ -10,13 +10,22 @@
             border-collapse: collapse;
         }
 
-        th,
+
         td {
             border: 1px solid #000;
             padding: 6px;
             text-align: left;
             font-size: 12px;
             text-align: center;
+        }
+
+        th {
+            border: 1px solid #000;
+            padding: 6px;
+            text-align: left;
+            font-size: 12px;
+            text-align: center;
+            background-color: #dbdbdbff;
         }
 
         h3 {
@@ -54,43 +63,43 @@
 
         <tbody>
             <tr>
-                <td>Control No</td>
+                <th>Control No</th>
                 <td>{{ $record->control_no }}</td>
-                <td>Serial</td>
+                <th>Serial</th>
                 <td>{{ $record->serial }}</td>
             </tr>
             <tr>
-                <td>Description</td>
+                <th>Description</th>
                 <td>{{ $record->description }}</td>
-                <td>PM Date</td>
+                <th>PM Date</th>
                 <td>{{ $record->pm_date }}</td>
             </tr>
             <tr>
-                <td>Frequency</td>
+                <th>Frequency</th>
                 <td>{{ $record->frequency }}</td>
-                <td>PM Due</td>
+                <th>PM Due</th>
                 <td>{{ $record->pm_due }}</td>
             </tr>
             <tr>
-                <td>Performed By</td>
-                <td colspan="3">{{ $record->performed_by }}</td>
+                <th>Performed By</th>
+                <td colspan="3">{{ $record->performed_by }} <br> {{ \Carbon\Carbon::parse($record['created_at'])->format('m/d/Y h:i A') }}</td>
             </tr>
             <tr>
-                <td>OMEGA DTHM Temp. (°C)</td>
+                <th>OMEGA DTHM Temp. (°C)</th>
                 <td>{{ $record->dthm_temp }}</td>
-                <td>OMEGA DTHM Humidity (%RH)</td>
+                <th>OMEGA DTHM Humidity (%RH)</th>
                 <td>{{ $record->dthm_rh }}</td>
             </tr>
             <tr>
-                <td>Duration Usage</td>
+                <th>Duration Usage</th>
                 <td>{{ $record->days }}</td>
-                <td>Remarks</td>
+                <th>Remarks</th>
                 <td>{{ $record->remarks }}</td>
             </tr>
             <tr>
-                <td>Technician Verifier</td>
+                <th>Technician Verifier</th>
                 <td>{{ $record->tech_sign }} <br> {{ \Carbon\Carbon::parse($record['tech_sign_date'])->format('m/d/Y h:i A') }}</td>
-                <td>ESD/ QA Verifier</td>
+                <th>ESD/ QA Verifier</th>
                 <td>{{ $record->qa_sign }} <br> {{ \Carbon\Carbon::parse($record['qa_sign_date'])->format('m/d/Y h:i A') }}</td>
             </tr>
         </tbody>

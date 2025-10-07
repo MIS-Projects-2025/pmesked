@@ -138,7 +138,7 @@ export default function NavLinks() {
                     },
 
                     {
-                        href: route("calibration.non-tnr.mass.approval"),
+                        href: route("ionizer.ionizer.mass.approval"),
                         label: "Ionizer Calibration Report",
                         icon: (
                         <i className="far fa-square"></i>
@@ -151,6 +151,16 @@ export default function NavLinks() {
                 // notification={true}
                 />
 
+                </div>
+            )}
+
+            {["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer", "DIC Clerk 1"].includes(emp_data?.emp_jobtitle) && (
+                <div>
+                    <SidebarLink
+                        href={route("calibration.dthm.index")}
+                        label="DTHM"
+                        icon={<i className="fa-solid fa-list"></i>}
+                    />
                 </div>
             )}
            
@@ -222,6 +232,16 @@ export default function NavLinks() {
                     {
                         href: route("calibration.IonizerCalibrationReport"),
                         label: "Ionizer Calibration Report",
+                        icon: (
+                        <i className="far fa-square"></i>
+                        ),
+                        className: "opacity-50 pointer-events-none",
+                        // notification: 125,
+                    },
+
+                    {
+                        href: route("calibration.dthm.index"),
+                        label: "DTHM",
                         icon: (
                         <i className="far fa-square"></i>
                         ),

@@ -554,6 +554,41 @@ if (techTitles.includes(empData.emp_jobtitle)) {
       <p className="text-gray-500 italic">No answers found.</p>
     )}
   </div>
+
+  {/* ✅ Tool Life Table */}
+        <div className="mt-6">
+          <h6 className="font-semibold text-gray-600 mb-2">Tool Life Data:</h6>
+          <div className="border p-2 rounded overflow-x-auto">
+            {selectedActivity?.tool_life ? (
+              <table className="table-auto w-full text-sm border-collapse border border-gray-300">
+                <thead>
+                  <tr className="bg-gradient-to-r from-gray-600 to-black text-white">
+                    <th className="border border-gray-300 px-2 py-1">#</th>
+                    <th className="border border-gray-300 px-2 py-1">Description</th>
+                    <th className="border border-gray-300 px-2 py-1">Part Number</th>
+                    <th className="border border-gray-300 px-2 py-1">Duration Usage</th>
+                    <th className="border border-gray-300 px-2 py-1">Expected Tool Life</th>
+                    <th className="border border-gray-300 px-2 py-1">Remarks</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {JSON.parse(selectedActivity.tool_life).map((tool, i) => (
+                    <tr key={i} className="text-gray-500">
+                      <td className="border border-gray-300 px-2 py-1 text-center">{i + 1}</td>
+                      <td className="border border-gray-300 px-2 py-1">{tool.description}</td>
+                      <td className="border border-gray-300 px-2 py-1">{tool.partnumber}</td>
+                      <td className="border border-gray-300 px-2 py-1 text-center">{tool.duration_usage}</td>
+                      <td className="border border-gray-300 px-2 py-1 text-center">{tool.expected_tool_life}</td>
+                      <td className="border border-gray-300 px-2 py-1">{tool.remarks}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="text-gray-500 italic">No tool life data found.</p>
+            )}
+          </div>
+        </div>
 </div>
 
       </div>
