@@ -3,7 +3,7 @@ import { useForm, router } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head } from "@inertiajs/react";
 
-export default function Form({ platforms, manufacturers, auth }) {
+export default function Form({ platforms, manufacturers, model, auth }) {
     const { data, setData, post, processing, reset } = useForm({
         created_by: auth?.user?.id || "", // kunin ID ng logged-in user
         platform: "",
@@ -97,37 +97,19 @@ export default function Form({ platforms, manufacturers, auth }) {
                             {/* Platform */}
                             <div className="mb-4">
                                 <label className="block text-sm font-medium text-white">Platform</label>
-                            <select
-                                value={data.platform}
-                                onChange={(e) => setData("platform", e.target.value)}
-                                className="w-full border rounded p-2 text-gray-800"
-                                required
+                                <select
+                                    value={data.platform}
+                                    onChange={(e) => setData("platform", e.target.value)}
+                                    className="w-full border rounded p-2 text-gray-800"
+                                    required
                                 >
-                                <option value="">-- Select Platform --</option>
-                                <option value="V12">V12</option>
-                                <option value="ISMECA">ISMECA</option>
-                                <option value="ST60">ST60</option>
-                                <option value="BRANDING (DYSEC_DIPBR_SOLAS DUM-815)">BRANDING (DYSEC_DIPBR_SOLAS DUM-815)</option>
-                                <option value="MH3020">MH3020</option>
-                                <option value="LASER MARKING">LASER MARKING</option>
-                                <option value="HOPE SEIKI">HOPE SEIKI</option>
-                                <option value="HEPCO">HEPCO</option>
-                                <option value="BAKE OVEN">BAKE OVEN</option>
-                                <option value="G6L">G6L</option>
-                                <option value="VITROX TR3000i">VITROX TR3000i</option>
-                                <option value="VITROX TR1000i2000iTR3000i">VITROX TR1000i2000iTR3000i</option>
-                                <option value="HSI200">HSI200</option>
-                                <option value="HSI250">HSI250</option>
-                                <option value="HSI400T">HSI400T</option>
-                                <option value="HEXA">HEXA</option>
-                                <option value="AT28">AT28</option>
-                                <option value="AT128">AT128</option>
-                                <option value="AT268_AT468">AT268_AT468</option>
-                                <option value="AT8005">AT8005</option>
-                                <option value="MICROVISION_MV853A">MICROVISION_MV853A</option>
-                                <option value="MV883">MV883</option>
-                                <option value="MV996">MV996</option>
-                            </select>
+                                    <option value="">-- Select Platform --</option>
+                                    {platforms.map((p, i) => (
+                                        <option key={i} value={p}>
+                                            {p}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
 
                             {/* Manufacturer */}
@@ -143,6 +125,24 @@ export default function Form({ platforms, manufacturers, auth }) {
                                     {manufacturers.map((m, i) => (
                                         <option key={i} value={m}>
                                             {m}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Model */}
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-white">Manufacturer</label>
+                                <select
+                                    value={data.model}
+                                    onChange={(e) => setData("model", e.target.value)}
+                                    className="w-full border rounded p-2 text-gray-800"
+                                    required
+                                >
+                                    <option value="">-- Select Model --</option>
+                                    {model.map((md, i) => (
+                                        <option key={i} value={md}>
+                                            {md}
                                         </option>
                                     ))}
                                 </select>

@@ -29,7 +29,7 @@ export default function MassApproval({ activities, empData }) {
       { ids: selected },
       {
         onSuccess: () => {
-          alert("Selected activities approved successfully!");
+          alert("✅ Selected checklist successfully Approved!");
           window.location.reload();
         },
         onError: () => {
@@ -59,10 +59,13 @@ export default function MassApproval({ activities, empData }) {
   if (empData && empData.emp_jobtitle) {
     const job = empData.emp_jobtitle;
     const techRoles = [
-      "Senior Equipment Technician",
-      "Equipment Technician 2",
-      "Equipment Technician 3",
-      "PM Technician 2",
+       "Senior Equipment Technician",
+  "Equipment Technician 1",
+  "Equipment Technician 2",
+  "Equipment Technician 3",
+  "PM Technician 1",
+  "PM Technician 2",
+  "Trainee - Equipment Technician 1"
     ];
     const esdRoles = [
       "ESD Technician 1",
@@ -103,7 +106,7 @@ console.log(todayLocal);
   // 1. Technician verify
   const techTitles = [
   "Senior Equipment Technician",
-  // "Equipment Technician 1",
+  "Equipment Technician 1",
   "Equipment Technician 2",
   "Equipment Technician 3",
   "PM Technician 1",

@@ -1,59 +1,79 @@
 import { useState } from "react";
-import { router, useForm } from "@inertiajs/react";
+import { router } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import DataTable from "@/Components/DataTable"; // 👈 shared DataTable component
+import DataTable from "@/Components/DataTable";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
-export default function SchedulerTable({ tableData, machines, empData, tableFilters }) {
+export default function SchedulerTable({ tableData, empData, tableFilters, machines}) {
+  // 🔹 PDF Download
+  const handleDownloadPDF = () => {
+    const input = document.getElementById("modal-content");
+    html2canvas(input, { scale: 2 }).then((canvas) => {
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-  // Function para i-download yung modal content
-const handleDownloadPDF = () => {
-  const input = document.getElementById("modal-content"); // target yung buong modal
-  html2canvas(input, { scale: 2 }).then((canvas) => {
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF("p", "mm", "a4");
-    const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save("activity-details.pdf");
+    });
+  };
 
-    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-    pdf.save("activity-details.pdf");
-  });
-};
-  
   const [showModal, setShowModal] = useState(false);
+  const [selectedChecklist, setSelectedChecklist] = useState([]);
+  const [answers, setAnswers] = useState({});
+  const [tool_life, setToolLifeData] = useState({});
+  const [selectedActivity, setSelectedActivity] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  // 🔹 Compute Quarter
+  const currentDate = new Date();
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth() + 1;
+  let quarter =
+    month <= 3
+      ? `1Q${String(year).slice(-2)}`
+      : month <= 6
+      ? `2Q${String(year).slice(-2)}`
+      : month <= 9
+      ? `3Q${String(year).slice(-2)}`
+      : `4Q${String(year).slice(-2)}`;
+
+  // 🔹 Compute Work Week
+  const getWorkWeek = (date) => {
+    const start = new Date("2024-11-03"); // Base ref WW501
+    const diffMs = date - start;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const totalWeeks = Math.floor(diffDays / 7);
+    const baseYear = 500;
+    const yearOffset = Math.floor(totalWeeks / 52);
+    const weekInYear = (totalWeeks % 52) + 1;
+    return `WW${baseYear + yearOffset * 100 + weekInYear}`;
+  };
+
+  // 🔹 Default PM Dates
+  const today = new Date();
+  const pmDateWW = getWorkWeek(today);
+  const dueDate = new Date(today);
+  dueDate.setDate(today.getDate() + 13 * 7);
+  const pmDueWW = getWorkWeek(dueDate);
+
   const [formData, setFormData] = useState({
-    machine: "",
     controlNo: "",
     serial: "",
     pmDate: "",
     pmDue: "",
     performedBy: empData?.emp_name || "",
-    machinePlatform: "",
-    quarter: "",
-    progress_value: 0,
+    quarter,
+    progress_value: 25,
     seniorTech: "",
     esdTech: "",
     pmEngineer: ""
   });
-  const [selectedChecklist, setSelectedChecklist] = useState([]);
-  const [answers, setAnswers] = useState({});
-  const [selectedActivity, setSelectedActivity] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
 
-  // 🔹 Current Quarter
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth() + 1;
-  let quarter;
-  if (currentMonth >= 1 && currentMonth <= 3) quarter = `1Q${String(currentYear).slice(-2)}`;
-  else if (currentMonth >= 4 && currentMonth <= 6) quarter = `2Q${String(currentYear).slice(-2)}`;
-  else if (currentMonth >= 7 && currentMonth <= 9) quarter = `3Q${String(currentYear).slice(-2)}`;
-  else quarter = `4Q${String(currentYear).slice(-2)}`;
-
-  // 🔹 Compute Work Week
-
+  // 🔹 Handle Answer Inputs
   const handleAnswerChange = (id, field, value) => {
     setAnswers((prev) => ({
       ...prev,
@@ -61,46 +81,23 @@ const handleDownloadPDF = () => {
     }));
   };
 
-  const [tool_life, setToolLifeData] = useState({});
+  const handleToolLifeChange = (id, field, value) => {
+    setToolLifeData((prev) => ({
+      ...prev,
+      [id]: { ...prev[id], [field]: value },
+    }));
+  };
 
-const handleToolLifeChange = (id, field, value) => {
-  setToolLifeData((prev) => ({
-    ...prev,
-    [id]: { ...prev[id], [field]: value },
-  }));
-};
-
-  
-  const getWorkWeek = (date) => {
-  const start = new Date("2024-11-03"); // Base reference (WW501)
-  const diffMs = date - start;
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  const totalWeeks = Math.floor(diffDays / 7);
-
-  // Base year series
-  const baseYear = 500;
-
-  // Ilang taon (sets of 52 weeks) ang lumipas
-  const yearOffset = Math.floor(totalWeeks / 52);
-
-  // Week number sa loob ng taon (1 → 52)
-  const weekInYear = (totalWeeks % 52) + 1;
-
-  // Final formatted WW code (e.g., WW501, WW652, etc.)
-  return `WW${baseYear + yearOffset * 100 + weekInYear}`;
-};
-
-
-const handleMachineChange = async (e) => {
+const handleMachineChange = (e) => {
   const selected = e.target.value;
   const machine = machines.find((m) => m.machine_num === selected);
   if (!machine) return;
 
-  const today = new Date();
-  const pmDateWW = getWorkWeek(today);
-  const dueDate = new Date(today);
-  dueDate.setDate(today.getDate() + 13 * 7);
-  const pmDueWW = getWorkWeek(dueDate);
+  // const today = new Date();
+  // const pmDateWW = getWorkWeek(today);
+  // const dueDate = new Date(today);
+  // dueDate.setDate(today.getDate() + 5 * 7);
+  // const pmDueWW = getWorkWeek(dueDate);
 
   let progress_value = 25;
 
@@ -108,18 +105,35 @@ const handleMachineChange = async (e) => {
     machine: selected,
     controlNo: machine?.pmnt_no || "",
     serial: machine?.serial || "",
-    machinePlatform: machine?.machine_platform || "",
-    pmDate: pmDateWW,
-    pmDue: pmDueWW,
+    pmDate: `${pmDateWW}`,
+    pmDue: `${pmDueWW}`,
     quarter,
     progress_value,
     performedBy: empData?.emp_name || "",
   });
 
-  if (machine?.machine_platform) {
+  // ✅ Clear checklist + answers since di na sila needed
+  setSelectedChecklist([]);
+  setAnswers({});
+};
+
+
+
+  // 🔹 Handle Platform Change (Manual options + Fetch checklist)
+  const handlePlatformChange = async (e) => {
+    const selectedPlatform = e.target.value;
+    setFormData((prev) => ({ ...prev, machinePlatform: selectedPlatform }));
+
+    if (!selectedPlatform) {
+      setSelectedChecklist([]);
+      setAnswers({});
+      return;
+    }
+
     try {
-      const res = await fetch(`/checklist/${machine.machine_platform}`);
+      const res = await fetch(`/checklist/${selectedPlatform}`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
       const data = await res.json();
       setSelectedChecklist(data);
 
@@ -143,48 +157,139 @@ const handleMachineChange = async (e) => {
       setSelectedChecklist([]);
       setAnswers({});
     }
-  }
-};
+  };
 
+  const handleVerify = (activityId) => {
+  if (!empData?.emp_jobtitle) {
+    alert("❌ Missing job title, cannot verify.");
+    return;
+  }
+
+  const today = new Date().toISOString().slice(0, 19).replace("T", " ");
+  let updateFields = {};
+
+  // 1. Technician verify
+  const techTitles = [
+  "Senior Equipment Technician",
+  "Equipment Technician 1",
+  "Equipment Technician 2",
+  "Equipment Technician 3",
+  "PM Technician 1",
+  "PM Technician 2",
+  "Trainee - Equipment Technician 1"
+];
+
+if (techTitles.includes(empData.emp_jobtitle)) {
+  if (selectedActivity.tech_ack) {
+    alert("⚠️ Already verified by Technician.");
+    return;
+  }
+  updateFields = {
+    tech_ack: empData.emp_name,
+    tech_ack_date: today,
+    progress_value: (selectedActivity.progress_value || 0) + 25,
+  };
+}
+  // 2. ESD verify
+  else if (["ESD Technician 1", "ESD Technician 2"].includes(empData.emp_jobtitle)) {
+    if (!selectedActivity.tech_ack) {
+      alert("⚠️ Technician must verify first.");
+      return;
+    }
+    if (selectedActivity.qa_ack) {
+      alert("⚠️ Already verified by ESD.");
+      return;
+    }
+    updateFields = {
+      qa_ack: empData.emp_name,
+      qa_ack_date: today,
+      progress_value: (selectedActivity.progress_value || 0) + 25,
+    };
+  }
+  // 3. Engineer/Section Head verify
+  else if (
+    [
+      "Equipment Engineer",
+      "Supervisor - Equipment Technician",
+      "Senior Equipment Engineer",
+      "Sr. Equipment Engineer",
+      "Equipment Engineering Section Head",
+      "Section Head - Equipment Engineering",
+    ].includes(empData.emp_jobtitle)
+  ) {
+    if (!selectedActivity.qa_ack) {
+      alert("⚠️ ESD must verify first.");
+      return;
+    }
+    if (selectedActivity.senior_ee_ack || selectedActivity.section_ack) {
+      alert("⚠️ Already verified by Engineer/Section Head.");
+      return;
+    }
+    updateFields = {
+      senior_ee_ack: empData.emp_name,
+      senior_ee_ack_date: today,
+      progress_value: (selectedActivity.progress_value || 0) + 25,
+    };
+  } else {
+    alert("⚠️ You are not allowed to verify.");
+    return;
+  }
+
+  router.put(`/scheduler/${activityId}/verify`, updateFields, {
+    onSuccess: () => {
+      alert("✅ Verified successfully!");
+      setModalOpen(false);
+      window.location.reload();
+    },
+    onError: () => {
+      alert("❌ Verification failed.");
+    },
+  });
+};
 
   const saveSchedule = (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const tool_lifeArray = Object.keys(tool_life).map((key) => ({
-  id: key,
-  ...tool_life[key],
-}));
+  const answersArray = Object.keys(answers).map((key) => ({
+    id: key,
+    ...answers[key],
+  }));
 
-const answersArray = Object.keys(answers).map((key) => ({
-  id: key,
-  ...answers[key],
-}));
+  // ✅ get tool life data directly from the table rows
+  const tool_lifeArray = toolLifeRows.filter(
+    (row) =>
+      row.description !== "" ||
+      row.partnumber !== "" ||
+      row.duration_usage !== "" ||
+      row.expected_tool_life !== "" ||
+      row.remarks !== ""
+  );
 
-const payload = {
-  machine_num: formData.machine,
-  pmnt_no: formData.controlNo,
-  serial: formData.serial,
-  first_cycle: formData.pmDate,
-  pm_due: formData.pmDue,
-  responsible_person: formData.performedBy,
-  quarter: formData.quarter,
-  progress_value: formData.progress_value,
-  answers: JSON.stringify(answersArray),
-  tool_life: JSON.stringify(tool_lifeArray),
+  const payload = {
+    machine_num: formData.machine,
+    pmnt_no: formData.controlNo,
+    serial: formData.serial,
+    first_cycle: formData.pmDate,
+    pm_due: formData.pmDue,
+    responsible_person: formData.performedBy,
+    quarter: formData.quarter,
+    progress_value: formData.progress_value,
+    answers: JSON.stringify(answersArray),
+    tool_life: JSON.stringify(tool_lifeArray), // ✅ now correct data
+  };
+
+  router.post("/scheduler", payload, {
+    onSuccess: () => {
+      alert("✅ PM Scheduler created successfully!");
+      setShowModal(false);
+      window.location.reload();
+    },
+    onError: () => {
+      alert("❌ Failed to save scheduler. Please check your inputs.");
+    },
+  });
 };
 
-
-    router.post("/scheduler", payload, {
-      onSuccess: () => {
-        alert("✅ PM Scheduler created successfully!");
-        setShowModal(false);
-        window.location.reload();
-      },
-      onError: () => {
-        alert("❌ Failed to save scheduler. Please check your inputs.");
-      },
-    });
-  };
 
 const dataWithProgressAndAction = (tableData?.data || []).map((row, index) => {
 
@@ -268,104 +373,35 @@ const dataWithProgressAndAction = (tableData?.data || []).map((row, index) => {
   };
 });
 
-const handleVerify = (activityId) => {
-  if (!empData?.emp_jobtitle) {
-    alert("❌ Missing job title, cannot verify.");
-    return;
-  }
+  // Default 4 rows
+const [toolLifeRows, setToolLifeRows] = useState([
+  { description: "", partnumber: "", duration_usage: "", expected_tool_life: "", remarks: "" },
+  { description: "", partnumber: "", duration_usage: "", expected_tool_life: "", remarks: "" },
+  { description: "", partnumber: "", duration_usage: "", expected_tool_life: "", remarks: "" },
+  { description: "", partnumber: "", duration_usage: "", expected_tool_life: "", remarks: "" },
+]);
 
-  const now = new Date();
-const todayLocal = now.getFullYear() + '-' +
-                   String(now.getMonth() + 1).padStart(2, '0') + '-' +
-                   String(now.getDate()).padStart(2, '0') + ' ' +
-                   String(now.getHours()).padStart(2, '0') + ':' +
-                   String(now.getMinutes()).padStart(2, '0') + ':' +
-                   String(now.getSeconds()).padStart(2, '0');
-
-console.log(todayLocal);
-
-  let updateFields = {};
-
-  // 1. Technician verify
-  const techTitles = [
-  "Senior Equipment Technician",
-  "Equipment Technician 1",
-  "Equipment Technician 2",
-  "Equipment Technician 3",
-  "PM Technician 1",
-  "PM Technician 2",
-  "Trainee - Equipment Technician 1"
-];
-
-if (techTitles.includes(empData.emp_jobtitle)) {
-  if (selectedActivity.tech_ack) {
-    alert("⚠️ Already verified by Technician.");
-    return;
-  }
-  updateFields = {
-    tech_ack: empData.emp_name,
-    tech_ack_date: todayLocal,
-    progress_value: (selectedActivity.progress_value || 0) + 25,
-  };
-}
-  // 2. ESD verify
-  else if (["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer", "DIC Clerk 1"].includes(empData.emp_jobtitle)) {
-    if (!selectedActivity.tech_ack) {
-      alert("⚠️ Technician must verify first.");
-      return;
-    }
-    if (selectedActivity.qa_ack) {
-      alert("⚠️ Already verified by ESD.");
-      return;
-    }
-    updateFields = {
-      qa_ack: empData.emp_name,
-      qa_ack_date: todayLocal,
-      progress_value: (selectedActivity.progress_value || 0) + 25,
-    };
-  }
-  // 3. Engineer/Section Head verify
-  else if (
-    [
-      "Equipment Engineer",
-      "Supervisor - Equipment Technician",
-      "Senior Equipment Engineer",
-      "Sr. Equipment Engineer",
-      "Equipment Engineering Section Head",
-      "Section Head - Equipment Engineering",
-    ].includes(empData.emp_jobtitle)
-  ) {
-    if (!selectedActivity.qa_ack) {
-      alert("⚠️ ESD must verify first.");
-      return;
-    }
-    if (selectedActivity.senior_ee_ack || selectedActivity.section_ack) {
-      alert("⚠️ Already verified by Engineer/Section Head.");
-      return;
-    }
-    updateFields = {
-      senior_ee_ack: empData.emp_name,
-      senior_ee_ack_date: todayLocal,
-      progress_value: (selectedActivity.progress_value || 0) + 25,
-    };
-  } else {
-    alert("⚠️ You are not allowed to verify.");
-    return;
-  }
-
-  router.put(`/scheduler/${activityId}/verify`, updateFields, {
-    onSuccess: () => {
-      alert("✅ Verified successfully!");
-      setModalOpen(false);
-      window.location.reload();
-    },
-    onError: () => {
-      alert("❌ Verification failed.");
-    },
-  });
+// Handle changes per cell
+const handleRowChange = (index, field, value) => {
+  const updated = [...toolLifeRows];
+  updated[index][field] = value;
+  setToolLifeRows(updated);
 };
 
+// Add new row
+const handleAddRow = () => {
+  setToolLifeRows([
+    ...toolLifeRows,
+    { description: "", partnumber: "", duration_usage: "", expected_tool_life: "", remarks: "" },
+  ]);
+};
 
+// Remove last row
+const handleRemoveRow = () => {
+  if (toolLifeRows.length > 1) {
+    setToolLifeRows(toolLifeRows.slice(0, -1));
+  }
+};
 
 
   return (
@@ -384,37 +420,30 @@ if (techTitles.includes(empData.emp_jobtitle)) {
           </button>
         </div>
 
-        {/* ✅ DataTable */}
+        {/* DataTable */}
         <DataTable
           columns={[
             { key: "pmnt_no", label: "PMNT Number" },
-            { key: "machine_num", label: "Machine" },
             { key: "quarter", label: "Quarter" },
             { key: "first_cycle", label: "PM Date" },
             { key: "pm_due", label: "PM Due" },
+            { key: "tech_ack", label: "Tech Verifier" },
+            { key: "qa_ack", label: "ESD Verifier" },
+            { key: "senior_ee_ack", label: "PM Engineer Verifier" },
             { key: "progress", label: "Progress" },
             { key: "action", label: "Action" },
           ]}
           data={dataWithProgressAndAction}
-          meta={{
-            from: tableData?.from,
-            to: tableData?.to,
-            total: tableData?.total,
-            links: tableData?.links,
-            currentPage: tableData?.current_page,
-            lastPage: tableData?.last_page,
-          }}
+          meta={tableData?.meta}
           routeName={route("tnr.schedulerTable")}
           filters={tableFilters}
           rowKey="id"
-          sortBy="id"
-          sortOrder="desc"
         />
+
         {/* Modal */}
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
             <div className="bg-white w-full max-w-7xl rounded-lg shadow-lg max-h-screen overflow-y-auto">
-              
               {/* Header */}
               <div className="flex justify-between items-center bg-gradient-to-r from-gray-600 to-black text-white p-4 rounded-t-lg sticky top-0 z-10">
                 <h5 className="text-lg font-bold">
@@ -448,13 +477,46 @@ if (techTitles.includes(empData.emp_jobtitle)) {
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-gray-500">Machine Platform</label>
-                  <input
-                    type="text"
-                    className="border rounded w-full text-gray-500"
-                    value={formData.machinePlatform || ""}
-                    readOnly
-                  />
+                  <label className="block font-semibold text-gray-500">
+                    Platform
+                  </label>
+                  <select
+                    value={formData.machinePlatform}
+                    onChange={handlePlatformChange}
+                    className="border rounded w-full text-gray-700 p-2"
+                    required
+                  >
+                    <option value="">-- Select Platform --</option>
+                    <option value="V12">V12</option>
+                    <option value="ISMECA">ISMECA</option>
+                    <option value="ST60">ST60</option>
+                    <option value="BRANDING (DYSEC_DIPBR_SOLAS DUM-815)">
+                      BRANDING (DYSEC_DIPBR_SOLAS DUM-815)
+                    </option>
+                    <option value="MH3020">MH3020</option>
+                    <option value="LASER MARKING">LASER MARKING</option>
+                    <option value="HOPE SEIKI">HOPE SEIKI</option>
+                    <option value="HEPCO">HEPCO</option>
+                    <option value="BAKE OVEN">BAKE OVEN</option>
+                    <option value="G6L">G6L</option>
+                    <option value="VITROX TR3000i">VITROX TR3000i</option>
+                    <option value="VITROX TR1000i2000iTR3000i">
+                      VITROX TR1000i2000iTR3000i
+                    </option>
+                    <option value="HSI200">HSI200</option>
+                    <option value="HSI250">HSI250</option>
+                    <option value="HSI400T">HSI400T</option>
+                    <option value="HEXA">HEXA</option>
+                    <option value="AT28">AT28</option>
+                    <option value="AT128">AT128</option>
+                    <option value="AT268_AT468">AT268_AT468</option>
+                    <option value="AT8005">AT8005</option>
+                    <option value="MICROVISION_MV853A">
+                      MICROVISION_MV853A
+                    </option>
+                    <option value="MV883">MV883</option>
+                    <option value="MV996">MV996</option>
+                  </select>
                 </div>
 
                 <div>
@@ -478,56 +540,67 @@ if (techTitles.includes(empData.emp_jobtitle)) {
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-gray-500">PM Date</label>
+                  <label className="block font-semibold text-gray-500">
+                    PM Date
+                  </label>
                   <input
                     type="text"
-                    className="border rounded w-full text-gray-500"
-                    value={formData.pmDate || ""}
+                    className="border rounded w-full text-gray-700"
+                    value={formData.pmDate}
                     readOnly
                   />
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-gray-500">PM Due</label>
+                  <label className="block font-semibold text-gray-500">
+                    PM Due
+                  </label>
                   <input
                     type="text"
-                    className="border rounded w-full text-gray-500"
-                    value={formData.pmDue || ""}
+                    className="border rounded w-full text-gray-700"
+                    value={formData.pmDue}
                     readOnly
                   />
                 </div>
 
-                <div className="sm:col-span-2 md:col-span-1">
-                  <label className="block font-semibold text-gray-500">Performed By</label>
+                <div>
+                  <label className="block font-semibold text-gray-500">
+                    Performed By
+                  </label>
                   <input
                     type="text"
-                    className="border rounded w-full text-gray-500"
-                    value={formData.performedBy || ""}
+                    className="border rounded w-full text-gray-700"
+                    value={formData.performedBy}
                     readOnly
                   />
                 </div>
 
-                <div className="sm:col-span-2 md:col-span-1">
-                  <label className="block font-semibold text-gray-500">Quarter</label>
+                <div>
+                  <label className="block font-semibold text-gray-500">
+                    Quarter
+                  </label>
                   <input
                     type="text"
-                    className="border rounded w-full text-gray-500"
-                    value={formData.quarter || ""}
+                    className="border rounded w-full text-gray-700"
+                    value={formData.quarter}
                     readOnly
                   />
                 </div>
-                <div className="sm:col-span-2 md:col-span-1">
-                  <label className="block font-semibold text-gray-500">Progress Value</label>
+
+                <div>
+                  <label className="block font-semibold text-gray-500">
+                    Progress Value
+                  </label>
                   <input
                     type="text"
-                    className="border rounded w-full text-gray-500"
+                    className="border rounded w-full text-gray-700"
                     value={formData.progress_value}
                     readOnly
                   />
                 </div>
               </div>
 
-              {/* Checklist Section */}
+              {/* Checklist */}
               {selectedChecklist.length > 0 && (
                 <div className="p-4">
                   <h3 className="font-bold text-gray-700 mb-2">
@@ -555,51 +628,66 @@ if (techTitles.includes(empData.emp_jobtitle)) {
                       <tbody>
                         {selectedChecklist.map((row) => (
                           <tr key={row.id} className="hover:bg-gray-400 hover:text-white text-gray-700">
-                            <td className="border border-gray-300 px-2 py-1">{answers[row.id]?.assy_item || row.assy_item}</td>
-                            <td className="border border-gray-300 px-2 py-1">{answers[row.id]?.description || row.description}</td>
-                            <td className="border border-gray-300 px-2 py-1">{answers[row.id]?.requirements || row.requirements}</td>
-                            <td className="border border-gray-300 px-2 py-1 text-center">{answers[row.id]?.activity_1 || row.activity_1}</td>
-                            <td className="border border-gray-300 px-2 py-1 text-center">
+                            <td className="border border-gray-300 px-2 py-1">{row.assy_item}</td>
+                            <td className="border border-gray-300 px-2 py-1">{row.description}</td>
+                            <td className="border border-gray-300 px-2 py-1">{row.requirements}</td>
+                            <td className="border border-gray-300 px-2 py-1">{row.activity_1}</td>
+                            <td className="text-center">
                               <input
                                 type="checkbox"
-                                checked={answers[row.id]?.compliance1 || false}
+                                checked={!!answers[row.id]?.compliance1}
                                 onChange={(e) =>
-                                  handleAnswerChange(row.id, "compliance1", e.target.checked ? 1 : 0)
+                                  handleAnswerChange(
+                                    row.id,
+                                    "compliance1",
+                                    e.target.checked ? 1 : 0
+                                  )
+                                  
                                 }
                                 className="w-5 h-5 mx-auto"
                               />
-                              <label className="ml-1" style={{ fontSize: "12px" }}>- Complied</label>
                             </td>
-                            <td className="border border-gray-300 px-2 py-1">
+                            <td>
                               <input
                                 type="text"
-                                className="border rounded w-full border border-gray-300 px-2 py-1 text-gray-700"
                                 value={answers[row.id]?.remarks1 || ""}
                                 onChange={(e) =>
-                                  handleAnswerChange(row.id, "remarks1", e.target.value)
+                                  handleAnswerChange(
+                                    row.id,
+                                    "remarks1",
+                                    e.target.value
+                                  )
                                 }
+                                 className="border rounded w-full border border-gray-300 px-2 py-1 text-gray-700"
                               />
                             </td>
-                            <td className="border border-gray-300 px-2 py-1 text-center">{answers[row.id]?.activity_2 || row.activity_2}</td>
-                            <td className="border border-gray-300 px-2 py-1 text-center">
+                            <td>{row.activity_2}</td>
+                            <td className="text-center">
                               <input
                                 type="checkbox"
-                                checked={answers[row.id]?.compliance2 || false}
+                                checked={!!answers[row.id]?.compliance2}
                                 onChange={(e) =>
-                                  handleAnswerChange(row.id, "compliance2", e.target.checked ? 1 : 0)
+                                  handleAnswerChange(
+                                    row.id,
+                                    "compliance2",
+                                    e.target.checked ? 1 : 0
+                                  )
                                 }
                                 className="w-5 h-5 mx-auto"
                               />
-                              <label className="ml-1" style={{ fontSize: "12px" }}>- Complied</label>
                             </td>
-                            <td className="border border-gray-300 px-2 py-1">
+                            <td>
                               <input
                                 type="text"
-                                className="border rounded w-full border border-gray-300 px-2 py-1 text-gray-700"
                                 value={answers[row.id]?.remarks2 || ""}
                                 onChange={(e) =>
-                                  handleAnswerChange(row.id, "remarks2", e.target.value)
+                                  handleAnswerChange(
+                                    row.id,
+                                    "remarks2",
+                                    e.target.value
+                                  )
                                 }
+                                 className="border rounded w-full border border-gray-300 px-2 py-1 text-gray-700"
                               />
                             </td>
                           </tr>
@@ -610,83 +698,179 @@ if (techTitles.includes(empData.emp_jobtitle)) {
                 </div>
               )}
 
-             <table className="table-auto w-full text-sm border-collapse border border-gray-300 mt-4">
-  <thead className="bg-gray-200 sticky top-0 z-10">
-    <tr className="bg-gradient-to-r from-gray-600 to-black text-white">
-      <th className="border border-gray-200 px-2 py-1">Description</th>
-      <th className="border border-gray-200 px-2 py-1">Partnumber</th>
-      <th className="border border-gray-200 px-2 py-1">Duration usage (Days)</th>
-      <th className="border border-gray-200 px-2 py-1">Expected Tool Life</th>
-      <th className="border border-gray-200 px-2 py-1">Remarks</th>
-    </tr>
-  </thead>
-  <tbody>
-    {selectedChecklist.map((row) => (
-      <tr key={row.id} className="hover:bg-gray-400 hover:text-white text-gray-700">
-        <td className="border border-gray-300 px-2 py-1">
-          <input
-            type="text"
-            className="border rounded w-full border-gray-300 px-2 py-1 text-gray-700"
-            value={tool_life[row.id]?.description || ""}
-            onChange={(e) => handleToolLifeChange(row.id, "description", e.target.value)}
-          />
-        </td>
-        <td className="border border-gray-300 px-2 py-1">
-          <input
-            type="text"
-            className="border rounded w-full border-gray-300 px-2 py-1 text-gray-700"
-            value={tool_life[row.id]?.partnumber || ""}
-            onChange={(e) => handleToolLifeChange(row.id, "partnumber", e.target.value)}
-          />
-        </td>
-        <td className="border border-gray-300 px-2 py-1">
-          <input
-            type="text"
-            className="border rounded w-full border-gray-300 px-2 py-1 text-gray-700"
-            value={tool_life[row.id]?.duration_usage || ""}
-            onChange={(e) => handleToolLifeChange(row.id, "duration_usage", e.target.value)}
-          />
-        </td>
-        <td className="border border-gray-300 px-2 py-1">
-          <input
-            type="text"
-            className="border rounded w-full border-gray-300 px-2 py-1 text-gray-700"
-            value={tool_life[row.id]?.expected_tool_life || ""}
-            onChange={(e) => handleToolLifeChange(row.id, "expected_tool_life", e.target.value)}
-          />
-        </td>
-        <td className="border border-gray-300 px-2 py-1">
-          <input
-            type="text"
-            className="border rounded w-full border-gray-300 px-2 py-1 text-gray-700"
-            value={tool_life[row.id]?.remarks || ""}
-            onChange={(e) => handleToolLifeChange(row.id, "remarks", e.target.value)}
-          />
-        </td>
-      </tr>
-    ))}
-  </tbody>
-</table>
+              {/* Tool Life Table */}
+{selectedChecklist.length > 0 && (
+  <div className="p-4">
+    <div className="flex justify-between items-center mb-2">
+      <h2 className="font-semibold text-gray-700">Tool Life</h2>
+      <div className="flex gap-2">
+        <button
+          onClick={handleAddRow}
+          className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+        >
+          + Add Row
+        </button>
+        <button
+          onClick={handleRemoveRow}
+          className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+        >
+          – Remove
+        </button>
+      </div>
+    </div>
+
+    <table className="table-auto w-full text-sm border border-gray-300">
+      <thead className="bg-gradient-to-r from-gray-600 to-black text-white">
+        <tr>
+          <th>Description</th>
+          <th>Partnumber</th>
+          <th>Duration Usage (Days)</th>
+          <th>Expected Tool Life</th>
+          <th>Remarks</th>
+        </tr>
+      </thead>
+      <tbody className="text-gray-600">
+        {toolLifeRows.map((row, index) => (
+          <tr key={index}>
+            <td>
+              <input
+                type="text"
+                value={row.description}
+                onChange={(e) =>
+                  handleRowChange(index, "description", e.target.value)
+                }
+                className="border w-full px-1"
+              />
+            </td>
+            <td>
+              <input
+                type="text"
+                value={row.partnumber}
+                onChange={(e) =>
+                  handleRowChange(index, "partnumber", e.target.value)
+                }
+                className="border w-full px-1"
+              />
+            </td>
+            <td>
+              <input
+                type="text"
+                value={row.duration_usage}
+                onChange={(e) =>
+                  handleRowChange(index, "duration_usage", e.target.value)
+                }
+                className="border w-full px-1"
+              />
+            </td>
+            <td>
+              <input
+                type="text"
+                value={row.expected_tool_life}
+                onChange={(e) =>
+                  handleRowChange(index, "expected_tool_life", e.target.value)
+                }
+                className="border w-full px-1"
+              />
+            </td>
+            <td>
+              <input
+                type="text"
+                value={row.remarks}
+                onChange={(e) =>
+                  handleRowChange(index, "remarks", e.target.value)
+                }
+                className="border w-full px-1"
+              />
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
 
 
-              {/* Footer */}
-              <div className="flex flex-col sm:flex-row justify-end gap-2 p-4 border-t">
+              {/* Footer Buttons */}
+              <div className="p-4 flex justify-end gap-4 sticky bottom-0 bg-white border-t">
                 <button
-                  className="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-600"
                   onClick={() => setShowModal(false)}
+                  className="px-4 py-2 rounded-md bg-gray-500 text-white hover:bg-gray-700"
                 >
-                  <i className="fa-solid fa-circle-xmark"></i> Close
+                  Cancel
                 </button>
                 <button
-                  className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
                   onClick={saveSchedule}
+                  className="px-4 py-2 rounded-md bg-green-700 text-white hover:bg-green-800"
                 >
-                  <i className="fa-solid fa-bookmark"></i> Save
+                  <i className="fas fa-save"></i> Save Schedule
                 </button>
               </div>
             </div>
           </div>
         )}
+
+        {/* Activity View Modal */}
+        {modalOpen && selectedActivity && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+            <div
+              id="modal-content"
+              className="bg-white w-full max-w-5xl rounded-lg shadow-lg max-h-screen overflow-y-auto"
+            >
+              {/* Header */}
+              <div className="flex justify-between items-center bg-gradient-to-r from-gray-600 to-black text-white p-4 rounded-t-lg sticky top-0 z-10">
+                <h5 className="text-lg font-bold">
+                  <i className="fas fa-clipboard-list"></i> PM Details
+                </h5>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleDownloadPDF}
+                    className="bg-red-700 px-3 py-2 rounded-md text-white hover:bg-red-800"
+                  >
+                    <i className="fas fa-file-pdf"></i> PDF
+                  </button>
+                  <button
+                    onClick={() => setModalOpen(false)}
+                    className="text-white text-xl"
+                  >
+                    <i className="fas fa-times text-red-500 hover:text-red-700"></i>
+                  </button>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="p-4">
+                <table className="table-auto w-full border-collapse border border-gray-300 text-sm">
+                  <tbody>
+                    <tr>
+                      <td className="font-semibold border p-2">Platform</td>
+                      <td className="font-semibold border p-2">Control No</td>
+                      <td className="border p-2">{selectedActivity.pmnt_no}</td>
+                    </tr>
+                    <tr>
+                      <td className="font-semibold border p-2">Serial</td>
+                      <td className="border p-2">{selectedActivity.serial}</td>
+                      <td className="font-semibold border p-2">Quarter</td>
+                      <td className="border p-2">{selectedActivity.quarter}</td>
+                    </tr>
+                    <tr>
+                      <td className="font-semibold border p-2">PM Date</td>
+                      <td className="border p-2">{selectedActivity.first_cycle}</td>
+                      <td className="font-semibold border p-2">PM Due</td>
+                      <td className="border p-2">{selectedActivity.pm_due}</td>
+                    </tr>
+                    <tr>
+                      <td className="font-semibold border p-2">Performed By</td>
+                      <td className="border p-2" colSpan="3">
+                        {selectedActivity.responsible_person}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
 
        {modalOpen && (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
