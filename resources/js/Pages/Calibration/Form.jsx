@@ -209,7 +209,7 @@ export default function Form({ platforms, manufacturers, auth }) {
                                                     )
                                                 )
                                             }
-                                            className="border rounded p-2 flex-1 text-gray-500"
+                                            className="border rounded p-2 flex-1 text-amber-600"
                                             required
                                         />
                                         <button

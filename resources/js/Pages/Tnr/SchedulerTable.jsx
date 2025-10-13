@@ -461,7 +461,7 @@ const handleRemoveRow = () => {
               <div className="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block font-semibold text-gray-500">Machine</label>
-                  <select
+                  {/* <select
                     className="border rounded w-full text-gray-500"
                     value={formData.machine}
                     onChange={handleMachineChange}
@@ -473,7 +473,24 @@ const handleRemoveRow = () => {
                         {m.machine_num}
                       </option>
                     ))}
-                  </select>
+                  </select> */}
+
+                  <input
+  list="machineList"
+  name="machine"
+  className="border rounded w-full text-gray-500 p-1"
+  value={formData.machine}
+  onChange={handleMachineChange}
+  placeholder="Select or type here..."
+  required
+/>
+
+<datalist id="machineList">
+  {machines.map((m, i) => (
+    <option key={i} value={m.machine_num} />
+  ))}
+</datalist>
+
                 </div>
 
                 <div>
@@ -1009,40 +1026,47 @@ const handleRemoveRow = () => {
           </div>
         </div>
 
-        {/* ✅ Tool Life Table */}
-        <div className="mt-6">
-          <h6 className="font-semibold text-gray-600 mb-2">Tool Life Data:</h6>
-          <div className="border p-2 rounded overflow-x-auto">
-            {selectedActivity?.tool_life ? (
-              <table className="table-auto w-full text-sm border-collapse border border-gray-300">
-                <thead>
-                  <tr className="bg-gradient-to-r from-gray-600 to-black text-white">
-                    <th className="border border-gray-300 px-2 py-1">#</th>
-                    <th className="border border-gray-300 px-2 py-1">Description</th>
-                    <th className="border border-gray-300 px-2 py-1">Part Number</th>
-                    <th className="border border-gray-300 px-2 py-1">Duration Usage</th>
-                    <th className="border border-gray-300 px-2 py-1">Expected Tool Life</th>
-                    <th className="border border-gray-300 px-2 py-1">Remarks</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {JSON.parse(selectedActivity.tool_life).map((tool, i) => (
-                    <tr key={i} className="text-gray-500">
-                      <td className="border border-gray-300 px-2 py-1 text-center">{i + 1}</td>
-                      <td className="border border-gray-300 px-2 py-1">{tool.description}</td>
-                      <td className="border border-gray-300 px-2 py-1">{tool.partnumber}</td>
-                      <td className="border border-gray-300 px-2 py-1 text-center">{tool.duration_usage}</td>
-                      <td className="border border-gray-300 px-2 py-1 text-center">{tool.expected_tool_life}</td>
-                      <td className="border border-gray-300 px-2 py-1">{tool.remarks}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <p className="text-gray-500 italic">No tool life data found.</p>
-            )}
-          </div>
+        {(() => {
+  try {
+    const toolLifeArray = JSON.parse(selectedActivity?.tool_life || "[]");
+    if (!Array.isArray(toolLifeArray) || toolLifeArray.length === 0) return null;
+
+    return (
+      <div className="mt-6">
+        <h6 className="font-semibold text-gray-600 mb-2">Tool Life Data:</h6>
+        <div className="border p-2 rounded overflow-x-auto">
+          <table className="table-auto w-full text-sm border-collapse border border-gray-300">
+            <thead>
+              <tr className="bg-gradient-to-r from-gray-600 to-black text-white">
+                <th className="border border-gray-300 px-2 py-1">#</th>
+                <th className="border border-gray-300 px-2 py-1">Description</th>
+                <th className="border border-gray-300 px-2 py-1">Part Number</th>
+                <th className="border border-gray-300 px-2 py-1">Duration Usage</th>
+                <th className="border border-gray-300 px-2 py-1">Expected Tool Life</th>
+                <th className="border border-gray-300 px-2 py-1">Remarks</th>
+              </tr>
+            </thead>
+            <tbody>
+              {toolLifeArray.map((tool, i) => (
+                <tr key={i} className="text-gray-500">
+                  <td className="border border-gray-300 px-2 py-1 text-center">{i + 1}</td>
+                  <td className="border border-gray-300 px-2 py-1">{tool.description}</td>
+                  <td className="border border-gray-300 px-2 py-1">{tool.partnumber}</td>
+                  <td className="border border-gray-300 px-2 py-1 text-center">{tool.duration_usage}</td>
+                  <td className="border border-gray-300 px-2 py-1 text-center">{tool.expected_tool_life}</td>
+                  <td className="border border-gray-300 px-2 py-1">{tool.remarks}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
+      </div>
+    );
+  } catch (e) {
+    return null;
+  }
+})()}
+
       </div>
 
       {/* Footer */}

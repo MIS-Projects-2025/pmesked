@@ -40,8 +40,8 @@ export default function Index({ checklist }) {
                     </button>
                 </div>
 
-                <div className="card-body">
-                    <table className="table table-bordered text-center w-full">
+                <div className="card-body w-full overflow-x-auto">
+                    <table className="min-w-full border text-center text-sm">
                         <thead className="bg-gray-200 text-gray-700 bg-gradient-to-r from-gray-600 to-black text-white rounded-t-2xl">
                             <tr>
                                 <th>#</th>
