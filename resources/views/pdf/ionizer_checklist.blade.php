@@ -99,7 +99,7 @@
             <tr>
                 <th>Technician Verifier</th>
                 <td>{{ $record->tech_sign }} <br> {{ \Carbon\Carbon::parse($record['tech_sign_date'])->format('m/d/Y h:i A') }}</td>
-                <th>ESD/ QA Verifier</th>
+                <th>QA Verifier</th>
                 <td>{{ $record->qa_sign }} <br> {{ \Carbon\Carbon::parse($record['qa_sign_date'])->format('m/d/Y h:i A') }}</td>
             </tr>
         </tbody>

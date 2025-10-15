@@ -241,7 +241,7 @@ if (techTitles.includes(empData.emp_jobtitle)) {
                 <th className="border px-2 py-1">Serial</th>
                 <th className="border px-2 py-1">Technician</th>
                 <th className="border px-2 py-1">Senior Tech</th>
-                <th className="border px-2 py-1">ESD Personnel</th>
+                <th className="border px-2 py-1">QA Personnel</th>
                 <th className="border px-2 py-1">Senior Engineer</th>
                 <th className="border px-2 py-1 text-center">Action</th>
               </tr>
@@ -467,7 +467,7 @@ if (techTitles.includes(empData.emp_jobtitle)) {
           </div>
 
           <div>
-            <label className="block font-semibold text-gray-600">ESD Technician</label>
+            <label className="block font-semibold text-gray-600">QA Personnel</label>
             <input
               type="text"
               className="form-control border rounded w-full text-gray-600 text-sm"

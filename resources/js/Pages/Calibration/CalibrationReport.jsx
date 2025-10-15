@@ -895,7 +895,7 @@ const handleVerifyReviewer = () => {
              className="px-4 py-2 border rounded bg-green-500 text-white hover:bg-green-600 mr-2"
            >
              <i className="fas fa-check mr-2"></i>
-             Verify (ESD)
+             Verify (QA)
             </button>
           )}
 

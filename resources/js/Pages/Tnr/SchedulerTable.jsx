@@ -957,7 +957,7 @@ const handleRemoveRow = () => {
           </div>
 
           <div>
-            <label className="block font-semibold text-gray-600">ESD Technician</label>
+            <label className="block font-semibold text-gray-600">QA Personnel</label>
             <input type="text" className="form-control border rounded w-full text-gray-600 text-sm" value={formData.esdTech || "Waiting for ESD Technician..."} readOnly />
           </div>
 

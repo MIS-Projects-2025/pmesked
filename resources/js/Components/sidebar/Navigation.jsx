@@ -56,9 +56,7 @@ export default function NavLinks() {
                 {[
                 "ESD Technician 1", "ESD Technician 2", "Senior QA Engineer", "DIC Clerk 1",
                  "Equipment Engineer",  "Supervisor - Equipment Technician",  "Senior Equipment Engineer",  "Sr. Equipment Engineer",  "Equipment Engineering Section Head",  "Section Head - Equipment Engineering"
-
-
-            ].includes(emp_data?.emp_jobtitle) && (
+                ].includes(emp_data?.emp_jobtitle) && (
                 <div>
 
                 <Dropdown
@@ -153,7 +151,7 @@ export default function NavLinks() {
 
                 </div>
             )}
-
+            
             {["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer", "DIC Clerk 1"].includes(emp_data?.emp_jobtitle) && (
                 <div>
                     <SidebarLink
@@ -265,7 +263,7 @@ export default function NavLinks() {
                 </div>
             )}
             
-            {["Equipment Engineering"].includes(emp_data?.emp_dept) && !["Equipment Engineering Section Head", "Section Head - Equipment Engineering"].includes(emp_data?.emp_jobtitle) && (
+            {["1742" , "1788"].includes(emp_data?.emp_id) && (
                 <div>
 
                     <SidebarLink
@@ -273,20 +271,28 @@ export default function NavLinks() {
                         label="TNR PM Checklist Items"
                         icon={<i className="fa-solid fa-list"></i>}
                     />
-
+            </div>
+            )}
+             {["17807", "1788"].includes(emp_data?.emp_id) && (
+                <div>
                     <SidebarLink
                         href={route("ionizer-items.index")}
                         label="Ionizer Checklist Items"
                         icon={<i className="fa-solid fa-table-list"></i>}
                     />
-
+            </div>
+            )}
+             {["1088", "1788"].includes(emp_data?.emp_id) && (
+                <div>
                     <SidebarLink
                         href={route("non-tnr-items.index")}
                         label="Non-TNR Checklist Items"
                         icon={<i className="fa-solid fa-table-list"></i>}
                     />
-                    </div>
+            </div>
             )}
+
+
             {["superadmin", "admin" ].includes(emp_data?.emp_system_role) && (
                 <div>
                     <SidebarLink

@@ -384,7 +384,7 @@ const handleVerifyReviewer = () => {
             { key: "equipment", label: "Equipment" },
             { key: "model", label: "Model" },
             { key: "performed_by", label: "Performed By" },
-            { key: "qa_sign", label: "Verified By ESD" },
+            { key: "qa_sign", label: "Verified By QA" },
             { key: "review_by", label: "Reviewed By" },
             { key: "calibration_date", label: "Calibration Date" },
             { key: "calibration_due", label: "Calibration Due" },
@@ -898,7 +898,7 @@ const handleVerifyReviewer = () => {
              className="px-4 py-2 border rounded bg-green-500 text-white hover:bg-green-600 mr-2"
            >
              <i className="fas fa-check mr-2"></i>
-             Verify (ESD)
+             Verify (QA)
             </button>
           )}
 

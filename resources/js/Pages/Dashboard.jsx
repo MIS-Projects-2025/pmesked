@@ -17,6 +17,8 @@ import {
 export default function Dashboard(props) {
   const { emp_data } = usePage().props;
 
+  console.log(emp_data);
+
   // Parse WW format (ex: WW501) into a Date (start of that week)
   const parseWWToDate = (ww) => {
     if (!ww || typeof ww !== "string" || !ww.startsWith("WW")) return null;

@@ -85,7 +85,7 @@
         </tr>
         <tr>
             <th>Technician</th>
-            <th>QA/ ESD</th>
+            <th>QA</th>
             <th>Engineer</th>
         </tr>
         <tr>

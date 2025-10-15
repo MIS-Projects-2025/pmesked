@@ -366,7 +366,7 @@ export default function MassApprovalNonTnr({ checklists, empData }) {
             <td className="border p-2">{viewData.tech_sign_date || "-"}</td>
           </tr>
           <tr>
-            <td className="border p-2 font-semibold">QA</td>
+            <td className="border p-2 font-semibold">QA Personnel</td>
             <td className="border p-2">{viewData.qa_sign || "-"}</td>
             <td className="border p-2 font-semibold">Date</td>
             <td className="border p-2">{viewData.qa_sign_date || "-"}</td>

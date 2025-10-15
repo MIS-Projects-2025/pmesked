@@ -111,7 +111,7 @@
     <table class="table-head">
         <tr>
             <th>Senior Technician</th>
-            <th>ESD Technician</th>
+            <th>QA Personnel</th>
             <th>Sr. Engineer/ Engineer</th>
         </tr>
         <tr>

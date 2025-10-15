@@ -137,7 +137,7 @@ const handleVerifyReviewer = () => {
               onClick={() => handleMassApproveQA()}
               className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
             >
-              <i className="fa-solid fa-check"></i> Mass Approve ESD ({selected.length})
+              <i className="fa-solid fa-check"></i> Mass Approve QA ({selected.length})
             </button>
           )}
 
@@ -181,7 +181,7 @@ const handleVerifyReviewer = () => {
                 <th className="border px-2 py-1">Control No</th>
                 <th className="border px-2 py-1">Serial</th>
                 <th className="border px-2 py-1">Technician</th>
-                <th className="border px-2 py-1 text-center">ESD Personnel</th>
+                <th className="border px-2 py-1 text-center">QA Personnel</th>
                 <th className="border px-2 py-1 text-center">Senior Engineer</th>
                 <th className="border px-2 py-1 text-center">Action</th>
               </tr>
@@ -418,7 +418,7 @@ const handleVerifyReviewer = () => {
     className="px-4 py-2 border rounded bg-green-500 text-white hover:bg-green-600 mr-2"
   >
     <i className="fas fa-check mr-2"></i>
-    Verify (ESD)
+    Verify (QA)
   </button>
 )}
 
