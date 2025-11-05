@@ -15,7 +15,7 @@
             border: 1px solid #000;
             padding: 6px;
             text-align: left;
-            font-size: 12px;
+            font-size: 11px;
             text-align: center;
         }
 
@@ -35,7 +35,7 @@
         }
 
         .tableFooter {
-            margin-top: 5px;
+            margin-top: -0.1%;
             border: none;
         }
 
@@ -47,7 +47,7 @@
 
 <body>
     <div style="text-align: center;">
-        <h2 style="color: #790d0dff; margin-top: -30px;">AIR IONIZER CHECKLIST</h2>
+        <h2 style="color: #790d0dff; margin-top: -35px;">AIR IONIZER CHECKLIST</h2>
         <h4 style="margin-top: -3%; font-size: 12px;">PREVENTIVE MAINTENANCE CHECKLIST</h4>
     </div>
     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -63,38 +63,28 @@
 
         <tbody>
             <tr>
-                <th>Control No</th>
-                <td>{{ $record->control_no }}</td>
-                <th>Serial</th>
-                <td>{{ $record->serial }}</td>
-            </tr>
-            <tr>
                 <th>Description</th>
                 <td>{{ $record->description }}</td>
                 <th>PM Date</th>
                 <td>{{ $record->pm_date }}</td>
+
+
             </tr>
             <tr>
-                <th>Frequency</th>
-                <td>{{ $record->frequency }}</td>
+                <th>Control No</th>
+                <td>{{ $record->control_no }}</td>
                 <th>PM Due</th>
                 <td>{{ $record->pm_due }}</td>
             </tr>
             <tr>
+                <th>Serial</th>
+                <td>{{ $record->serial }}</td>
                 <th>Performed By</th>
-                <td colspan="3">{{ $record->performed_by }} <br> {{ \Carbon\Carbon::parse($record['created_at'])->format('m/d/Y h:i A') }}</td>
+                <td>{{ $record->performed_by }} <br> {{ \Carbon\Carbon::parse($record['created_at'])->format('m/d/Y h:i A') }}</td>
             </tr>
             <tr>
-                <th>OMEGA DTHM Temp. (°C)</th>
-                <td>{{ $record->dthm_temp }}</td>
-                <th>OMEGA DTHM Humidity (%RH)</th>
-                <td>{{ $record->dthm_rh }}</td>
-            </tr>
-            <tr>
-                <th>Duration Usage</th>
-                <td>{{ $record->days }}</td>
-                <th>Remarks</th>
-                <td>{{ $record->remarks }}</td>
+                <th>Frequency</th>
+                <td colspan="3">{{ $record->frequency }}</td>
             </tr>
             <tr>
                 <th>Technician Verifier</th>
@@ -179,6 +169,11 @@
                 <td>{{ $vr['trial3_max'] ?? '' }}</td>
             </tr>
             @endforeach
+            <tr>
+                <th>OMEGA DTHM (REFERENCE EQUIPMENT) :</th>
+                <td colspan="3">{{ $record->dthm_temp }} (°C)</td>
+                <td colspan="4">{{ $record->dthm_rh }} (%RH)</td>
+            </tr>
         </tbody>
     </table>
 
@@ -202,7 +197,12 @@
                 <td>{{ $sv['instrument3'] ?? '' }}</td>
             </tr>
             @endforeach
-
+            <tr>
+                <th>Duration Usage</th>
+                <td>{{ $record->days }}</td>
+                <th>Remarks</th>
+                <td>{{ $record->remarks }}</td>
+            </tr>
         </tbody>
 
     </table>

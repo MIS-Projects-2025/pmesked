@@ -24,14 +24,14 @@ class CalibrationController extends Controller
 
     public function create()
     {
-        $platforms = DB::table('machine_list')
+        $platforms = DB::connection('server25')->table('machine_list')
             ->whereNotNull('machine_platform')
             ->where('machine_platform', '!=', '')   // alisin ang empty string
             ->pluck('machine_platform')
             ->unique()
             ->values();
 
-        $manufacturers = DB::table('machine_list')
+        $manufacturers = DB::connection('server25')->table('machine_list')
             ->whereNotNull('machine_manufacturer')
             ->where('machine_manufacturer', '!=', '') // alisin din ang empty string
             ->pluck('machine_manufacturer')

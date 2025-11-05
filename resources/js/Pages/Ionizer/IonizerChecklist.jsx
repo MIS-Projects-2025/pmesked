@@ -433,7 +433,31 @@ const handleChange = (e) => {
                 <table className="w-full border text-sm text-gray-600 mb-4 rounded-lg">
                   <tbody>
                     <tr>
-                      <td className="border p-2">Control No</td>
+                      <td className="border p-2">Description</td>
+                      <td className="border p-2">
+                        <input
+                          type="text"
+                          name="description"
+                          value={formData.description}
+                          onChange={handleChange}
+                          className="w-full border rounded p-1 bg-gray-100"
+                          readOnly
+                        />
+                      </td>
+                      <td className="border p-2">PM Date</td>
+                      <td className="border p-2">
+                        <input
+                          type="text"
+                          name="pm_date"
+                          value={formData.pm_date}
+                          onChange={handleChange}
+                          className="w-full border rounded p-1"
+                          required
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                       <td className="border p-2">Control Number</td>
                       <td className="border p-2">
                         <input
                           list="control_no_list"
@@ -463,8 +487,22 @@ const handleChange = (e) => {
                           </p>
                         )}
                       </td>
-                     
-                      <td className="border p-2">Serial</td>
+                      <td className="border p-2">PM Due</td>
+                      <td className="border p-2">
+                        <input
+                          type="text"
+                          name="pm_due"
+                          value={formData.pm_due}
+                          onChange={handleChange}
+                          className="w-full border rounded p-1"
+                          required
+                        />
+                      </td>
+                       
+                      
+                    </tr>
+                    <tr>
+                       <td className="border p-2">Serial Number</td>
                       <td className="border p-2">
                         <input
                           type="text"
@@ -475,57 +513,6 @@ const handleChange = (e) => {
                           readOnly
                         />
                       </td>
-                    </tr>
-                    <tr>
-                       <td className="border p-2">Description</td>
-                      <td className="border p-2">
-                        <input
-                          type="text"
-                          name="description"
-                          value={formData.description}
-                          onChange={handleChange}
-                          className="w-full border rounded p-1 bg-gray-100"
-                          readOnly
-                        />
-                      </td>
-                      <td className="border p-2">Frequency</td>
-                      <td className="border p-2">
-                        <input
-                          type="text"
-                          name="frequency"
-                          value={formData.frequency}
-                          onChange={handleChange}
-                          className="w-full border rounded p-1 bg-gray-100"
-                          readOnly
-                        />
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="border p-2">PM Date</td>
-                      <td className="border p-2">
-                        <input
-                          type="date"
-                          name="pm_date"
-                          value={formData.pm_date}
-                          onChange={handleChange}
-                          className="w-full border rounded p-1 bg-gray-100"
-                          required
-                        />
-                      </td>
-                      <td className="border p-2">PM Due</td>
-                      <td className="border p-2">
-                        <input
-                          type="date"
-                          name="pm_due"
-                          value={formData.pm_due}
-                          onChange={handleChange}
-                          className="w-full border rounded p-1 bg-gray-100"
-                          readOnly
-                        />
-                      </td>
-                      
-                    </tr>
-                    <tr>
                       <td className="border p-2">Performed By</td>
                       <td className="border p-2">
                         <input
@@ -539,30 +526,17 @@ const handleChange = (e) => {
                       </td>
                     </tr>
                     <tr>
-                      
-                       <td className="border p-2 w-2/12">OMEGA DTHM Temp. (°C)</td>
+                      <td className="border p-2">PM Frequency</td>
                       <td className="border p-2">
                         <input
                           type="text"
-                          name="dthm_temp"
-                          value={formData.dthm_temp}
+                          name="frequency"
+                          value={formData.frequency}
                           onChange={handleChange}
                           className="w-full border rounded p-1"
                           required
                         />
                       </td>
-                      <td className="border p-2 w-2/12">OMEGA DTHM Humidity (%RH)</td>
-                      <td className="border p-2">
-                        <input
-                          type="text"
-                          name="dthm_rh"
-                          value={formData.dthm_rh}
-                          onChange={handleChange}
-                          className="w-full border rounded p-1"
-                          required
-                        />
-                      </td>
-                      
                     </tr>
                   </tbody>
                 </table>
@@ -671,6 +645,7 @@ const handleChange = (e) => {
                         </td>
                       </tr>
                     ))}
+                   
                   </tbody>
                 </table>
 
@@ -708,7 +683,7 @@ const handleChange = (e) => {
                        onChange={(e) =>
                          handleVerificationChange(index, "parameter", e.target.value)
                        }
-                        className="border p-1 rounded"
+                        className="border-none p-1 rounded"
                        style={{ width: "350px" }}
                        readOnly
                       />
@@ -722,7 +697,7 @@ const handleChange = (e) => {
                       onChange={(e) =>
                         handleVerificationChange(index, "specs_value", e.target.value)
                       }
-                      className="border p-1 rounded w-full"
+                      className="border-none p-1 rounded w-full"
                       style={{ width: "150px" }}
                       readOnly
                     />
@@ -813,6 +788,31 @@ const handleChange = (e) => {
                      </td>
                     </tr>
                     ))}
+                    <tr>
+                       <td className="border p-2 w-2/12">OMEGA DTHM (REFERRENCE EQUIPMENT)</td>
+                      <td colSpan={3} className="border p-2">
+                        <input
+                          type="text"
+                          name="dthm_temp"
+                          value={formData.dthm_temp}
+                          onChange={handleChange}
+                          className="w-full border rounded p-1"
+                          placeholder="OMEGA DTHM Temp. (°C)"
+                          required
+                        />
+                      </td>
+                      <td colSpan={5} className="border p-2">
+                        <input
+                          type="text"
+                          name="dthm_rh"
+                          value={formData.dthm_rh}
+                          onChange={handleChange}
+                          className="w-full border rounded p-1"
+                          placeholder="OMEGA DTHM Humidity (%RH)"
+                          required
+                        />
+                      </td>
+                    </tr>
                 </tbody>
                 </table>
 
@@ -982,32 +982,26 @@ const handleChange = (e) => {
       <table className="w-full border text-sm text-gray-600 mb-4 rounded-lg">
         <tbody>
           <tr>
-            <td className="border p-2">Control No</td>
-            <td className="border p-2">{viewData?.control_no}</td>
-            <td className="border p-2">Serial</td>
-            <td className="border p-2">{viewData?.serial}</td>
-          </tr>
-          <tr>
             <td className="border p-2">Description</td>
             <td className="border p-2">{viewData?.description}</td>
-            <td className="border p-2">Frequency</td>
-            <td className="border p-2">{viewData?.frequency}</td>
-          </tr>
-          <tr>
             <td className="border p-2">PM Date</td>
             <td className="border p-2">{viewData?.pm_date}</td>
-            <td className="border p-2">PM Due</td>
+          </tr>
+          <tr>
+             <td className="border p-2">Control No</td>
+            <td className="border p-2">{viewData?.control_no}</td>
+             <td className="border p-2">PM Due</td>
             <td className="border p-2">{viewData?.pm_due}</td>
           </tr>
           <tr>
+            <td className="border p-2">Serial</td>
+            <td className="border p-2">{viewData?.serial}</td>
             <td className="border p-2">Performed By</td>
             <td className="border p-2">{viewData?.performed_by}</td>
           </tr>
           <tr>
-            <td className="border p-2">OMEGA DTHM Temp. (°C)</td>
-            <td className="border p-2">{viewData?.dthm_temp}</td>
-            <td className="border p-2">OMEGA DTHM Humidity (%RH)</td>
-            <td className="border p-2">{viewData?.dthm_rh}</td>
+            <td className="border p-2">Frequency</td>
+            <td className="border p-2">{viewData?.frequency}</td>
           </tr>
            <tr>
             <td className="border p-2">Tech Verifier</td>
@@ -1050,7 +1044,7 @@ const handleChange = (e) => {
                 <input 
                  type="checkbox" 
                   checked={row.compliance === 1} 
-                  className="rounded-full cursor-not-allowed checked:bg-gray-400 checked:border-green-500 "
+                  className="rounded-full cursor-not-allowed checked:bg-blue-400 checked:border-green-800 "
                   readOnly 
                 />
               </td>
@@ -1096,6 +1090,11 @@ const handleChange = (e) => {
               <td className="border p-2">{row.trial3_max}</td>
             </tr>
           ))}
+          <tr>
+            <td className="border p-2">OMEGA DTHM (REFERRENCE EQUIPMENT)</td>
+            <td colSpan={3} className="border p-2">{viewData?.dthm_temp} °C</td>
+            <td colSpan={5} className="border p-2">{viewData?.dthm_rh} %RH</td>
+          </tr>
         </tbody>
       </table>
 

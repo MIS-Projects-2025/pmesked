@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Dthm;
 use Inertia\Inertia;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class DthmController extends Controller
 {
@@ -73,5 +74,19 @@ class DthmController extends Controller
         //     'message' => 'QA verification completed.',
         // ]);
         return redirect()->back()->with('success', 'Calibration Report saved successfully!');
+    }
+
+    public function generatePdf($id)
+    {
+        // ✅ Get the calibration record
+        $record = Dthm::findOrFail($id);
+
+        // ✅ Pass data to the PDF view
+        $pdf = Pdf::loadView('pdf.dthm', [
+            'record' => $record
+        ])->setPaper('A4', 'portrait');
+
+        // ✅ Output (download or stream)
+        return $pdf->stream('Thermohygrometer_Calibration_' . $record->control_no . '.pdf');
     }
 }

@@ -19,7 +19,7 @@ class AuthenticationController extends Controller
             ->first();
 
 
-        $isAdmin = DB::table('admin')
+        $isAdmin = DB::connection('mysql')->table('admin')
             ->where('emp_id', $currentUser->emp_id)
             ->first();
 

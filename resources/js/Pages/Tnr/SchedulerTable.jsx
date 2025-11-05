@@ -282,7 +282,7 @@ if (techTitles.includes(empData.emp_jobtitle)) {
     onSuccess: () => {
       alert("✅ PM Scheduler created successfully!");
       setShowModal(false);
-      window.location.reload();
+      router.visit(route("tnr.schedulerTable"));
     },
     onError: () => {
       alert("❌ Failed to save scheduler. Please check your inputs.");
@@ -403,6 +403,49 @@ const handleRemoveRow = () => {
   }
 };
 
+const [isAllChecked1, setIsAllChecked1] = useState(false);
+const [isAllChecked2, setIsAllChecked2] = useState(false);
+
+const handleCheckAll = (e, complianceField) => {
+  const checked = e.target.checked;
+
+  if (complianceField === "compliance1") {
+    setIsAllChecked1(checked);
+  } else {
+    setIsAllChecked2(checked);
+  }
+
+  const updatedAnswers = { ...answers };
+
+  selectedChecklist.forEach((row) => {
+    // ✅ Apply only to valid activities (not N/A, not empty, not null)
+    if (
+      complianceField === "compliance1" &&
+      row.activity_1 &&
+      row.activity_1 !== "N/A"
+    ) {
+      updatedAnswers[row.id] = {
+        ...updatedAnswers[row.id],
+        compliance1: checked ? 1 : 0,
+      };
+    }
+
+    if (
+      complianceField === "compliance2" &&
+      row.activity_2 &&
+      row.activity_2 !== "N/A"
+    ) {
+      updatedAnswers[row.id] = {
+        ...updatedAnswers[row.id],
+        compliance2: checked ? 1 : 0,
+      };
+    }
+  });
+
+  setAnswers(updatedAnswers);
+};
+
+
 
   return (
     <AuthenticatedLayout>
@@ -461,19 +504,6 @@ const handleRemoveRow = () => {
               <div className="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block font-semibold text-gray-500">Machine</label>
-                  {/* <select
-                    className="border rounded w-full text-gray-500"
-                    value={formData.machine}
-                    onChange={handleMachineChange}
-                    required
-                  >
-                    <option value="">Select here...</option>
-                    {machines.map((m, i) => (
-                      <option key={i} value={m.machine_num}>
-                        {m.machine_num}
-                      </option>
-                    ))}
-                  </select> */}
 
                   <input
   list="machineList"
@@ -625,31 +655,51 @@ const handleRemoveRow = () => {
                   </h3>
                   <div className="overflow-x-auto">
                     <table className="table-auto w-full text-sm border-collapse border border-gray-300">
-                      <thead className="bg-gray-200 sticky top-0 z-10">
-                        <tr className="bg-gradient-to-r from-gray-600 to-black text-white">
-                          <th rowSpan="2" className="border border-gray-300 px-2 py-1">ASSY Item</th>
-                          <th rowSpan="2" className="border border-gray-300 px-2 py-1">Description</th>
-                          <th rowSpan="2"  className="border border-gray-300 px-2 py-1">Requirement</th>
-                          <th colSpan="3" className="border border-gray-300 px-2 py-1">First Cycle</th>
-                          <th colSpan="3" className="border border-gray-300 px-2 py-1">Second Cycle</th>
-                        </tr>
-                        <tr className="bg-gray-500">
-                          <th className="border border-gray-300 px-2 py-1">Activity</th>
-                          <th className="border border-gray-300 px-2 py-1">Compliance</th>
-                          <th className="border border-gray-300 px-2 py-1">Remarks</th>
-                          <th className="border border-gray-300 px-2 py-1">Activity</th>
-                          <th className="border border-gray-300 px-2 py-1">Compliance</th>
-                          <th className="border border-gray-300 px-2 py-1">Remarks</th>
-                          </tr>
-                      </thead>
+                     <thead className="bg-gray-200 sticky top-0 z-10">
+  <tr className="bg-gradient-to-r from-gray-600 to-black text-white">
+    <th rowSpan="2" className="border border-gray-300 px-2 py-1">ASSY Item</th>
+    <th rowSpan="2" className="border border-gray-300 px-2 py-1">Description</th>
+    <th rowSpan="2" className="border border-gray-300 px-2 py-1">Requirement</th>
+    <th colSpan="3" className="border border-gray-300 px-2 py-1">First Cycle</th>
+    <th colSpan="3" className="border border-gray-300 px-2 py-1">Second Cycle</th>
+  </tr>
+  <tr className="bg-gray-500">
+    <th className="border border-gray-300 px-2 py-1">Activity</th>
+    <th className="border border-gray-300 px-2 py-1 text-center">
+      <input
+        type="checkbox"
+        checked={isAllChecked1}
+        onChange={(e) => handleCheckAll(e, "compliance1")}
+        className="w-5 h-5"
+        title="Check all First Cycle"
+      />
+    </th>
+    <th className="border border-gray-300 px-2 py-1">Remarks</th>
+
+    <th className="border border-gray-300 px-2 py-1">Activity</th>
+    <th className="border border-gray-300 px-2 py-1 text-center">
+      <input
+        type="checkbox"
+        checked={isAllChecked2}
+        onChange={(e) => handleCheckAll(e, "compliance2")}
+        className="w-5 h-5"
+        title="Check all Second Cycle"
+      />
+    </th>
+    <th className="border border-gray-300 px-2 py-1">Remarks</th>
+  </tr>
+</thead>
+
                       <tbody>
                         {selectedChecklist.map((row) => (
                           <tr key={row.id} className="hover:bg-gray-400 hover:text-white text-gray-700">
                             <td className="border border-gray-300 px-2 py-1">{row.assy_item}</td>
                             <td className="border border-gray-300 px-2 py-1">{row.description}</td>
                             <td className="border border-gray-300 px-2 py-1">{row.requirements}</td>
-                            <td className="border border-gray-300 px-2 py-1">{row.activity_1}</td>
-                            <td className="text-center">
+                            {(row.activity_1 && row.activity_1 !== "N/A") ? (
+                            <>
+                            <td className="text-center border border-gray-300 px-2 py-1">{row.activity_1}</td>
+                            <td className="text-center border border-gray-300 px-2 py-1">
                               <input
                                 type="checkbox"
                                 checked={!!answers[row.id]?.compliance1}
@@ -664,7 +714,7 @@ const handleRemoveRow = () => {
                                 className="w-5 h-5 mx-auto"
                               />
                             </td>
-                            <td>
+                            <td className="text-center border border-gray-300 px-2 py-1">
                               <input
                                 type="text"
                                 value={answers[row.id]?.remarks1 || ""}
@@ -678,8 +728,19 @@ const handleRemoveRow = () => {
                                  className="border rounded w-full border border-gray-300 px-2 py-1 text-gray-700"
                               />
                             </td>
-                            <td>{row.activity_2}</td>
-                            <td className="text-center">
+                              </>
+                              ) : (
+                               <>
+                                <td className="bg-blue-100"></td>
+                                <td className="bg-blue-100"></td>
+                                <td className="bg-blue-100"></td>
+                               </>
+                              )}
+
+                              {(row.activity_2 && row.activity_2 !== "N/A") ? (
+                            <>
+                           <td className="text-center border border-gray-300 px-2 py-1">{row.activity_2}</td>
+                            <td className="text-center border border-gray-300 px-2 py-1">
                               <input
                                 type="checkbox"
                                 checked={!!answers[row.id]?.compliance2}
@@ -693,7 +754,7 @@ const handleRemoveRow = () => {
                                 className="w-5 h-5 mx-auto"
                               />
                             </td>
-                            <td>
+                            <td className="text-center border border-gray-300 px-2 py-1">
                               <input
                                 type="text"
                                 value={answers[row.id]?.remarks2 || ""}
@@ -707,6 +768,14 @@ const handleRemoveRow = () => {
                                  className="border rounded w-full border border-gray-300 px-2 py-1 text-gray-700"
                               />
                             </td>
+                            </>
+                              ) : (
+                               <>
+                                <td className="bg-blue-100"></td>
+                                 <td className="bg-blue-100"></td>
+                                 <td className="bg-blue-100"></td>
+                               </>
+                              )}
                           </tr>
                         ))}
                       </tbody>
@@ -1006,16 +1075,36 @@ const handleRemoveRow = () => {
                       <td className="border border-gray-300 px-2 py-1">{ans.assy_item}</td>
                       <td className="border border-gray-300 px-2 py-1">{ans.description}</td>
                       <td className="border border-gray-300 px-2 py-1">{ans.requirements}</td>
+                      {(ans.activity_1 && ans.activity_1 !== "N/A") ? (
+                            <>
                       <td className="border border-gray-300 px-2 py-1">{ans.activity_1}</td>
                       <td className="border border-gray-300 px-2 py-1 text-center">
                         <input type="checkbox" checked={true} readOnly className="h-4 w-4 accent-green-600 rounded-full" />
                       </td>
                       <td className="border border-gray-300 px-2 py-1">{ans.remarks1}</td>
+                            </>
+                              ) : (
+                               <>
+                                <td className="bg-blue-100"></td>
+                                 <td className="bg-blue-100"></td>
+                                 <td className="bg-blue-100"></td>
+                               </>
+                              )}
+                               {(ans.activity_2 && ans.activity_2 !== "N/A") ? (
+                                <>
                       <td className="border border-gray-300 px-2 py-1">{ans.activity_2}</td>
                       <td className="border border-gray-300 px-2 py-1 text-center">
                         <input type="checkbox" checked={ans.compliance2 == 1} readOnly className="h-4 w-4 accent-green-600 rounded-full" />
                       </td>
                       <td className="border border-gray-300 px-2 py-1">{ans.remarks2}</td>
+                       </>
+                              ) : (
+                               <>
+                                <td className="bg-blue-100"></td>
+                                 <td className="bg-blue-100"></td>
+                                 <td className="bg-blue-100"></td>
+                               </>
+                              )}
                     </tr>
                   ))}
                 </tbody>

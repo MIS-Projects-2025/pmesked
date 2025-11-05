@@ -2,6 +2,26 @@
 
 use Illuminate\Support\Str;
 
+if (!function_exists('getDbHost')) {
+    function getDbHost(array $hosts)
+    {
+        $ip = gethostbyname(gethostname());
+        if (str_starts_with($ip, '172')) return $hosts['172'] ?? '127.0.0.1';
+        if (str_starts_with($ip, '192')) return $hosts['192'] ?? '127.0.0.1';
+        return $hosts['local'] ?? '127.0.0.1';
+    }
+}
+
+if (!function_exists('getDbCredential')) {
+    function getDbCredential(array $usernames, array $passwords)
+    {
+        $ip = gethostbyname(gethostname());
+        if (str_starts_with($ip, '172')) return [$usernames['172'], $passwords['172']];
+        if (str_starts_with($ip, '192')) return [$usernames['192'], $passwords['192']];
+        return [$usernames['local'], $passwords['local']];
+    }
+}
+
 return [
 
     /*
@@ -16,7 +36,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => env('DB_CONNECTION', 'mysql'),
 
     /*
     |--------------------------------------------------------------------------
@@ -31,28 +51,83 @@ return [
 
     'connections' => [
 
-        'sqlite' => [
-            'driver' => 'sqlite',
-            'url' => env('DB_URL'),
-            'database' => env('DB_DATABASE', database_path('database.sqlite')),
-            'prefix' => '',
-            'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
-            'busy_timeout' => null,
-            'journal_mode' => null,
-            'synchronous' => null,
-        ],
+        // 'sqlite' => [
+        //     'driver' => 'sqlite',
+        //     'url' => env('DB_URL'),
+        //     'database' => env('DB_DATABASE', database_path('database.sqlite')),
+        //     'prefix' => '',
+        //     'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
+        //     'busy_timeout' => null,
+        //     'journal_mode' => null,
+        //     'synchronous' => null,
+        // ],
 
-        'mysql' => [
+        // 'mysql' => [
+        //     'driver' => 'mysql',
+        //     'url' => env('DB_URL'),
+        //     'host' => env('DB_HOST', '127.0.0.1'),
+        //     'port' => env('DB_PORT', '3306'),
+        //     'database' => env('DB_DATABASE', 'laravel'),
+        //     'username' => env('DB_USERNAME', 'root'),
+        //     'password' => env('DB_PASSWORD', ''),
+        //     'unix_socket' => env('DB_SOCKET', ''),
+        //     'charset' => env('DB_CHARSET', 'utf8mb4'),
+        //     'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
+        //     'prefix' => '',
+        //     'prefix_indexes' => true,
+        //     'strict' => true,
+        //     'engine' => null,
+        //     'options' => extension_loaded('pdo_mysql') ? array_filter([
+        //         PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+        //     ]) : [],
+        // ],
+
+        'mysql' => (function () {
+            $host = getDbHost([
+                '172' => env('APP_DB_HOST_172'),
+                '192' => env('APP_DB_HOST_192'),
+                'local' => env('APP_DB_HOST_LOCAL'),
+            ]);
+
+            [$username, $password] = getDbCredential(
+                [
+                    '172' => env('APP_DB_USERNAME_172'),
+                    '192' => env('APP_DB_USERNAME_192'),
+                    'local' => env('APP_DB_USERNAME_LOCAL'),
+                ],
+                [
+                    '172' => env('APP_DB_PASSWORD_172'),
+                    '192' => env('APP_DB_PASSWORD_192'),
+                    'local' => env('APP_DB_PASSWORD_LOCAL'),
+                ]
+            );
+
+            return [
+                'driver' => 'mysql',
+                'host' => $host,
+                'port' => env('APP_DB_PORT', '3306'),
+                'database' => env('APP_DB_DATABASE', 'laravel'),
+                'username' => $username,
+                'password' => $password,
+                'charset' => 'utf8mb4',
+                'collation' => 'utf8mb4_unicode_ci',
+                'prefix' => '',
+                'strict' => true,
+                'engine' => null,
+            ];
+        })(),
+
+        'server172' => [
             'driver' => 'mysql',
-            'url' => env('DB_URL'),
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '3306'),
-            'database' => env('DB_DATABASE', 'laravel'),
-            'username' => env('DB_USERNAME', 'root'),
-            'password' => env('DB_PASSWORD', ''),
-            'unix_socket' => env('DB_SOCKET', ''),
-            'charset' => env('DB_CHARSET', 'utf8mb4'),
-            'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'url' => env('XDB_URL'),
+            'host' => env('XDB_HOST', '127.0.0.1'),
+            'port' => env('XDB_PORT', '3306'),
+            'database' => env('XDB_DATABASE', 'laravel'),
+            'username' => env('XDB_USERNAME', 'root'),
+            'password' => env('XDB_PASSWORD', ''),
+            'unix_socket' => env('XDB_SOCKET', ''),
+            'charset' => env('XDB_CHARSET', 'utf8mb4'),
+            'collation' => env('XDB_COLLATION', 'utf8mb4_unicode_ci'),
             'prefix' => '',
             'prefix_indexes' => true,
             'strict' => true,
@@ -122,25 +197,59 @@ return [
             ]) : [],
         ],
 
-        'authify' => [
-            'driver' => 'mysql',
-            'url' => env('ADB_URL'),
-            'host' => env('ADB_HOST', '127.0.0.1'),
-            'port' => env('ADB_PORT', '3306'),
-            'database' => env('ADB_DATABASE', 'laravel'),
-            'username' => env('ADB_USERNAME', 'root'),
-            'password' => env('ADB_PASSWORD', ''),
-            'unix_socket' => env('ADB_SOCKET', ''),
-            'charset' => env('ADB_CHARSET', 'utf8mb4'),
-            'collation' => env('ADB_COLLATION', 'utf8mb4_unicode_ci'),
-            'prefix' => '',
-            'prefix_indexes' => true,
-            'strict' => true,
-            'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
-        ],
+        // 'authify' => [
+        //     'driver' => 'mysql',
+        //     'url' => env('ADB_URL'),
+        //     'host' => env('ADB_HOST', '127.0.0.1'),
+        //     'port' => env('ADB_PORT', '3306'),
+        //     'database' => env('ADB_DATABASE', 'laravel'),
+        //     'username' => env('ADB_USERNAME', 'root'),
+        //     'password' => env('ADB_PASSWORD', ''),
+        //     'unix_socket' => env('ADB_SOCKET', ''),
+        //     'charset' => env('ADB_CHARSET', 'utf8mb4'),
+        //     'collation' => env('ADB_COLLATION', 'utf8mb4_unicode_ci'),
+        //     'prefix' => '',
+        //     'prefix_indexes' => true,
+        //     'strict' => true,
+        //     'engine' => null,
+        //     'options' => extension_loaded('pdo_mysql') ? array_filter([
+        //         PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+        //     ]) : [],
+        // ],
+
+        'authify' => (function () {
+            $host = getDbHost([
+                '172' => env('AUTH_DB_HOST_172'),
+                '192' => env('AUTH_DB_HOST_192'),
+                'local' => env('AUTH_DB_HOST_LOCAL'),
+            ]);
+
+            [$username, $password] = getDbCredential(
+                [
+                    '172' => env('AUTH_DB_USERNAME_172'),
+                    '192' => env('AUTH_DB_USERNAME_192'),
+                    'local' => env('AUTH_DB_USERNAME_LOCAL'),
+                ],
+                [
+                    '172' => env('AUTH_DB_PASSWORD_172'),
+                    '192' => env('AUTH_DB_PASSWORD_192'),
+                    'local' => env('AUTH_DB_PASSWORD_LOCAL'),
+                ]
+            );
+
+            return [
+                'driver' => 'mysql',
+                'host' => $host,
+                'port' => env('AUTH_DB_PORT', '3306'),
+                'database' => env('AUTH_DB_DATABASE'),
+                'username' => $username,
+                'password' => $password,
+                'charset' => 'utf8mb4',
+                'collation' => 'utf8mb4_unicode_ci',
+                'prefix' => '',
+                'strict' => true,
+            ];
+        })(),
 
         // 'mariadb' => [
         //     'driver' => 'mariadb',

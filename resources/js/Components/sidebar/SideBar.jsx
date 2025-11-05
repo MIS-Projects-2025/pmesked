@@ -27,7 +27,7 @@ export default function Sidebar() {
         .join(" ");
 
     return (
-        <div className="flex">
+        <div className="flex ">
             {/* Mobile Hamburger */}
             <button
                 className="absolute z-50 p-2 rounded top-4 right-4 md:hidden"
@@ -51,7 +51,7 @@ export default function Sidebar() {
             {/* Sidebar */}
             <div
                 className={`
-                    fixed md:relative top-0 left-0 z-40 transition-transform transform
+                    fixed md:relative top-0 left-0 z-40 transition-transform transform bg-gray-500
                     ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
                     md:translate-x-0
                     md:flex
@@ -72,7 +72,7 @@ export default function Sidebar() {
                     href={route("dashboard")}
                     className="flex items-center pl-[10px] text-lg font-bold"
                 >
-                    <i className="far fa-calendar-check fa-2x"></i>
+                    <i className="fa-solid fa-toolbox"></i>
                     <p className="pt-[2px] pl-1">{formattedAppName}</p>
                 </Link>
 

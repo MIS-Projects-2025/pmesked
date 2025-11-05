@@ -46,52 +46,39 @@
     {{-- 🔹 Report Summary --}}
     <table>
         <tr>
-            <th>Report No.</th>
-            <td>{{ $report->report_no ?? '' }}</td>
+
             <th>Equipment</th>
             <td>{{ $report->equipment ?? '' }}</td>
+            <th>Manufacturer</th>
+            <td>{{ $report->manufacturer ?? '' }}</td>
+            <th>Control No.</th>
+            <td>{{ $report->control_no ?? '' }}</td>
+            <th>Report No.</th>
+            <td>{{ $report->report_no ?? '' }}</td>
         </tr>
         <tr>
             <th>Model</th>
             <td>{{ $report->model ?? '' }}</td>
-            <th>Manufacturer</th>
-            <td>{{ $report->manufacturer ?? '' }}</td>
-        </tr>
-        <tr>
             <th>Serial</th>
             <td>{{ $report->serial ?? '' }}</td>
-            <th>Control No.</th>
-            <td>{{ $report->control_no ?? '' }}</td>
+            <th>Cal Spec No.</th>
+            <td>{{ $report->specs ?? '' }}</td>
+            <th>Calibration Interval</th>
+            <td>{{ $report->cal_interval ?? '' }}</td>
         </tr>
         <tr>
             <th>Temperature</th>
             <td>{{ $report->temperature ?? '' }}</td>
-            <th>Relative Humidity</th>
-            <td>{{ $report->relative_humidity ?? '' }}</td>
-        </tr>
-        <tr>
             <th>Calibration Date</th>
             <td>{{ $report->calibration_date ?? '' }}</td>
-            </td>
-            <th>Calibration Due</th>
-            <td>{{ $report->calibration_due ?? '' }}</td>
-        </tr>
-        <tr>
-            <th>Calibration Interval</th>
-            <td>{{ $report->cal_interval ?? '' }}</td>
-            <th>Specs</th>
-            <td>{{ $report->specs ?? '' }}</td>
-        </tr>
-        <tr>
             <th>Calibrated By</th>
-            <td>{{ $report->performed_by ?? '' }}</td>
-            <th>Date Calibrated</th>
-            <td>
-                {{ !empty($report['created_at']) 
-        ? \Carbon\Carbon::parse($report['created_at'])->format('m/d/Y h:i A') 
-        : '' }}
-            </td>
-
+            <td colspan="3">{{ $report->performed_by ?? '' }}</td>
+        </tr>
+        <tr>
+            <th>Relative Humidity</th>
+            <td>{{ $report->relative_humidity ?? '' }}</td>
+            <th>Calibration Due</th>
+            <td colspan="5">{{ $report->calibration_due ?? '' }}</td>
         </tr>
         <tr>
             <th>Reviewed By</th>
@@ -102,9 +89,6 @@
         ? \Carbon\Carbon::parse($report['review_date'])->format('m/d/Y h:i A') 
         : '' }}
             </td>
-
-        </tr>
-        <tr>
             <th>QA Sign</th>
             <td>{{ $report->qa_sign ?? '' }}</td>
             <th>QA Sign Date</th>
@@ -113,6 +97,7 @@
         ? \Carbon\Carbon::parse($report['qa_sign_date'])->format('m/d/Y h:i A') 
         : '' }}
             </td>
+
         </tr>
     </table>
 

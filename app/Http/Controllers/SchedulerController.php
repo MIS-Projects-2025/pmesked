@@ -32,7 +32,7 @@ class SchedulerController extends Controller
         }
 
         // 🔹 Compute progress_value sa SQL
-        $progress_value = DB::raw("ROUND((
+        $progress_value = DB::connection('mysql')->raw("ROUND((
         (CASE WHEN responsible_person IS NOT NULL AND TRIM(responsible_person) != '' THEN 1 ELSE 0 END) +
         (CASE WHEN qa_ack IS NOT NULL AND TRIM(qa_ack) != '' THEN 1 ELSE 0 END) +
         (CASE WHEN senior_ee_ack IS NOT NULL AND TRIM(senior_ee_ack) != '' THEN 1 ELSE 0 END) +

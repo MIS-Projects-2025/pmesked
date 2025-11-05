@@ -32,7 +32,7 @@ class DashboardController extends Controller
     public function index()
     {
 
-        // echo base_url(); // always returns correct dynamic URL
+
 
         // 🔹 Compute current workweek number
         $baseDate = Carbon::create(2024, 11, 3)->startOfDay();
@@ -40,26 +40,26 @@ class DashboardController extends Controller
         // dd(DB::connection()->getName());
 
         // 🔹 Scheduler (TNR PM Checklists)
-        $dueTodayReports = DB::connection('mysql')->table('scheduler_tbl')
+        $dueTodayReports = DB::table('scheduler_tbl')
             ->whereRaw("CAST(SUBSTRING(pm_due, 3) AS UNSIGNED) = ?", [$currentWeek]) // next WW
             ->get();
 
-        $overdueReports = DB::connection('mysql')->table('scheduler_tbl')
+        $overdueReports = DB::table('scheduler_tbl')
             ->whereRaw("CAST(SUBSTRING(pm_due, 3) AS UNSIGNED) < ?", [$currentWeek]) // before current WW
             ->get();
 
-        $completedSchedulers = DB::connection('mysql')->table('scheduler_tbl')
+        $completedSchedulers = DB::table('scheduler_tbl')
             ->where('progress_value', 100)
             ->get();
 
         // 🔹 Calibration Reports
-        $calibrationReportsCount = DB::connection('mysql')->table('calibration_report_list')
+        $calibrationReportsCount = DB::table('calibration_report_list')
             ->whereBetween('created_at', [
                 today()->startOfDay(),
                 today()->endOfDay()
             ])
             ->count();
-        $latestReports = DB::connection('mysql')->table('calibration_report_list')
+        $latestReports = DB::table('calibration_report_list')
             ->orderByDesc('created_at')
             ->whereBetween('created_at', [
                 today()->startOfDay(),
@@ -68,21 +68,21 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
-        $QAforApprovalcalReportsCount = DB::connection('mysql')->table('calibration_report_list')
+        $QAforApprovalcalReportsCount = DB::table('calibration_report_list')
             ->where(function ($q) {
                 $q->whereNull('qa_sign')
                     ->orWhereRaw("TRIM(qa_sign) = ''");
             })
             ->count();
 
-        $EEforApprovalcalReportsCount = DB::connection('mysql')->table('calibration_report_list')
+        $EEforApprovalcalReportsCount = DB::table('calibration_report_list')
             ->where(function ($q) {
                 $q->whereNull('review_by')
                     ->orWhereRaw("TRIM(review_by) = ''");
             })
             ->count();
 
-        $seniortechAck = DB::connection('mysql')->table('scheduler_tbl')
+        $seniortechAck = DB::table('scheduler_tbl')
             ->where(function ($q) {
                 $q->whereNull('tech_ack')
                     ->orWhereRaw("TRIM(tech_ack) = ''");
@@ -90,19 +90,19 @@ class DashboardController extends Controller
             ->count();
 
 
-        $esdAck = DB::connection('mysql')->table('scheduler_tbl')
+        $esdAck = DB::table('scheduler_tbl')
             ->whereNull('qa_ack')
             ->orWhere('qa_ack', '')
             ->count();
 
-        $senioreeAck = DB::connection('mysql')->table('scheduler_tbl')
+        $senioreeAck = DB::table('scheduler_tbl')
             ->whereNull('senior_ee_ack')
             ->orWhere('senior_ee_ack', '')
             ->count();
 
 
         // 🔹 Calibration reports grouped per month (for chart)
-        $calibrationReportsByMonth = DB::connection('mysql')->table('calibration_report_list')
+        $calibrationReportsByMonth = DB::table('calibration_report_list')
             ->selectRaw('MONTHNAME(calibration_date) as month, COUNT(*) as count')
             ->groupBy('month')
             ->get();
@@ -112,13 +112,13 @@ class DashboardController extends Controller
         // 🔹 Checklist status (for bar chart)
         $checklistStatus = [
             ['name' => 'Completed', 'value' => $completedSchedulers->count()],
-            ['name' => 'Pending', 'value' => DB::connection('mysql')->table('scheduler_tbl')->where('progress_value', '<', 100)->count()],
+            ['name' => 'Pending', 'value' => DB::table('scheduler_tbl')->where('progress_value', '<', 100)->count()],
         ];
 
 
         //para sa chart ng verifier tnr scheduler
         //technician verifier
-        $eeCalforApproval = DB::connection('mysql')->table('calibration_report_list_non_tnr')
+        $eeCalforApproval = DB::table('calibration_report_list_non_tnr')
             ->whereNull('review_by')
             ->orWhere('review_by', '')
             ->count();
@@ -127,7 +127,7 @@ class DashboardController extends Controller
             ['name' => 'For Approval', 'value' => $eeCalforApproval],
         ];
 
-        $qaCalforApproval = DB::connection('mysql')->table('calibration_report_list_non_tnr')
+        $qaCalforApproval = DB::table('calibration_report_list_non_tnr')
             ->whereNull('qa_sign')
             ->orWhere('qa_sign', '')
             ->count();
@@ -136,7 +136,7 @@ class DashboardController extends Controller
             ['name' => 'For Approval', 'value' => $qaCalforApproval],
         ];
 
-        $eeforApproval = DB::connection('mysql')->table('scheduler_tbl')
+        $eeforApproval = DB::table('scheduler_tbl')
             ->whereNull('senior_ee_ack')
             ->orWhere('senior_ee_ack', '')
             ->count();
@@ -146,7 +146,7 @@ class DashboardController extends Controller
         ];
 
         //technician verifier
-        $qaforApproval = DB::connection('mysql')->table('scheduler_tbl')
+        $qaforApproval = DB::table('scheduler_tbl')
             ->whereNull('qa_ack')
             ->orWhere('qa_ack', '')
             ->count();
@@ -191,7 +191,7 @@ class DashboardController extends Controller
 
     public function extend($id)
     {
-        $scheduler = DB::connection('mysql')->table('scheduler_tbl')->where('id', $id)->first();
+        $scheduler = DB::table('scheduler_tbl')->where('id', $id)->first();
 
         if (!$scheduler) {
             abort(404, 'Scheduler not found');

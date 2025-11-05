@@ -282,7 +282,7 @@ export default function NavLinks() {
                     />
             </div>
             )}
-             {["1088", "1788"].includes(emp_data?.emp_id) && (
+             {["1088", "1788", "1638"].includes(emp_data?.emp_id) && (
                 <div>
                     <SidebarLink
                         href={route("non-tnr-items.index")}

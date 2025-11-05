@@ -203,6 +203,10 @@ Route::prefix('calibration')->group(function () {
     Route::post('/dthm/qa-verify', [DthmController::class, 'qaVerify'])->name('calibration.dthm.qa.verify');
 });
 
+Route::get('/calibration/dthm/pdf/{id}', [DthmController::class, 'generatePdf'])
+    ->name('calibration.dthm.pdf');
+
+
 
 
 // fallback

@@ -464,7 +464,7 @@ const handleVerifyReviewer = () => {
 
                 <div>
                   <label className="block font-semibold text-gray-500">
-                    CN No.
+                    Control No.
                   </label>
                   <input
                     name="control_no"
@@ -475,22 +475,89 @@ const handleVerifyReviewer = () => {
                     readOnly
                   />
                 </div>
+                <div>
+                  <label className="block font-semibold text-gray-500">
+                    Report No. <small className="text-red-500 text-2xl">*</small>
+                  </label>
+                  <input
+                    name="report_no"
+                    value={data.report_no}
+                    onChange={(e) => setData("report_no", e.target.value)}
+                    placeholder="XX..."
+                    className="border p-2 rounded w-full text-gray-600"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-500">
+                    Model No.
+                  </label>
+                  <input
+                    name="model"
+                    value={data.model}
+                    onChange={(e) => setData("model", e.target.value)}
+                    placeholder="Model"
+                    className="border p-2 rounded w-full text-gray-600"
+                    readOnly
+                  />
+                </div>
 
                 <div>
                   <label className="block font-semibold text-gray-500">
-                    Perform By
+                    Serial No.
                   </label>
-                  <div className="relative">
-                    <input
-                      name="performed_by"
-                      value={data.performed_by}
-                      readOnly
-                      className="border p-2 rounded bg-gray-100 text-sky-400 pl-8 w-full"
-                    />
-                    <i className="fas fa-user-gear absolute left-2 top-1/2 transform -translate-y-1/2 text-sky-300"></i>
-                  </div>
+                  <input
+                    name="serial"
+                    value={data.serial}
+                    onChange={(e) => setData("serial", e.target.value)}
+                    placeholder="Serial"
+                    className="border p-2 rounded w-full text-gray-600"
+                    readOnly
+                  />
+                </div>
+                
+                <div>
+                  <label className="block font-semibold text-gray-500">
+                    Cal. Spec No. <small className="text-red-500 text-2xl">*</small>
+                  </label>
+                  <input
+                    name="specs"
+                    value={data.specs}
+                    onChange={(e) => setData("specs", e.target.value)}
+                    placeholder="TFPXX-XXX..."
+                    className="border p-2 rounded w-full text-gray-600"
+                    required
+                  />
                 </div>
 
+                
+
+                <div>
+                  <label className="block font-semibold text-gray-500">
+                    Cal Interval <small className="text-red-500 text-2xl">*</small>
+                  </label>
+                  <input
+                    name="cal_interval"
+                    value={data.cal_interval}
+                    onChange={(e) => setData("cal_interval", e.target.value)}
+                    placeholder="Quarterly..."
+                    className="border p-2 rounded w-full text-gray-600"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-500">
+                    Temperature (°C) <small className="text-red-500 text-2xl">*</small>
+                  </label>
+                  <input
+                    name="temperature"
+                    value={data.temperature}
+                    onChange={(e) => setData("temperature", e.target.value)}
+                    placeholder="XX.X... °C"
+                    className="border p-2 rounded w-full text-gray-600"
+                    required
+                  />
+                </div>
                 <div>
                   <label className="block font-semibold text-gray-500">
                     Calibration Date
@@ -506,7 +573,35 @@ const handleVerifyReviewer = () => {
                     readOnly
                   />
                 </div>
-
+                <div>
+                  <label className="block font-semibold text-gray-500">
+                    Calibrated By
+                  </label>
+                  <div className="relative">
+                    <input
+                      name="performed_by"
+                      value={data.performed_by}
+                      readOnly
+                      className="border p-2 rounded bg-gray-100 text-sky-400 pl-8 w-full"
+                    />
+                    <i className="fas fa-user-gear absolute left-2 top-1/2 transform -translate-y-1/2 text-sky-300"></i>
+                  </div>
+                </div>
+                </div>
+                <div className="grid grid-cols-4 gap-4 mb-6 mt-4">
+                <div>
+                  <label className="block font-semibold text-gray-500">
+                    Relative Humidity (%) <small className="text-red-500 text-2xl">*</small>
+                  </label>
+                  <input
+                    name="relative_humidity"
+                    value={data.relative_humidity}
+                    onChange={(e) => setData("relative_humidity", e.target.value)}
+                    placeholder="XX.X... % "
+                    className="border p-2 rounded w-full text-gray-600"
+                    required
+                  />
+                </div>
                 <div>
                   <label className="block font-semibold text-gray-500">
                     Calibration Due
@@ -518,104 +613,6 @@ const handleVerifyReviewer = () => {
                     onChange={(e) => setData("calibration_due", e.target.value)}
                     className="border p-2 rounded w-full text-gray-600"
                     readOnly
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-gray-500">
-                    Model
-                  </label>
-                  <input
-                    name="model"
-                    value={data.model}
-                    onChange={(e) => setData("model", e.target.value)}
-                    placeholder="Model"
-                    className="border p-2 rounded w-full text-gray-600"
-                    readOnly
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-gray-500">
-                    Serial
-                  </label>
-                  <input
-                    name="serial"
-                    value={data.serial}
-                    onChange={(e) => setData("serial", e.target.value)}
-                    placeholder="Serial"
-                    className="border p-2 rounded w-full text-gray-600"
-                    readOnly
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-gray-500">
-                    Temperature (°C)
-                  </label>
-                  <input
-                    name="temperature"
-                    value={data.temperature}
-                    onChange={(e) => setData("temperature", e.target.value)}
-                    placeholder="XX.X... °C"
-                    className="border p-2 rounded w-full text-gray-600"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-gray-500">
-                    Relative Humidity (%)
-                  </label>
-                  <input
-                    name="relative_humidity"
-                    value={data.relative_humidity}
-                    onChange={(e) => setData("relative_humidity", e.target.value)}
-                    placeholder="XX.X... % "
-                    className="border p-2 rounded w-full text-gray-600"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-gray-500">
-                    Cal. Specs No.
-                  </label>
-                  <input
-                    name="specs"
-                    value={data.specs}
-                    onChange={(e) => setData("specs", e.target.value)}
-                    placeholder="TFPXX-XXX..."
-                    className="border p-2 rounded w-full text-gray-600"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-gray-500">
-                    Report No.
-                  </label>
-                  <input
-                    name="report_no"
-                    value={data.report_no}
-                    onChange={(e) => setData("report_no", e.target.value)}
-                    placeholder="XX..."
-                    className="border p-2 rounded w-full text-gray-600"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-gray-500">
-                    Cal Interval
-                  </label>
-                  <input
-                    name="cal_interval"
-                    value={data.cal_interval}
-                    onChange={(e) => setData("cal_interval", e.target.value)}
-                    placeholder="Quarterly..."
-                    className="border p-2 rounded w-full text-gray-600"
-                    required
                   />
                 </div>
               </div>
@@ -788,38 +785,56 @@ const handleVerifyReviewer = () => {
         )}
     </div>
       {/* Machine info */}
-      <div className="grid grid-cols-4 gap-4 mb-6 mt-4 text-gray-500 border p-4">
-        {[
-          "equipment",
-          "manufacturer",
-          "control_no",
-          "performed_by",
-          "calibration_date",
-          "calibration_due",
-          "model",
-          "serial",
-          "temperature",
-          "relative_humidity",
-          "specs",
-          "report_no",
-          "cal_interval",
-          "review_by",
-          "review_date",
-        ].map((key) => (
-          <div key={key}>
-            <label className="block font-semibold" style={{ textTransform: "capitalize" }}>
-              {key.replace(/_/g, " ")}
-            </label>
-            <input
-              type="text"
-              value={selectedReport[key] || "Wait for Signature..."}
-              readOnly
-              className="border p-2 rounded w-full text-gray-600 bg-gray-100"
-            />
-          </div>
-        ))}
-        
-      </div>
+<div className="grid grid-cols-4 gap-4 mb-6 mt-4 text-gray-500 border p-4">
+  {[
+    "equipment",
+    "manufacturer",
+    "control_no",
+    "report_no",
+    "model",
+    "serial",
+    "specs",
+    "cal_interval",
+    "temperature",
+    "calibration_date",
+    "performed_by",
+  ].map((key) => (
+    <div key={key}>
+      <label className="block font-semibold capitalize">
+        {key.replace(/_/g, " ")}
+      </label>
+      <input
+        type="text"
+        value={selectedReport[key] || "Wait for Signature..."}
+        readOnly
+        className="border p-2 rounded w-full text-gray-600 bg-gray-100"
+      />
+    </div>
+  ))}
+</div>
+
+{/* New line for remaining fields */}
+<div className="grid grid-cols-4 gap-4 text-gray-500 border p-4">
+  {[
+    "relative_humidity",
+    "calibration_due",
+    "review_by",
+    "review_date",
+  ].map((key) => (
+    <div key={key}>
+      <label className="block font-semibold capitalize">
+        {key.replace(/_/g, " ")}
+      </label>
+      <input
+        type="text"
+        value={selectedReport[key] || "Wait for Signature..."}
+        readOnly
+        className="border p-2 rounded w-full text-gray-600 bg-gray-100"
+      />
+    </div>
+  ))}
+</div>
+
 
 
       {/* Calibration Standard Used */}

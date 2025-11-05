@@ -10,7 +10,7 @@ class ChecklistController extends Controller
 {
     public function getByPlatform($platform)
     {
-        $checklists = DB::table('check_list')
+        $checklists = DB::connection('mysql')->table('check_list')
             ->where('platform', $platform) // ✅ dito, 'platform' sa table
             ->get();
 

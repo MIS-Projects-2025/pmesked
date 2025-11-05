@@ -13,7 +13,7 @@ class TnrController extends Controller
      */
     public function fillup($id)
     {
-        $scheduler = DB::table('scheduler_tbl')->where('id', $id)->first();
+        $scheduler = DB::connection('mysql')->table('scheduler_tbl')->where('id', $id)->first();
 
         if (!$scheduler) {
             abort(404, 'Scheduler not found');
@@ -44,7 +44,7 @@ class TnrController extends Controller
      */
     public function updateFillup(Request $request, $id)
     {
-        $scheduler = DB::table('scheduler_tbl')->where('id', $id)->first();
+        $scheduler = DB::connection('mysql')->table('scheduler_tbl')->where('id', $id)->first();
         if (!$scheduler) abort(404, 'Scheduler not found');
 
         $validated = $request->validate([
@@ -88,7 +88,7 @@ class TnrController extends Controller
             'updated_at'         => now(),
         ];
 
-        DB::table('scheduler_tbl')->where('id', $id)->update($updateData);
+        DB::connection('mysql')->table('scheduler_tbl')->where('id', $id)->update($updateData);
 
         return redirect()
             ->route('tnr.schedulerTable')
@@ -97,7 +97,7 @@ class TnrController extends Controller
 
     public function extend($id)
     {
-        $scheduler = DB::table('scheduler_tbl')->where('id', $id)->first();
+        $scheduler = DB::connection('mysql')->table('scheduler_tbl')->where('id', $id)->first();
 
         if (!$scheduler) {
             abort(404, 'Scheduler not found');

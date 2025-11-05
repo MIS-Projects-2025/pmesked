@@ -308,8 +308,20 @@ const dataWithAction = records.data
     <div className="bg-white w-full max-w-5xl rounded-xl shadow-xl p-6">
       <h2 className="text-lg font-semibold mb-4 text-gray-700 flex items-center border-b-2 border-blue-500 pb-2">
        <i className="fas fa-eye text-blue-600 mr-2"></i>
-        View Thermohygrometer Calibration Record
+        View Thermohygrometer Calibration Data Logsheet
       </h2>
+{/* 🧾 View PDF Button */}
+<div className="flex justify-end mb-4">
+  <button
+    type="button"
+    onClick={() =>
+      window.open(route("calibration.dthm.pdf", { id: selectedRecord.id }), "_blank")
+    }
+    className="px-3 py-2 bg-gray-100 text-red-600 rounded shadow hover:bg-red-700 hover:text-white border-2 border-red-600 hover:border-gray-500 flex items-center text-bold"
+  >
+    <i className="fas fa-file-pdf mr-2"></i> View PDF
+  </button>
+  </div>
       <form className="space-y-6">
         {/* General Info */}
         <div className="grid grid-cols-5 gap-4">
@@ -427,27 +439,30 @@ const dataWithAction = records.data
           </div>
         </div>
 
-        {/* Buttons */}
-        <div className="flex justify-end mt-6 gap-2">
-          {/* ✅ QA Verification Button (Visible only to QA roles) */}
-          {isQA && !selectedRecord.qa_sign && (
-            <button
-              type="button"
-              onClick={() => handleQAVerify(selectedRecord.id)}
-              className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-md"
-            >
-              <i className="fas fa-check mr-2"></i> Verify (QA Sign)
-            </button>
-          )}
+       {/* Buttons */}
+<div className="flex justify-end mt-6 gap-2">
+  
 
-          <button
-            type="button"
-            onClick={() => setShowViewModal(false)}
-            className="bg-gray-600 hover:bg-gray-700 text-white px-5 py-2 rounded-md"
-          >
-            <i className="fas fa-times mr-2"></i> Close
-          </button>
-        </div>
+  {/* ✅ QA Verification Button (Visible only to QA roles) */}
+  {isQA && !selectedRecord.qa_sign && (
+    <button
+      type="button"
+      onClick={() => handleQAVerify(selectedRecord.id)}
+      className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-md"
+    >
+      <i className="fas fa-check mr-2"></i> Verify (QA Sign)
+    </button>
+  )}
+
+  <button
+    type="button"
+    onClick={() => setShowViewModal(false)}
+    className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-md"
+  >
+    <i className="fas fa-times"></i> Close
+  </button>
+</div>
+
       </form>
     </div>
   </div>
