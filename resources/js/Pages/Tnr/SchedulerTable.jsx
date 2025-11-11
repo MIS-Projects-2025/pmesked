@@ -28,37 +28,70 @@ export default function SchedulerTable({ tableData, empData, tableFilters, machi
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  // 🔹 Compute Quarter
-  const currentDate = new Date();
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth() + 1;
-  let quarter =
-    month <= 3
-      ? `1Q${String(year).slice(-2)}`
-      : month <= 6
-      ? `2Q${String(year).slice(-2)}`
-      : month <= 9
-      ? `3Q${String(year).slice(-2)}`
-      : `4Q${String(year).slice(-2)}`;
+  // 🔹 Compute Quarter const currentDate = new Date(); const year = currentDate.getFullYear(); const month = currentDate.getMonth() + 1; let quarter = month <= 3 ? 1Q${String(year).slice(-2)} : month <= 6 ? 2Q${String(year).slice(-2)} : month <= 9 ? 3Q${String(year).slice(-2)} : 4Q${String(year).slice(-2)};
 
-  // 🔹 Compute Work Week
-  const getWorkWeek = (date) => {
-    const start = new Date("2024-11-03"); // Base ref WW501
-    const diffMs = date - start;
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const totalWeeks = Math.floor(diffDays / 7);
-    const baseYear = 500;
-    const yearOffset = Math.floor(totalWeeks / 52);
-    const weekInYear = (totalWeeks % 52) + 1;
-    return `WW${baseYear + yearOffset * 100 + weekInYear}`;
-  };
+  // 🔹 Compute Fiscal Quarter (Starting Nov 3, 2024)
+const currentDate = new Date();
+const fiscalStart = new Date('2024-11-03'); // starting point of 1Q25
 
-  // 🔹 Default PM Dates
-  const today = new Date();
-  const pmDateWW = getWorkWeek(today);
-  const dueDate = new Date(today);
-  dueDate.setDate(today.getDate() + 13 * 7);
-  const pmDueWW = getWorkWeek(dueDate);
+// Compute months difference from the start of fiscal cycle
+const diffMonths =
+  (currentDate.getFullYear() - fiscalStart.getFullYear()) * 12 +
+  (currentDate.getMonth() - fiscalStart.getMonth());
+
+// Each quarter = 3 months
+const quarterIndex = Math.floor(diffMonths / 3);
+const quarterNumber = (quarterIndex % 4) + 1;
+
+// Compute which fiscal year we are in
+// Each cycle of 4 quarters → +1 year
+const fiscalYear = 2025 + Math.floor(quarterIndex / 4);
+
+// Format label (e.g., "1Q25", "2Q25", "3Q25", "4Q25", then "1Q26")
+const quarter = `${quarterNumber}Q${String(fiscalYear).slice(-2)}`;
+
+console.log("Current Quarter:", quarter);
+
+
+  // // 🔹 Compute Work Week
+  // const getWorkWeek = (date) => {
+  //   const start = new Date("2024-11-03"); // Base ref WW501
+  //   const diffMs = date - start;
+  //   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  //   const totalWeeks = Math.floor(diffDays / 7);
+  //   const baseYear = 500;
+  //   const yearOffset = Math.floor(totalWeeks / 52);
+  //   const weekInYear = (totalWeeks % 52) + 1;
+  //   return `WW${baseYear + yearOffset * 100 + weekInYear}`;
+  // };
+
+  // // 🔹 Default PM Dates
+  // const today = new Date();
+  // const pmDateWW = getWorkWeek(today);
+  // const dueDate = new Date(today);
+  // dueDate.setDate(today.getDate() + 13 * 7);
+  // const pmDueWW = getWorkWeek(dueDate);
+
+  // 🔹 Compute Dates (no more WW codes)
+const today = new Date();
+
+// 🔹 Format date helper: MM/DD/YYYY
+const formatDate = (date) => {
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  const yyyy = date.getFullYear();
+  return `${mm}/${dd}/${yyyy}`;
+};
+
+// 🔹 Compute PM Dates
+const pmDateWW = formatDate(today); // current date
+const dueDate = new Date(today);
+dueDate.setDate(today.getDate() + 91); // add 91 days instead of 13 weeks
+const pmDueWW = formatDate(dueDate);
+
+console.log("PM Date:", pmDateWW);
+console.log("PM Due Date (+91 days):", pmDueWW);
+
 
   const [formData, setFormData] = useState({
     controlNo: "",
@@ -176,6 +209,7 @@ const handleMachineChange = (e) => {
   "Equipment Technician 3",
   "PM Technician 1",
   "PM Technician 2",
+  "Equipment Engineering Supervisor / Equipment Specialist",
   "Trainee - Equipment Technician 1"
 ];
 
@@ -1173,6 +1207,7 @@ const handleCheckAll = (e, complianceField) => {
             "Equipment Technician 3",
             "PM Technician 1",
             "PM Technician 2",
+            "Equipment Engineering Supervisor / Equipment Specialist",
             "Trainee - Equipment Technician 1"
           ].includes(empData.emp_jobtitle);
           const isQA = ["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer", "DIC Clerk 1"].includes(empData.emp_jobtitle);

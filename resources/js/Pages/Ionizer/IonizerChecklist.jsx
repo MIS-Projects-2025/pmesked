@@ -477,7 +477,7 @@ const handleChange = (e) => {
                           <p className="text-red-600 text-sm mt-1">
                             {error}{" "}
                             <a
-                              href="http://192.168.1.26/mc-inventory-beta/admin"
+                              href="http://machine-portal:90/mc_inventory"
                               target="_blank"
                               rel="noopener noreferrer"
                               className="underline text-blue-600"
