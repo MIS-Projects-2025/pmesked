@@ -11,6 +11,7 @@ use App\Http\Controllers\Ionizer\IonizerChecklistItemController;
 use App\Http\Controllers\Ionizer\IonizerChecklistController;
 use App\Http\Controllers\ionizer\IonizerMassApprovedController;
 use App\Http\Controllers\MassApprovalController;
+use App\Http\Controllers\nonTnr\BakeCalibrationReportController;
 use App\Http\Controllers\nonTnr\NonTnrCalibrationMassApprovedController;
 use App\Http\Controllers\nonTnr\NonTnrCalibrationReportController;
 use App\Http\Controllers\nonTnr\NonTnrChecklistController;
@@ -53,6 +54,10 @@ Route::get('/calibration-report', [CalibrationReportController::class, 'index'])
 // 📂 Calibration Reports CRUD (web, para sa Inertia form submissions)
 Route::post('/calibration-reports', [CalibrationReportController::class, 'store'])
     ->name('calibration-reports.store');
+
+Route::delete('/calibration-reports-tnr/{id}', [CalibrationReportController::class, 'destroy'])
+    ->name('calibration-reports.tnr.destroy');
+
 // Route::put('/calibration-reports/{calibrationReport}', [CalibrationReportController::class, 'update'])
 //     ->name('calibration-reports.update');
 // Route::delete('/calibration-reports/{calibrationReport}', [CalibrationReportController::class, 'destroy'])
@@ -68,6 +73,9 @@ Route::get('/calibration-report/ionizer', [IonizerCalibrationReportController::c
 Route::post('/calibration-reports/ionizer', [IonizerCalibrationReportController::class, 'store'])
     ->name('calibration-reports.ionizer.store');
 
+Route::delete('/calibration-reports-ionizer/{id}', [IonizerCalibrationReportController::class, 'destroy'])
+    ->name('calibration-reports.ionizer.destroy');
+
 Route::post('/calibration-reports/ionizer/{report}/verify-qa', [IonizerCalibrationReportController::class, 'verifyQA'])
     ->name('calibration-reports.ionizer.verify-qa');
 Route::post('/calibration-reports/ionizer/{report}/verify-reviewer', [IonizerCalibrationReportController::class, 'verifyReviewer'])
@@ -78,6 +86,9 @@ Route::get('/calibration-report/non-tnr', [NonTnrCalibrationReportController::cl
 
 Route::post('/calibration-reports/non-tnr', [NonTnrCalibrationReportController::class, 'store'])
     ->name('calibration-reports.non-tnr.store');
+
+Route::delete('/calibration-reports-non-tnr/{id}', [NonTnrCalibrationReportController::class, 'destroy'])
+    ->name('calibration-reports.non-tnr.destroy');
 
 Route::post('/calibration-reports/non-tnr/{report}/verify-qa', [NonTnrCalibrationReportController::class, 'verifyQA'])
     ->name('calibration-reports.non-tnr.verify-qa');
@@ -205,6 +216,10 @@ Route::prefix('calibration')->group(function () {
 
 Route::get('/calibration/dthm/pdf/{id}', [DthmController::class, 'generatePdf'])
     ->name('calibration.dthm.pdf');
+
+Route::get('/bake-calibration-index', [BakeCalibrationReportController::class, 'index'])->name('bake.calibration.index');
+Route::post('/report/store', [BakeCalibrationReportController::class, 'store'])->name('report.store');
+Route::put('/report/{id}', [BakeCalibrationReportController::class, 'update'])->name('report.update');
 
 
 

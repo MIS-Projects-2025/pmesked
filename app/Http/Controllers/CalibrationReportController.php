@@ -7,6 +7,7 @@ use App\Models\CalibrationReport;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\DB;
 
 class CalibrationReportController extends Controller
 {
@@ -89,10 +90,13 @@ class CalibrationReportController extends Controller
     }
 
     // 📌 Delete
-    public function destroy(CalibrationReport $calibrationReport)
+    public function destroy($id)
     {
-        $calibrationReport->delete();
-        return response()->json(null, 204);
+        // Gamit ang custom connection/table
+        DB::connection('mysql')->table('calibration_report_list')->where('id', $id)->delete();
+
+        // Return Inertia redirect para hindi mag-error
+        return redirect()->back()->with('success', '✅ Report removed successfully!!');
     }
 
     // 📌 Validation rules (shared by store & update)

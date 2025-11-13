@@ -64,7 +64,7 @@ class CalibrationController extends Controller
 
         foreach ($validated['checklistGroups'] as $group) {
             foreach ($group['rows'] as $row) {
-                CheckList::create([
+                \App\Models\CheckList::create([
                     'platform' => $validated['platform'],
                     'manufacturer' => $validated['manufacturer'] ?? '',
                     'assy_item' => $group['assy_item'],
@@ -79,6 +79,7 @@ class CalibrationController extends Controller
 
         return redirect()->back()->with('success', 'Checklist saved successfully!');
     }
+
 
 
     public function show($platform, $manufacturer)

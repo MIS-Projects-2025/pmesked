@@ -628,7 +628,7 @@ const handleCheckAll = (e, complianceField) => {
                     type="text"
                     className="border rounded w-full text-gray-700"
                     value={formData.pmDate}
-                    readOnly
+                    required
                   />
                 </div>
 
@@ -640,7 +640,7 @@ const handleCheckAll = (e, complianceField) => {
                     type="text"
                     className="border rounded w-full text-gray-700"
                     value={formData.pmDue}
-                    readOnly
+                    required
                   />
                 </div>
 

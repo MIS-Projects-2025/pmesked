@@ -47,8 +47,8 @@ export default function NavBar() {
                                 </li>
                                 <li>
                                     <button onClick={logout}>
-                                        <i className="fa-regular fa-share-from-square text-sky-600"></i>
-                                        <span className="mt-[3px] text-sky-600">
+                                        <i className="fa-regular fa-share-from-square"></i>
+                                        <span className="mt-[3px]">
                                             Log out
                                         </span>
                                     </button>

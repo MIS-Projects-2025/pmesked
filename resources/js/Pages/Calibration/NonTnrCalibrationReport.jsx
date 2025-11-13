@@ -230,14 +230,113 @@ const handleDetailChange = (index, e) => {
     setDetails(updated);
   };
 
+// const handleSubmit = () => {
+//   const filteredStandards = standards.filter(
+//     (s) => Object.values(s).some((v) => v !== "")
+//   );
+//   const filteredDetails = details.filter(
+//     (d) => Object.values(d).some((v) => v !== "")
+//   );
+
+//   post(route("calibration-reports.non-tnr.store"), {
+//     preserveScroll: true,
+//     data: {
+//       ...data,
+//       cal_std_use: filteredStandards,
+//       cal_details: filteredDetails,
+//     },
+//     onSuccess: () => {
+//       alert("✅ Non TNR Calibration Report saved successfully!");
+//       reset();
+//       setStandards([
+//         {
+//           description: "",
+//           cal_manufacturer: "",
+//           model_no: "",
+//           cal_control_no: "",
+//           serial_no: "",
+//           accuracy: "",
+//           cal_date: "",
+//           cal_due: "",
+//           traceability: "",
+//         },
+//       ]);
+//       setDetails([
+//         {
+//           function_tested: "",
+//           nominal: "",
+//           tolerance: "",
+//           unit_under_test: "",
+//           standard_instrument: "",
+//           disparity: "",
+//           correction: "",
+//           remarks: "",
+//         },
+//       ]);
+//       setShowModal(false);
+//     },
+//     onError: (errors) => {
+//       console.error(errors);
+//       alert("❌ Failed to save Calibration Report!");
+//     },
+//   });
+// };
+
 const handleSubmit = () => {
-  const filteredStandards = standards.filter(
-    (s) => Object.values(s).some((v) => v !== "")
+  // 🔹 Validate main data fields
+  const requiredFields = [
+    "equipment",
+    "manufacturer",
+    "control_no",
+    "performed_by",
+    "calibration_date",
+    "calibration_due",
+    "model",
+    "serial",
+    "temperature",
+    "relative_humidity",
+    "specs",
+    "report_no",
+    "cal_interval",
+  ];
+
+  const emptyField = requiredFields.find((field) => !data[field]?.toString().trim());
+  if (emptyField) {
+    alert(`❌ Please fill in the "${emptyField.replace(/_/g, " ")}" field.`);
+    return;
+  }
+
+  // 🔹 Validate standards table
+  for (let i = 0; i < standards.length; i++) {
+    const s = standards[i];
+    for (const [key, value] of Object.entries(s)) {
+      if (!value?.toString().trim()) {
+        alert(`❌ Please fill in "${key.replace(/_/g, " ")}" in Standards row ${i + 1}.`);
+        return;
+      }
+    }
+  }
+
+  // 🔹 Validate details table
+  for (let i = 0; i < details.length; i++) {
+    const d = details[i];
+    for (const [key, value] of Object.entries(d)) {
+      if (!value?.toString().trim()) {
+        alert(`❌ Please fill in "${key.replace(/_/g, " ")}" in Details row ${i + 1}.`);
+        return;
+      }
+    }
+  }
+
+  // 🔹 Filter empty rows (safety)
+  const filteredStandards = standards.filter((s) =>
+    Object.values(s).some((v) => v !== "")
   );
-  const filteredDetails = details.filter(
-    (d) => Object.values(d).some((v) => v !== "")
+  const filteredDetails = details.filter((d) =>
+    Object.values(d).some((v) => v !== "")
   );
 
+  // 🔹 Post data
   post(route("calibration-reports.non-tnr.store"), {
     preserveScroll: true,
     data: {
@@ -285,19 +384,50 @@ const handleSubmit = () => {
 
 
 
+const handleRemoveReport = (id) => {
+  if (!confirm("Are you sure you want to remove this report?")) return;
+
+  // Pag-delete sa front-end
+router.delete(route("calibration-reports.non-tnr.destroy", id), {
+    onSuccess: () => {
+        // alert("✅ Report removed successfully!");
+        window.location.reload();
+    },
+    onError: () => {
+        alert("❌ Failed to remove report!");
+    },
+});
+};
+
+
+
 
 const dataWithAction = reports.data.map((r) => ({
   ...r,
   action: (
-    <button
-       className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-      onClick={() => {
-        setSelectedReport(r);
-        setViewModal(true);
-      }}
-    >
-      <i className="fas fa-eye"></i> View
-    </button>
+    <div className="flex gap-2">
+      {/* View Button */}
+      <button
+        className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        onClick={() => {
+          setSelectedReport(r);
+          setViewModal(true);
+        }}
+      >
+        <i className="fas fa-eye"></i> View
+      </button>
+
+      {/* Conditional Remove Button */}
+      {r.performed_by === empData?.emp_name && 
+       (!r.qa_sign && !r.review_by) && (
+          <button
+            className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+            onClick={() => handleRemoveReport(r.id)}
+          >
+            <i className="fas fa-trash"></i> Remove
+          </button>
+        )}
+    </div>
   ),
 }));
 

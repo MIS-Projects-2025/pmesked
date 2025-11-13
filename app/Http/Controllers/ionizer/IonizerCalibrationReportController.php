@@ -9,6 +9,7 @@ use App\Models\IonizerCalibrationReport;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\DB;
 
 class IonizerCalibrationReportController extends Controller
 {
@@ -91,11 +92,15 @@ class IonizerCalibrationReportController extends Controller
     }
 
     // 📌 Delete
-    public function destroy(IonizerCalibrationReport $IonizerCalibrationReport)
+    public function destroy($id)
     {
-        $IonizerCalibrationReport->delete();
-        return response()->json(null, 204);
+        // Gamit ang custom connection/table
+        DB::connection('mysql')->table('calibration_report_list_ionizer')->where('id', $id)->delete();
+
+        // Return Inertia redirect para hindi mag-error
+        return redirect()->back()->with('success', 'Successfully deleted the report!');
     }
+
 
     // 📌 Validation rules (shared by store & update)
     protected function validateData(Request $request)

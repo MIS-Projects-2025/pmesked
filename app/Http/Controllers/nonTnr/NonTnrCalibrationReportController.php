@@ -1,5 +1,5 @@
 <?php
-// app/Http/Controllers/CalibrationReportController.php
+
 namespace App\Http\Controllers\nonTnr;
 
 use App\Http\Controllers\Controller;
@@ -8,6 +8,7 @@ use App\Models\NonTnrCalibrationReport;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\DB;
 
 class NonTnrCalibrationReportController extends Controller
 {
@@ -47,7 +48,6 @@ class NonTnrCalibrationReportController extends Controller
     }
 
     // 📌 Store
-    // app/Http/Controllers/NonTnrCalibrationReportController.php
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -90,10 +90,13 @@ class NonTnrCalibrationReportController extends Controller
     }
 
     // 📌 Delete
-    public function destroy(NonTnrCalibrationReport $NonTnrCalibrationReport)
+    public function destroy($id)
     {
-        $NonTnrCalibrationReport->delete();
-        return response()->json(null, 204);
+        // Gamit ang custom connection/table
+        DB::connection('mysql')->table('calibration_report_list_non_tnr')->where('id', $id)->delete();
+
+        // Return Inertia redirect para hindi mag-error
+        return redirect()->back()->with('success', '✅ Report removed successfully!!');
     }
 
     // 📌 Validation rules (shared by store & update)

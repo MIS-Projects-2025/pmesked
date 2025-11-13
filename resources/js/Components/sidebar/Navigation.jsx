@@ -192,6 +192,17 @@ export default function NavLinks() {
                         // notification: 125,
                     },
 
+                    
+                    {
+                        href: route("bake.calibration.index"),
+                        label: "Bake Calibration Report",
+                        icon: (
+                        <i className="far fa-square"></i>
+                        ),
+                        className: "opacity-50 pointer-events-none",
+                        // notification: 125,
+                    },
+
                     {
                         href: route("non_tnr.mass.index"),
                         label: "Non Tnr Mass Approved",
@@ -261,6 +272,17 @@ export default function NavLinks() {
                 // notification={true}
             />
                 </div>
+            )}
+
+            {["1788"].includes(emp_data?.emp_id) && (
+                <div>
+
+                    <SidebarLink
+                        href={route("bake.calibration.index")}
+                        label="Bake Calibration Report"
+                        icon={<i className="fa-solid fa-file-pen"></i>}
+                    />
+            </div>
             )}
             
             {["1742" , "1788"].includes(emp_data?.emp_id) && (
