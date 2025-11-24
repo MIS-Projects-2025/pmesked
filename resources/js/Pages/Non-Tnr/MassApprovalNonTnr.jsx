@@ -9,25 +9,10 @@ export default function MassApprovalNonTnr({ checklists, empData }) {
   const [showView, setShowView] = useState(false);
   const [viewData, setViewData] = useState(null);
 
-  const job = empData?.emp_jobtitle || "";
-  const techRoles = [
-    "Senior Equipment Technician",
-    "Equipment Technician 2",
-    "Equipment Technician 3",
-    "PM Technician 2",
-  ];
-  const qaRoles = [
-    "ESD Technician 1",
-    "ESD Technician 2",
-    "Senior QA Engineer",
-    "DIC Clerk 1",
-  ];
-  const engineerRoles = [
-    "Equipment Engineer",
-    "Senior Equipment Engineer",
-    "Equipment Engineering Section Head",
-    "Sr. Equipment Engineer",
-  ];
+  const job = emp_data?.emp_system_role || "";
+  const techRoles = ["seniortech"];
+    const qaRoles = ["esd"];
+  const engineerRoles = ["engineer"];
 
   let userRole = null;
   if (techRoles.includes(job)) userRole = "tech";
@@ -385,33 +370,13 @@ export default function MassApprovalNonTnr({ checklists, empData }) {
 
         {/* ✅ Conditional Verify Button */}
         {(() => {
-          const techRoles = [
-            "Senior Equipment Technician",
-            "Equipment Technician 1",
-            "Equipment Technician 2",
-            "Equipment Technician 3",
-            "PM Technician 1",
-            "PM Technician 2",
-            "Trainee - Equipment Technician 1",
-          ];
-          const qaRoles = [
-            "ESD Technician 1",
-            "ESD Technician 2",
-            "Senior QA Engineer",
-            "DIC Clerk 1",
-          ];
-          const seniorRoles = [
-            "Equipment Engineer",
-            "Supervisor - Equipment Technician",
-            "Senior Equipment Engineer",
-            "Sr. Equipment Engineer",
-            "Equipment Engineering Section Head",
-            "Section Head - Equipment Engineering",
-          ];
+          const techRoles =  ["seniortech"];
+          const qaRoles =  ["esd"];
+          const seniorRoles = ["engineer"];
 
-          const isTech = techRoles.includes(emp_data?.emp_jobtitle);
-          const isQA = qaRoles.includes(emp_data?.emp_jobtitle);
-          const isSenior = seniorRoles.includes(emp_data?.emp_jobtitle);
+          const isTech = techRoles.includes(emp_data?.emp_system_role);
+          const isQA = qaRoles.includes(emp_data?.emp_system_role);
+          const isSenior = seniorRoles.includes(emp_data?.emp_system_role);
 
           // ✅ Technician verify visible only if no tech_sign
           if (isTech && !viewData.tech_sign) {

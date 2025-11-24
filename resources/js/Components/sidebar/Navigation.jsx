@@ -17,7 +17,7 @@ export default function NavLinks() {
                 }
                 // notifications={5}
             />
-            {["Equipment Engineering"].includes(emp_data?.emp_dept) && !["Equipment Engineer",  "Supervisor - Equipment Technician",  "Senior Equipment Engineer",  "Sr. Equipment Engineer",  "Equipment Engineering Section Head",  "Section Head - Equipment Engineering"].includes(emp_data?.emp_jobtitle) && (
+            {["pmtech", "seniortech"].includes(emp_data?.emp_system_role) && (
                 <div>
                      <Dropdown
                 label="TNR"
@@ -41,22 +41,157 @@ export default function NavLinks() {
                         ),
                         // notification: 125,
                     },
-
-                    {
-                        href: route("tnr.massApproved"),   // bagong link
-                        label: "Tnr Mass Approved",
-                        icon:  <i className="far fa-square"></i>,
-                    },
                 ]}
-                // notification={true}
                 />
                 </div>
             )}
-           
-                {[
-                "ESD Technician 1", "ESD Technician 2", "Senior QA Engineer", "DIC Clerk 1",
-                 "Equipment Engineer",  "Supervisor - Equipment Technician",  "Senior Equipment Engineer",  "Sr. Equipment Engineer",  "Equipment Engineering Section Head",  "Section Head - Equipment Engineering"
-                ].includes(emp_data?.emp_jobtitle) && (
+
+            {["seniortech"].includes(emp_data?.emp_system_role) && (
+                <div>
+
+                    <SidebarLink
+                        href={route("tnr.massApproved")}
+                        label="TNR Mass Approved"
+                        icon={<i className="fa-solid fa-list-check"></i>}
+                    />
+            </div>
+            )}
+            
+            {["pmtech", "seniortech"].includes(emp_data?.emp_system_role) && (
+                <div>
+                    <Dropdown
+                label="Non-TNR"
+                icon={
+                    <i className="fa-solid fa-rectangle-list"></i>
+                }
+                className='disabled'
+                links={[
+                    {
+                        
+                        href: route("non-tnr-checklists.index"),
+                        label: "Checklist",
+                        icon: (
+                           <i className="far fa-square"></i>
+                        ),
+                        className: "opacity-50 pointer-events-none",
+                        // notification: true,
+                    },
+                    {
+                        href: route("calibration.calibrationReportNontnr"),
+                        label: "Calibration Report",
+                        icon: (
+                        <i className="far fa-square"></i>
+                        ),
+                        className: "opacity-50 pointer-events-none",
+                        // notification: 125,
+                    },
+
+                    
+                    {
+                        href: route("bake.calibration.index"),
+                        label: "Bake Calibration Report",
+                        icon: (
+                        <i className="far fa-square"></i>
+                        ),
+                        className: "opacity-50 pointer-events-none",
+                        // notification: 125,
+                    },
+                    
+                ]}
+                // notification={true}
+            />
+                </div>
+            )}
+
+            {["seniortech"].includes(emp_data?.emp_system_role) && (
+                <div>
+
+                    <SidebarLink
+                        href={route("non_tnr.mass.index")}
+                        label="Non-TNR Mass Approved"
+                        icon={<i className="fa-regular fa-calendar-check"></i>}
+                    />
+            </div>
+            )}
+
+             {["pmtech", "seniortech"].includes(emp_data?.emp_system_role) && (
+                <div>
+                    <Dropdown
+                label="Air Ionizer"
+                icon={
+                    <i className="fas fa-fan"></i>
+                }
+                className='disabled'
+                links={[
+                    {
+                        href: route("ionizer.index"),
+                        label: "Checklist",
+                        icon: (
+                           <i className="far fa-square"></i>
+                        ),
+                        className: "opacity-50 pointer-events-none",
+                        // notification: true,
+                    },
+
+                    {
+                        href: route("calibration.IonizerCalibrationReport"),
+                        label: "Ionizer Calibration Report",
+                        icon: (
+                        <i className="far fa-square"></i>
+                        ),
+                        className: "opacity-50 pointer-events-none",
+                        // notification: 125,
+                    },
+
+                    {
+                        href: route("calibration.dthm.index"),
+                        label: "DTHM",
+                        icon: (
+                        <i className="far fa-square"></i>
+                        ),
+                        className: "opacity-50 pointer-events-none",
+                        // notification: 125,
+                    },
+                    
+                ]}
+                // notification={true}
+            />
+                </div>
+            )}
+
+             {["seniortech"].includes(emp_data?.emp_system_role) && (
+                <div>
+
+                    <SidebarLink
+                        href={route("ionizer.mass.index")}
+                        label="Ionizer Mass Approved"
+                        icon={<i className="fa-solid fa-clipboard-check"></i>}
+                    />
+            </div>
+            )}
+
+            {["esd"].includes(emp_data?.emp_system_role) && (
+                <div>
+                    <SidebarLink
+                        href={route("calibration.dthm.index")}
+                        label="DTHM"
+                        icon={<i className="fa-solid fa-list"></i>}
+                    />
+                </div>
+            )}
+            
+            {["1788"].includes(emp_data?.emp_id) && (
+                <div>
+
+                    <SidebarLink
+                        href={route("bake.calibration.index")}
+                        label="Bake Calibration Report"
+                        icon={<i className="fa-solid fa-file-pen"></i>}
+                    />
+            </div>
+            )}
+
+              {["esd", "engineer"].includes(emp_data?.emp_system_role) && (
                 <div>
 
                 <Dropdown
@@ -152,139 +287,6 @@ export default function NavLinks() {
                 </div>
             )}
             
-            {["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer", "DIC Clerk 1"].includes(emp_data?.emp_jobtitle) && (
-                <div>
-                    <SidebarLink
-                        href={route("calibration.dthm.index")}
-                        label="DTHM"
-                        icon={<i className="fa-solid fa-list"></i>}
-                    />
-                </div>
-            )}
-           
-
-            {["Equipment Engineering"].includes(emp_data?.emp_dept) && !["Equipment Engineer",  "Supervisor - Equipment Technician",  "Senior Equipment Engineer",  "Sr. Equipment Engineer",  "Equipment Engineering Section Head",  "Section Head - Equipment Engineering"].includes(emp_data?.emp_jobtitle) && (
-                <div>
-                    <Dropdown
-                label="Non-TNR"
-                icon={
-                    <i className="fa-solid fa-rectangle-list"></i>
-                }
-                className='disabled'
-                links={[
-                    {
-                        
-                        href: route("non-tnr-checklists.index"),
-                        label: "Checklist",
-                        icon: (
-                           <i className="far fa-square"></i>
-                        ),
-                        className: "opacity-50 pointer-events-none",
-                        // notification: true,
-                    },
-                    {
-                        href: route("calibration.calibrationReportNontnr"),
-                        label: "Calibration Report",
-                        icon: (
-                        <i className="far fa-square"></i>
-                        ),
-                        className: "opacity-50 pointer-events-none",
-                        // notification: 125,
-                    },
-
-                    
-                    {
-                        href: route("bake.calibration.index"),
-                        label: "Bake Calibration Report",
-                        icon: (
-                        <i className="far fa-square"></i>
-                        ),
-                        className: "opacity-50 pointer-events-none",
-                        // notification: 125,
-                    },
-
-                    {
-                        href: route("non_tnr.mass.index"),
-                        label: "Non Tnr Mass Approved",
-                        icon: (
-                       <i className="far fa-square"></i>
-                        ),
-                        className: "opacity-50 pointer-events-none",
-                        // notification: 125,
-                    },
-                    
-                ]}
-                // notification={true}
-            />
-                </div>
-            )}
-
-             {["Equipment Engineering"].includes(emp_data?.emp_dept) && !["Equipment Engineer",  "Supervisor - Equipment Technician",  "Senior Equipment Engineer",  "Sr. Equipment Engineer",  "Equipment Engineering Section Head",  "Section Head - Equipment Engineering"].includes(emp_data?.emp_jobtitle) && (
-                <div>
-                    <Dropdown
-                label="Air Ionizer"
-                icon={
-                    <i className="fas fa-fan"></i>
-                }
-                className='disabled'
-                links={[
-                    {
-                        href: route("ionizer.index"),
-                        label: "Checklist",
-                        icon: (
-                           <i className="far fa-square"></i>
-                        ),
-                        className: "opacity-50 pointer-events-none",
-                        // notification: true,
-                    },
-
-                    {
-                        href: route("calibration.IonizerCalibrationReport"),
-                        label: "Ionizer Calibration Report",
-                        icon: (
-                        <i className="far fa-square"></i>
-                        ),
-                        className: "opacity-50 pointer-events-none",
-                        // notification: 125,
-                    },
-
-                    {
-                        href: route("calibration.dthm.index"),
-                        label: "DTHM",
-                        icon: (
-                        <i className="far fa-square"></i>
-                        ),
-                        className: "opacity-50 pointer-events-none",
-                        // notification: 125,
-                    },
-
-                    {
-                        href: route("ionizer.mass.index"),
-                        label: "Ionizer Mass Approved Checklist",
-                        icon: (
-                           <i className="far fa-square"></i>
-                        ),
-                        className: "opacity-50 pointer-events-none",
-                        // notification: true,
-                    },
-                    
-                ]}
-                // notification={true}
-            />
-                </div>
-            )}
-
-            {["1788"].includes(emp_data?.emp_id) && (
-                <div>
-
-                    <SidebarLink
-                        href={route("bake.calibration.index")}
-                        label="Bake Calibration Report"
-                        icon={<i className="fa-solid fa-file-pen"></i>}
-                    />
-            </div>
-            )}
-            
             {["1742" , "1788"].includes(emp_data?.emp_id) && (
                 <div>
 
@@ -315,11 +317,11 @@ export default function NavLinks() {
             )}
 
 
-            {["superadmin", "admin" ].includes(emp_data?.emp_system_role) && (
+            {["superadmin", "admin", "engineer" ].includes(emp_data?.emp_system_role) || ["pmtech" ].includes(emp_data?.emp_system_role) && ["1742" ].includes(emp_data?.emp_id) && (
                 <div>
                     <SidebarLink
                         href={route("admin")}
-                        label="Administrators"
+                        label="PM Personnel"
                         icon={
                             <i className="fas fa-user-shield"></i>
                         }

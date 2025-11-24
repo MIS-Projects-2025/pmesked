@@ -134,34 +134,47 @@ export default function NonTnrCalibrationReport({ machines, empData }) {
 
 
   // 🔹 Autofill when selecting machine
-  const handleMachineChange = (e) => {
-    const selected = e.target.value;
-    const machine = machines.find((m) => m.machine_num === selected);
-    if (!machine) return;
+ const handleMachineChange = (e) => {
+  const selected = e.target.value;
 
-    const today = new Date();
-    const pmDateWW = getWorkWeek(today);
-    const dueDate = new Date(today);
-    dueDate.setDate(today.getDate() + 7 );
-    const pmDueWW = getWorkWeek(dueDate);
+  // Hanapin sa machine list kung match ang machine_num
+  const machine = machines.find((m) => m.machine_num === selected);
 
+  // Kung wala sa list (user typed random text), update lang equipment field
+  if (!machine) {
     setData((prev) => ({
       ...prev,
       equipment: selected,
-      model: machine?.model ?? machine?.machine_model ?? "",
-      serial: machine?.serial ?? machine?.serial_no ?? "",
-      manufacturer: machine?.machine_manufacturer ?? machine?.manufacturer ?? "",
-      control_no: machine?.cn_no ?? machine?.control_no ?? "",
-      calibration_date: pmDateWW,
-      calibration_due: pmDueWW,
-      performed_by: empData?.emp_name || user?.name || "",
-      temperature: "",
-      relative_humidity: "",
-      specs: "",
-      report_no: "",
-      cal_interval: "",
     }));
-  };
+    return;
+  }
+
+  // Compute PM week
+  const today = new Date();
+  const pmDateWW = getWorkWeek(today);
+
+  const dueDate = new Date(today);
+  dueDate.setDate(today.getDate() + 7);
+  const pmDueWW = getWorkWeek(dueDate);
+
+  setData((prev) => ({
+    ...prev,
+    equipment: selected,
+    model: machine?.model ?? machine?.machine_model ?? "",
+    serial: machine?.serial ?? machine?.serial_no ?? "",
+    manufacturer: machine?.machine_manufacturer ?? machine?.manufacturer ?? "",
+    control_no: machine?.cn_no ?? machine?.control_no ?? "",
+    calibration_date: pmDateWW,
+    calibration_due: pmDueWW,
+    performed_by: empData?.emp_name || user?.name || "",
+    temperature: "",
+    relative_humidity: "",
+    specs: "",
+    report_no: "",
+    cal_interval: "",
+  }));
+};
+
 
   // 🔹 Table row handlers
 const handleStandardChange = (index, e) => {
@@ -446,15 +459,8 @@ useEffect(() => {
 
 const [report, setReport] = useState(selectedReport);
 
-  const isQA = ["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer","DIC Clerk 1"].includes(empData.emp_jobtitle);
-  const isEngineer = [
-    "Equipment Engineer",
-    "Supervisor - Equipment Technician",
-    "Senior Equipment Engineer",
-    "Sr. Equipment Engineer",
-    "Equipment Engineering Section Head",
-    "Section Head - Equipment Engineering"
-  ].includes(empData.emp_jobtitle);
+   const isQA = ["esd"].includes(empData.emp_system_role);
+  const isEngineer = ["engineer"].includes(empData.emp_system_role);
 
 const handleVerifyQA = () => {
   if (!selectedReport) return;
@@ -551,27 +557,30 @@ const handleVerifyReviewer = () => {
 
               {/* 🔹 Machine Info */}
               <div className="grid grid-cols-4 gap-4 mb-6 mt-4">
-                <div>
-                  <label className="block font-semibold text-gray-500">
-                    Machine
-                  </label>
-                  <select
-                    name="equipment"
-                    value={data.equipment}
-                    onChange={handleMachineChange}
-                    className="border p-2 rounded w-full text-gray-600"
-                  >
-                    <option value="">-- Select Equipment --</option>
-                    {machines.map((m, index) => (
-                      <option
-                        key={`${m.machine_num}-${index}`}
-                        value={m.machine_num}
-                      >
-                        {m.machine_num}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                                <div>
+  <label className="block font-semibold text-gray-500">
+    Machine
+  </label>
+
+  <input
+    list="machine-list"
+    name="equipment"
+    value={data.equipment}
+    onChange={handleMachineChange}
+    className="border p-2 rounded w-full text-gray-600"
+    placeholder="Type or select machine..."
+  />
+
+  <datalist id="machine-list">
+    {machines.map((m, index) => (
+      <option 
+        key={`${m.machine_num}-${index}`} 
+        value={m.machine_num}
+      >
+      </option>
+    ))}
+  </datalist>
+</div>
 
                 <div>
                   <label className="block font-semibold text-gray-500">

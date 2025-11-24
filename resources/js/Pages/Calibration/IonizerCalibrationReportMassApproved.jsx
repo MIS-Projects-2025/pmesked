@@ -11,15 +11,8 @@ export default function IonizerCalibrationReportMassApproved({ reports, empData 
   const itemsPerPage = 10;
 
   // Roles
-  const isQA = ["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer","DIC Clerk 1"].includes(
-    empData?.emp_jobtitle
-  );
-  const isEngineer = [
-    "Equipment Engineer",
-    "Supervisor - Equipment Technician",
-    "Senior Equipment Engineer",
-    "Sr. Equipment Engineer",
-  ].includes(empData?.emp_jobtitle);
+   const isQA = ["esd"].includes(empData.emp_system_role);
+  const isEngineer = ["engineer"].includes(empData.emp_system_role);
 
   // Toggle select row
   const toggleSelect = (id) => {

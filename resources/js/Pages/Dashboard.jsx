@@ -17,7 +17,7 @@ import {
 export default function Dashboard(props) {
   const { emp_data } = usePage().props;
 
-  console.log(emp_data);
+  // console.log(emp_data);
 
   // Parse WW format (ex: WW501) into a Date (start of that week)
   const parseWWToDate = (ww) => {
@@ -72,21 +72,9 @@ export default function Dashboard(props) {
   const COLORS = ["#10B981", "#F59E0B"];
 
   // Job groups (reuse)
-  const qaJobs = [
-    "ESD Technician 1",
-    "ESD Technician 2",
-    "Senior QA Engineer",
-    "DIC Clerk 1",
-  ];
+  const qaJobs = ["esd"];
 
-  const eeJobs = [
-    "Equipment Engineer",
-    "Supervisor - Equipment Technician",
-    "Senior Equipment Engineer",
-    "Sr. Equipment Engineer",
-    "Equipment Engineering Section Head",
-    "Section Head - Equipment Engineering",
-  ];
+  const eeJobs = ["engineer"];
 
   const combinedJobs = [...qaJobs, ...eeJobs];
 
@@ -129,16 +117,16 @@ export default function Dashboard(props) {
       <h1 className="text-2xl font-bold mb-6">TNR Checklist</h1>
 
       {/* Only show this block if job title is in combinedJobs */}
-      {combinedJobs.includes(emp_data?.emp_jobtitle) && (
+      {combinedJobs.includes(emp_data?.emp_system_role) && (
         <div className="mt-6">
           {/* 🔹 Summary Cards */}
           <div className="grid grid-cols-2 gap-4 mb-6">
             {/* Calibration Reports for Approval */}
             <div className="p-4 bg-stone-100 rounded-lg shadow text-center cursor-pointer hover:bg-stone-200">
               <h2 className="text-2xl font-bold text-stone-500">
-                {qaJobs.includes(emp_data?.emp_jobtitle)
+                {qaJobs.includes(emp_data?.emp_system_role)
                   ? QAforApprovalcalReportsCount
-                  : eeJobs.includes(emp_data?.emp_jobtitle)
+                  : eeJobs.includes(emp_data?.emp_system_role)
                   ? EEforApprovalcalReportsCount
                   : 0}
               </h2>
@@ -148,9 +136,9 @@ export default function Dashboard(props) {
             {/* TNR for Approval */}
             <div className="p-4 bg-orange-100 rounded-lg shadow text-center cursor-pointer hover:bg-orange-200">
               <h2 className="text-2xl font-bold text-orange-500">
-                {qaJobs.includes(emp_data?.emp_jobtitle)
+                {qaJobs.includes(emp_data?.emp_system_role)
                   ? esdAck
-                  : eeJobs.includes(emp_data?.emp_jobtitle)
+                  : eeJobs.includes(emp_data?.emp_system_role)
                   ? senioreeAck
                   : 0}
               </h2>
@@ -161,7 +149,7 @@ export default function Dashboard(props) {
           {/* 🔹 Charts */}
           <div className="grid grid-cols-2 gap-4 mb-6">
             {/* Bar Chart */}
-{eeJobs.includes(emp_data?.emp_jobtitle) ? (
+{eeJobs.includes(emp_data?.emp_system_role) ? (
   <div className="bg-white p-4 shadow rounded-lg">
     <h3 className="text-lg font-semibold mb-4 text-gray-600">
       non-Tnr Cal Reports for approval
@@ -210,7 +198,7 @@ export default function Dashboard(props) {
 
 
             {/* Pie Chart */}
-            {eeJobs.includes(emp_data?.emp_jobtitle) ? (
+            {eeJobs.includes(emp_data?.emp_system_role) ? (
             <div className="bg-white p-4 shadow rounded-lg">
               <h3 className="text-lg font-semibold mb-4 text-gray-600">
                 non-TNR PM Checklist Status
@@ -270,7 +258,7 @@ export default function Dashboard(props) {
       )}
 
       {/* Department-level view */}
-      {["Equipment Engineering"].includes(emp_data?.emp_dept) && (
+      {["pmtech", "seniortech"].includes(emp_data?.emp_system_role) && (
         <div>
           {/* 🔹 Summary Cards */}
           <div className="grid grid-cols-4 gap-4 mb-6">

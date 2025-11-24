@@ -10,24 +10,12 @@ export default function MassApprovalIonizerChecklist({ ionizerReports, empData }
     const [showView, setShowView] = useState(false);
     const [viewData, setViewData] = useState(null);
 
-    const techRoles = [
-        "Senior Equipment Technician",
-        "Equipment Technician 1",
-        "Equipment Technician 2",
-        "Equipment Technician 3",
-        "PM Technician 1",
-        "PM Technician 2",
-    ];
-    const qaRoles = [
-        "ESD Technician 1",
-        "ESD Technician 2",
-        "Senior QA Engineer",
-        "DIC Clerk 1",
-    ];
+    const techRoles = ["seniortech"];
+    const qaRoles = ["esd"];
 
     let userRole = null;
-    if (techRoles.includes(empData?.emp_jobtitle)) userRole = "tech";
-    else if (qaRoles.includes(empData?.emp_jobtitle)) userRole = "qa";
+    if (techRoles.includes(emp_data?.emp_system_role)) userRole = "tech";
+    else if (qaRoles.includes(emp_data?.emp_system_role)) userRole = "qa";
 
     // Filter visible reports per role
     const visibleReports = ionizerReports.filter((r) => {
@@ -396,15 +384,7 @@ export default function MassApprovalIonizerChecklist({ ionizerReports, empData }
 {/* --- Verifier Buttons --- */}
 <div className="flex justify-end gap-2 mt-4">
   {/* Tech Sign Button */}
-  {[
-    "Senior Equipment Technician",
-  "Equipment Technician 1",
-  "Equipment Technician 2",
-  "Equipment Technician 3",
-  "PM Technician 1",
-  "PM Technician 2",
-  "Trainee - Equipment Technician 1"
-].includes(emp_data?.emp_jobtitle) &&
+  {["seniortech"].includes(emp_data?.emp_system_role) &&
     !viewData?.tech_sign && (
       <button
         onClick={() => handleVerify("tech")}
@@ -415,7 +395,7 @@ export default function MassApprovalIonizerChecklist({ ionizerReports, empData }
   )}
 
   {/* QA Sign Button */}
-  {["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer", "DIC Clerk 1"].includes(emp_data?.emp_jobtitle) &&
+  {["esd"].includes(emp_data?.emp_system_role) &&
     viewData?.tech_sign && !viewData?.qa_sign && (
       <button
         onClick={() => handleVerify("qa")}

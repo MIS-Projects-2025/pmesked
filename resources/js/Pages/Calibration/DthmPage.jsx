@@ -70,12 +70,7 @@ export default function DthmPage({ records = [], emp_data }) {
   };
 
   // Determine if current user is QA
-const isQA = [
-  "ESD Technician 1",
-  "ESD Technician 2",
-  "Senior QA Engineer",
-  "DIC Clerk 1",
-].includes(emp_data?.emp_jobtitle);
+ const isQA = ["esd"].includes(emp_data.emp_system_role);
 
 // Handler for QA verification
 const handleQAVerify = (id) => {

@@ -44,7 +44,86 @@ export default function CalibrationReport({ machines, empData }) {
   const [viewModal, setViewModal] = useState(false);
 
 
-  const { data, setData, post, processing, reset } = useForm({
+
+
+
+
+  // 🔹 Tables state
+// ===============================
+// DEFAULT VALUES
+// ===============================
+
+// 🔹 Calibration Standards (2 rows)
+const defaultStandards = [
+  {
+    description: "Thermometer Calibrator",
+    cal_manufacturer: "OMEGA",
+    model_no: "CL3512A",
+    cal_control_no: "CN 140",
+    serial_no: "03000256",
+    accuracy: "N/A",
+    cal_date: "", // user selects
+    cal_due: "",  // user selects
+    traceability: "SONJU",
+  },
+  {
+    description: "Thermo Couple wire",
+    cal_manufacturer: "T.M. Electronics",
+    model_no: "Type K",
+    cal_control_no: "CN 906",
+    serial_no: "20200924B",
+    accuracy: "N/A",
+    cal_date: "", // user selects
+    cal_due: "",  // user selects
+    traceability: "TSPI",
+  },
+];
+
+// 🔹 Calibration Details (4 rows)
+const defaultDetails = [
+  {
+    function_tested: "Sealing Temperature Calibration / Front",
+    nominal: "180°C",
+    tolerance: "+/- 5 °C",
+    unit_under_test: "180°C",
+    standard_instrument: "180.3°C",
+    disparity: "0.3°C",
+    correction: "0",
+    remarks: "PASSED",
+  },
+  {
+    function_tested: "Sealing Temperature Calibration / Front",
+    nominal: "220°C",
+    tolerance: "+/- 5 °C",
+    unit_under_test: "220°C",
+    standard_instrument: "219°C",
+    disparity: "-1°C",
+    correction: "0",
+    remarks: "PASSED",
+  },
+  {
+    function_tested: "Sealing Temperature Calibration / Rear",
+    nominal: "180°C",
+    tolerance: "+/- 5 °C",
+    unit_under_test: "180°C",
+    standard_instrument: "181.5°C",
+    disparity: "1.5°C",
+    correction: "0",
+    remarks: "PASSED",
+  },
+  {
+    function_tested: "Sealing Temperature Calibration / Rear",
+    nominal: "220°C",
+    tolerance: "+/- 5 °C",
+    unit_under_test: "220°C",
+    standard_instrument: "218°C",
+    disparity: "-2°C",
+    correction: "0",
+    remarks: "PASSED",
+  },
+];
+
+ const { data, setData, post, processing, reset } = useForm({
   equipment: "",
   model: "",
   serial: "",
@@ -58,178 +137,182 @@ export default function CalibrationReport({ machines, empData }) {
   specs: "",
   report_no: "",
   cal_interval: "",
-  cal_std_use: [
-    {
-      description: "",
-      cal_manufacturer: "",
-      model_no: "",
-      cal_control_no: "",
-      serial_no: "",
-      accuracy: "",
-      cal_date: "",
-      cal_due: "",
-      traceability: "",
-    },
-  ],
-  cal_details: [
-    {
-      function_tested: "",
-      nominal: "",
-      tolerance: "",
-      unit_under_test: "",
-      standard_instrument: "",
-      disparity: "",
-      correction: "",
-      remarks: "",
-    },
-  ],
+
+  // default standards + default details
+  cal_std_use: [...defaultStandards],
+  cal_details: [...defaultDetails],
 });
 
+// ===============================
+// TABLE STATES WITH DEFAULT VALUES
+// ===============================
+const [standards, setStandards] = useState([...defaultStandards]);
 
-  // 🔹 Tables state
-  const [standards, setStandards] = useState([
-    {
-      description: "",
-      cal_manufacturer: "",
-      model_no: "",
-      cal_control_no: "",
-      serial_no: "",
-      accuracy: "",
-      cal_date: "",
-      cal_due: "",
-      traceability: "",
-    },
-  ]);
+const [details, setDetails] = useState([...defaultDetails]);
 
-  const [details, setDetails] = useState([
-    {
-      function_tested: "",
-      nominal: "",
-      tolerance: "",
-      unit_under_test: "",
-      standard_instrument: "",
-      disparity: "",
-      correction: "",
-      remarks: "",
-    },
-  ]);
 
   // 🔹 Compute work week
- const getWorkWeek = (date) => {
-  const start = new Date("2024-11-03"); // Base reference (WW501)
-  const diffMs = date - start;
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  const totalWeeks = Math.floor(diffDays / 7);
+//  const getWorkWeek = (date) => {
+//   const start = new Date("2024-11-03"); // Base reference (WW501)
+//   const diffMs = date - start;
+//   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+//   const totalWeeks = Math.floor(diffDays / 7);
 
-  // Base year series
-  const baseYear = 500;
+//   // Base year series
+//   const baseYear = 500;
 
-  // Ilang taon (sets of 52 weeks) ang lumipas
-  const yearOffset = Math.floor(totalWeeks / 52);
+//   // Ilang taon (sets of 52 weeks) ang lumipas
+//   const yearOffset = Math.floor(totalWeeks / 52);
 
-  // Week number sa loob ng taon (1 → 52)
-  const weekInYear = (totalWeeks % 52) + 1;
+//   // Week number sa loob ng taon (1 → 52)
+//   const weekInYear = (totalWeeks % 52) + 1;
 
-  // Final formatted WW code (e.g., WW501, WW652, etc.)
-  return `WW${baseYear + yearOffset * 100 + weekInYear}`;
+//   // Final formatted WW code (e.g., WW501, WW652, etc.)
+//   return `WW${baseYear + yearOffset * 100 + weekInYear}`;
+// };
+
+const today = new Date();
+
+// 🔹 Format date helper: MM/DD/YYYY
+const formatDate = (date) => {
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  const yyyy = date.getFullYear();
+  return `${mm}/${dd}/${yyyy}`;
 };
 
+// 🔹 Compute PM Dates
+const pmDateWW = formatDate(today); // current date
+const dueDate = new Date(today);
+dueDate.setDate(today.getDate() + 91); // add 91 days instead of 13 weeks
+const pmDueWW = formatDate(dueDate);
+
+// console.log("PM Date:", pmDateWW);
+// console.log("PM Due Date (+91 days):", pmDueWW);
+
   // 🔹 Autofill when selecting machine
+  // const handleMachineChange = (e) => {
+  //   const selected = e.target.value;
+  //   const machine = machines.find((m) => m.machine_num === selected);
+  //   if (!machine) return;
+
+  //   // const today = new Date();
+  //   // const pmDateWW = getWorkWeek(today);
+  //   // const dueDate = new Date(today);
+  //   // dueDate.setDate(today.getDate() + 13 * 7);
+  //   // const pmDueWW = getWorkWeek(dueDate);
+
+  //   setData((prev) => ({
+  //     ...prev,
+  //     equipment: selected,
+  //     model: machine?.model ?? machine?.machine_model ?? "",
+  //     serial: machine?.serial ?? machine?.serial_no ?? "",
+  //     manufacturer: machine?.machine_manufacturer ?? machine?.manufacturer ?? "",
+  //     control_no: machine?.cn_no ?? machine?.control_no ?? "",
+  //     calibration_date: pmDateWW,
+  //     calibration_due: pmDueWW,
+  //     performed_by: empData?.emp_name || user?.name || "",
+  //     temperature: "",
+  //     relative_humidity: "",
+  //     specs: "",
+  //     report_no: "",
+  //     cal_interval: "",
+  //   }));
+  // };
+
   const handleMachineChange = (e) => {
-    const selected = e.target.value;
-    const machine = machines.find((m) => m.machine_num === selected);
-    if (!machine) return;
-
-    const today = new Date();
-    const pmDateWW = getWorkWeek(today);
-    const dueDate = new Date(today);
-    dueDate.setDate(today.getDate() + 13 * 7);
-    const pmDueWW = getWorkWeek(dueDate);
-
+  const selected = e.target.value;
+  const machine = machines.find((m) => m.machine_num === selected);
+  if (!machine) {
+    // If user typed random value → do not autofill
     setData((prev) => ({
       ...prev,
       equipment: selected,
-      model: machine?.model ?? machine?.machine_model ?? "",
-      serial: machine?.serial ?? machine?.serial_no ?? "",
-      manufacturer: machine?.machine_manufacturer ?? machine?.manufacturer ?? "",
-      control_no: machine?.cn_no ?? machine?.control_no ?? "",
-      calibration_date: pmDateWW,
-      calibration_due: pmDueWW,
-      performed_by: empData?.emp_name || user?.name || "",
-      temperature: "",
-      relative_humidity: "",
-      specs: "",
-      report_no: "",
-      cal_interval: "",
     }));
-  };
+    return;
+  }
+
+  setData((prev) => ({
+    ...prev,
+    equipment: selected,
+    model: machine?.model ?? machine?.machine_model ?? "",
+    serial: machine?.serial ?? machine?.serial_no ?? "",
+    manufacturer: machine?.machine_manufacturer ?? machine?.manufacturer ?? "",
+    control_no: machine?.cn_no ?? machine?.control_no ?? "",
+    calibration_date: pmDateWW,
+    calibration_due: pmDueWW,
+    performed_by: empData?.emp_name || user?.name || "",
+    temperature: "",
+    relative_humidity: "",
+    specs: "",
+    report_no: "",
+    cal_interval: "",
+  }));
+};
+
 
   // 🔹 Table row handlers
 const handleStandardChange = (index, e) => {
   const { name, value } = e.target;
   const updated = [...standards];
-  updated[index] = { ...updated[index], [name]: value };
-  setStandards(updated);
+  updated[index][name] = value;
 
-  // Sync with Inertia form data
+  setStandards(updated);
   setData("cal_std_use", updated);
 };
 
 const handleDetailChange = (index, e) => {
   const { name, value } = e.target;
   const updated = [...details];
-  updated[index] = { ...updated[index], [name]: value };
-  setDetails(updated);
+  updated[index][name] = value;
 
-  // Sync with Inertia form data
+  setDetails(updated);
   setData("cal_details", updated);
 };
 
 
-  const addStandardRow = () => {
-    setStandards([
-      ...standards,
-      {
-        description: "",
-        cal_manufacturer: "",
-        model_no: "",
-        cal_control_no: "",
-        serial_no: "",
-        accuracy: "",
-        cal_date: "",
-        cal_due: "",
-        traceability: "",
-      },
-    ]);
-  };
 
-  const removeStandardRow = (i) => {
-    const updated = [...standards];
-    updated.splice(i, 1);
-    setStandards(updated);
-  };
+const addStandardRow = () => {
+  setStandards([...standards, {
+    description: "",
+    cal_manufacturer: "",
+    model_no: "",
+    cal_control_no: "",
+    serial_no: "",
+    accuracy: "",
+    cal_date: "",
+    cal_due: "",
+    traceability: "",
+  }]);
+};
 
-  const addDetailRow = () => {
-    setDetails([
-      ...details,
-      {
-        function_tested: "",
-        nominal: "",
-        tolerance: "",
-        unit_under_test: "",
-        standard_instrument: "",
-        disparity: "",
-        correction: "",
-        remarks: "",
-      },
-    ]);
-  };
+const removeStandardRow = (index) => {
+  const updated = standards.filter((_, i) => i !== index);
+  setStandards(updated);
+  setData("cal_std_use", updated);
+};
 
-  const removeDetailRow = (i) => {
-    const updated = [...details];
-    updated.splice(i, 1);
-    setDetails(updated);
-  };
+// ---------------------
+
+const addDetailRow = () => {
+  setDetails([...details, {
+    function_tested: "",
+    nominal: "",
+    tolerance: "",
+    unit_under_test: "",
+    standard_instrument: "",
+    disparity: "",
+    correction: "",
+    remarks: "",
+  }]);
+};
+
+const removeDetailRow = (index) => {
+  const updated = details.filter((_, i) => i !== index);
+  setDetails(updated);
+  setData("cal_details", updated);
+};
+
 
 const handleSubmit = () => {
   // 🔹 Validate main data fields
@@ -390,15 +473,8 @@ useEffect(() => {
 
 const [report, setReport] = useState(selectedReport);
 
-  const isQA = ["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer","DIC Clerk 1"].includes(empData.emp_jobtitle);
-  const isEngineer = [
-    "Equipment Engineer",
-    "Supervisor - Equipment Technician",
-    "Senior Equipment Engineer",
-    "Sr. Equipment Engineer",
-    "Equipment Engineering Section Head",
-    "Section Head - Equipment Engineering"
-  ].includes(empData.emp_jobtitle);
+  const isQA = ["esd"].includes(empData.emp_system_role);
+  const isEngineer = ["engineer"].includes(empData.emp_system_role);
 
 const handleVerifyQA = () => {
   if (!selectedReport) return;
@@ -496,7 +572,7 @@ const handleVerifyReviewer = () => {
 
               {/* 🔹 Machine Info */}
               <div className="grid grid-cols-4 gap-4 mb-6">
-                <div>
+                {/* <div>
                   <label className="block font-semibold text-gray-500">
                     Machine
                   </label>
@@ -516,7 +592,33 @@ const handleVerifyReviewer = () => {
                       </option>
                     ))}
                   </select>
-                </div>
+                </div> */}
+
+                <div>
+  <label className="block font-semibold text-gray-500">
+    Machine
+  </label>
+
+  <input
+    list="machine-list"
+    name="equipment"
+    value={data.equipment}
+    onChange={handleMachineChange}
+    className="border p-2 rounded w-full text-gray-600"
+    placeholder="Type or select machine..."
+  />
+
+  <datalist id="machine-list">
+    {machines.map((m, index) => (
+      <option 
+        key={`${m.machine_num}-${index}`} 
+        value={m.machine_num}
+      >
+      </option>
+    ))}
+  </datalist>
+</div>
+
 
                 <div>
                   <label className="block font-semibold text-gray-500">
@@ -575,7 +677,7 @@ const handleVerifyReviewer = () => {
                       setData("calibration_date", e.target.value)
                     }
                     className="border p-2 rounded w-full text-gray-600"
-                    readOnly
+                    required
                   />
                 </div>
 
@@ -589,7 +691,7 @@ const handleVerifyReviewer = () => {
                     value={data.calibration_due}
                     onChange={(e) => setData("calibration_due", e.target.value)}
                     className="border p-2 rounded w-full text-gray-600"
-                    readOnly
+                    required
                   />
                 </div>
 

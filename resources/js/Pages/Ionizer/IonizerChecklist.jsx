@@ -293,22 +293,14 @@ const handleChange = (e) => {
   };
 
   // --- Role-based filtering (QA only sees rows without QA sign) ---
-  const isQaUser = ["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer", "DIC Clerk 1"].includes(emp_data?.emp_jobtitle);
+  const isQaUser = ["esd"].includes(emp_data.emp_system_role);
   const filteredReports = isQaUser
     ? reports.data.filter((item) => !item.qa_sign || item.qa_sign.trim() === "")
     : reports.data;
 
   // --- Table Data with Actions ---
   const dataWithAction = filteredReports.map((item) => {
-    const isTechUser = [
-      "Senior Equipment Technician",
-      "Equipment Technician 1",
-      "Equipment Technician 2",
-      "Equipment Technician 3",
-      "PM Technician 1",
-      "PM Technician 2",
-      "Trainee - Equipment Technician 1",
-    ].includes(emp_data?.emp_jobtitle);
+    const isTechUser = ["seniortech"].includes(emp_data.emp_system_role)
 
     const disableCheckbox =
       (isTechUser && item.tech_sign && item.tech_sign.trim() !== "") ||
@@ -1146,15 +1138,7 @@ const handleChange = (e) => {
 {/* --- Verifier Buttons --- */}
 <div className="flex justify-end gap-2 mt-4">
   {/* Tech Sign Button */}
-  {[
-    "Senior Equipment Technician",
-  "Equipment Technician 1",
-  "Equipment Technician 2",
-  "Equipment Technician 3",
-  "PM Technician 1",
-  "PM Technician 2",
-  "Trainee - Equipment Technician 1"
-].includes(emp_data?.emp_jobtitle) &&
+  {["seniortech"].includes(emp_data.emp_system_role) &&
     !viewData?.tech_sign && (
       <button
         onClick={() => handleVerify("tech")}
@@ -1165,7 +1149,7 @@ const handleChange = (e) => {
   )}
 
   {/* QA Sign Button */}
-  {["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer", "DIC Clerk 1"].includes(emp_data?.emp_jobtitle) &&
+  {["esd"].includes(emp_data.emp_system_role) &&
     viewData?.tech_sign && !viewData?.qa_sign && (
       <button
         onClick={() => handleVerify("qa")}

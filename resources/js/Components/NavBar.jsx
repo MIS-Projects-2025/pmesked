@@ -23,7 +23,7 @@ export default function NavBar() {
                             <div
                                 tabIndex={0}
                                 role="button"
-                                className="flex items-center m-1 space-x-2 cursor-pointer select-none"
+                                className="flex items-center m-1 space-x-2 cursor-pointer select-none text-white"
                             >
                                <i className="fa-regular fa-circle-user text-2xl"></i>
                                 <span className="mt-[3px]">
@@ -34,18 +34,17 @@ export default function NavBar() {
 
                             <ul
                                 tabIndex={0}
-                                className="p-2 shadow-md dropdown-content menu bg-base-100 rounded-box z-1 w-52"
+                                className="p-2 shadow-md dropdown-content menu bg-base-100 rounded-box z-1 w-52 bg-gray-500"
                             >
-                                <li>
+                                <li className="text-white">
                                     <a href={route("profile.index")}>
                                         <i className="fa-regular fa-id-card"></i>
-
                                         <span className="mt-[3px]">
                                             Profile
                                         </span>
                                     </a>
                                 </li>
-                                <li>
+                                <li className="text-white">
                                     <button onClick={logout}>
                                         <i className="fa-regular fa-share-from-square"></i>
                                         <span className="mt-[3px]">

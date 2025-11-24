@@ -7,6 +7,7 @@ use App\Services\DataTableService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class BakeCalibrationReportController extends Controller
 {
@@ -172,5 +173,23 @@ class BakeCalibrationReportController extends Controller
             ->delete();
 
         return back()->with('success', 'Admin removed successfully.');
+    }
+
+    public function viewPdf($id)
+    {
+        $report = DB::connection('mysql')
+            ->table('calibration_bake_report_list')
+            ->where('id', $id)
+            ->first(); // ← kailangan ito
+
+        if (!$report) {
+            abort(404, "Report not found.");
+        }
+
+        $pdf = Pdf::loadView('pdf.BakeCalibrationReport', [
+            'report' => $report
+        ])->setPaper('A4', 'portrait');
+
+        return $pdf->stream("Bake_Calibration_Report_$id.pdf");
     }
 }

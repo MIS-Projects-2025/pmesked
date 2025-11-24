@@ -21,7 +21,9 @@ class AuthMiddleware
             session('emp_data') &&
             (
                 !in_array(session('emp_data')['emp_dept'], ['Equipment Engineering', 'Quality Assurance', 'Quality Management System']) &&
-                !in_array(session('emp_data')['emp_jobtitle'], ['ESD Technician 1', 'ESD Technician 2', 'Senior QA Engineer', 'DIC Clerk 1'])
+                !in_array(session('emp_data')['emp_jobtitle'], ['ESD Technician 1', 'ESD Technician 2', 'Senior QA Engineer', 'DIC Clerk 1']) &&
+                !in_array(session('emp_data')['emp_system_role'], ['superadmin', 'admin'])
+
             )
         ) {
             session()->forget('emp_data');

@@ -58,7 +58,7 @@ export default function Sidebar() {
                     flex-col min-h-screen w-[270px] space-y-6 px-4 pb-6 pt-4
                     ${
                         theme === "light"
-                            ? "bg-gray-50 text-black"
+                            ? "bg-gray-50 text-white"
                             : "bg-base-100 text-base-content"
                     }
                 `}
@@ -77,7 +77,10 @@ export default function Sidebar() {
                 </Link>
 
                 <Navigation />
-
+                <div className="text-center mt-4">
+                    <small className="text-white text-sm">Copyright © {new Date().getFullYear()}. All rights reserved.</small><br />
+                    <small className="text-gray-100">Created by: <b>Dharwines</b></small>
+                </div>
                 <ThemeToggler toggleTheme={toggleTheme} theme={theme} />
             </div>
         </div>

@@ -2,7 +2,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, usePage, router } from "@inertiajs/react";
 import { useState } from "react";
 
-export default function MassApproval({ activities, empData }) {
+export default function MassApproval({ activities, empData, emp_data }) {
   const [selected, setSelected] = useState([]);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -56,37 +56,18 @@ export default function MassApproval({ activities, empData }) {
 
   // 🔑 Role-based button visibility
   let showButton = false;
-  if (empData && empData.emp_jobtitle) {
-    const job = empData.emp_jobtitle;
-    const techRoles = [
-       "Senior Equipment Technician",
-  "Equipment Technician 1",
-  "Equipment Technician 2",
-  "Equipment Technician 3",
-  "PM Technician 1",
-  "PM Technician 2",
-  "Trainee - Equipment Technician 1"
-    ];
-    const esdRoles = [
-      "ESD Technician 1",
-      "ESD Technician 2",
-      "Senior QA Engineer",
-    ];
-    const engineerRoles = [
-      "Equipment Engineer",
-      "Supervisor - Equipment Technician",
-      "Senior Equipment Engineer",
-      "Sr. Equipment Engineer",
-      "Equipment Engineering Section Head",
-      "Section Head - Equipment Engineering",
-    ];
+  if (empData && empData.emp_system_role) {
+    const job = empData.emp_system_role;
+    const techRoles = ["seniortech"];
+    const esdRoles = ["esd"];
+    const engineerRoles = ["engineer"];
     if (techRoles.includes(job)) showButton = true;
     if (esdRoles.includes(job)) showButton = true;
     if (engineerRoles.includes(job)) showButton = true;
   }
 
   const handleVerify = (activityId) => {
-  if (!empData?.emp_jobtitle) {
+  if (!empData?.emp_system_role) {
     alert("❌ Missing job title, cannot verify.");
     return;
   }
@@ -104,17 +85,9 @@ console.log(todayLocal);
   let updateFields = {};
 
   // 1. Technician verify
-  const techTitles = [
-  "Senior Equipment Technician",
-  "Equipment Technician 1",
-  "Equipment Technician 2",
-  "Equipment Technician 3",
-  "PM Technician 1",
-  "PM Technician 2",
-  "Trainee - Equipment Technician 1"
-];
+  const techTitles = ["seniortech"];
 
-if (techTitles.includes(empData.emp_jobtitle)) {
+if (techTitles.includes(emp_data.emp_system_role)) {
   if (selectedActivity.tech_ack) {
     alert("⚠️ Already verified by Technician.");
     return;
@@ -126,7 +99,7 @@ if (techTitles.includes(empData.emp_jobtitle)) {
   };
 }
   // 2. ESD verify
-  else if (["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer", "DIC Clerk 1"].includes(empData.emp_jobtitle)) {
+  else if (["esd"].includes(emp_data.emp_system_role)) {
     if (!selectedActivity.tech_ack) {
       alert("⚠️ Technician must verify first.");
       return;
@@ -143,14 +116,7 @@ if (techTitles.includes(empData.emp_jobtitle)) {
   }
   // 3. Engineer/Section Head verify
   else if (
-    [
-      "Equipment Engineer",
-      "Supervisor - Equipment Technician",
-      "Senior Equipment Engineer",
-      "Sr. Equipment Engineer",
-      "Equipment Engineering Section Head",
-      "Section Head - Equipment Engineering",
-    ].includes(empData.emp_jobtitle)
+    ["engineer"].includes(emp_data.emp_system_role)
   ) {
     if (!selectedActivity.qa_ack) {
       alert("⚠️ ESD must verify first.");
@@ -607,24 +573,9 @@ if (techTitles.includes(empData.emp_jobtitle)) {
 
         {/* ✅ Show Verify button only if empData is allowed */}
 {empData && (() => {
- const isTech = [
-  "Senior Equipment Technician",
-  "Equipment Technician 1",
-  "Equipment Technician 2",
-  "Equipment Technician 3",
-  "PM Technician 1",
-  "PM Technician 2",
-  "Trainee - Equipment Technician 1"
-].includes(empData.emp_jobtitle);
-  const isQA = ["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer","DIC Clerk 1"].includes(empData.emp_jobtitle);
-  const isEngineer = [
-    "Equipment Engineer",
-    "Supervisor - Equipment Technician",
-    "Senior Equipment Engineer",
-    "Sr. Equipment Engineer",
-    "Equipment Engineering Section Head",
-    "Section Head - Equipment Engineering"
-  ].includes(empData.emp_jobtitle);
+ const isTech = ["seniortech"].includes(emp_data.emp_system_role);
+  const isQA = ["esd"].includes(emp_data.emp_system_role);
+  const isEngineer = ["engineer"].includes(emp_data.emp_system_role);
 
   // 🔹 1. Technician can verify if no tech_ack yet
   if (isTech && !selectedActivity.tech_ack) {

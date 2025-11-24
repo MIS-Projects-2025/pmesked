@@ -221,8 +221,7 @@ Route::get('/bake-calibration-index', [BakeCalibrationReportController::class, '
 Route::post('/report/store', [BakeCalibrationReportController::class, 'store'])->name('report.store');
 Route::put('/report/{id}', [BakeCalibrationReportController::class, 'update'])->name('report.update');
 
-
-
+Route::get('/bake-calibration/pdf/{id}', [BakeCalibrationReportController::class, 'viewPdf']);
 
 // fallback
 Route::fallback(function () {

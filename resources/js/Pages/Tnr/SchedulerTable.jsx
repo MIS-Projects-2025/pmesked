@@ -5,7 +5,7 @@ import DataTable from "@/Components/DataTable";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
-export default function SchedulerTable({ tableData, empData, tableFilters, machines}) {
+export default function SchedulerTable({ tableData, empData, tableFilters, machines, emp_data}) {
   // 🔹 PDF Download
   const handleDownloadPDF = () => {
     const input = document.getElementById("modal-content");
@@ -50,7 +50,7 @@ const fiscalYear = 2025 + Math.floor(quarterIndex / 4);
 // Format label (e.g., "1Q25", "2Q25", "3Q25", "4Q25", then "1Q26")
 const quarter = `${quarterNumber}Q${String(fiscalYear).slice(-2)}`;
 
-console.log("Current Quarter:", quarter);
+// console.log("Current Quarter:", quarter);
 
 
   // // 🔹 Compute Work Week
@@ -89,8 +89,8 @@ const dueDate = new Date(today);
 dueDate.setDate(today.getDate() + 91); // add 91 days instead of 13 weeks
 const pmDueWW = formatDate(dueDate);
 
-console.log("PM Date:", pmDateWW);
-console.log("PM Due Date (+91 days):", pmDueWW);
+// console.log("PM Date:", pmDateWW);
+// console.log("PM Due Date (+91 days):", pmDueWW);
 
 
   const [formData, setFormData] = useState({
@@ -202,18 +202,9 @@ const handleMachineChange = (e) => {
   let updateFields = {};
 
   // 1. Technician verify
-  const techTitles = [
-  "Senior Equipment Technician",
-  "Equipment Technician 1",
-  "Equipment Technician 2",
-  "Equipment Technician 3",
-  "PM Technician 1",
-  "PM Technician 2",
-  "Equipment Engineering Supervisor / Equipment Specialist",
-  "Trainee - Equipment Technician 1"
-];
+  const techTitles = ["seniortech"];
 
-if (techTitles.includes(empData.emp_jobtitle)) {
+if (techTitles.includes(emp_data.emp_system_role)) {
   if (selectedActivity.tech_ack) {
     alert("⚠️ Already verified by Technician.");
     return;
@@ -225,7 +216,7 @@ if (techTitles.includes(empData.emp_jobtitle)) {
   };
 }
   // 2. ESD verify
-  else if (["ESD Technician 1", "ESD Technician 2"].includes(empData.emp_jobtitle)) {
+  else if (["esd"].includes(emp_data.emp_system_role)) {
     if (!selectedActivity.tech_ack) {
       alert("⚠️ Technician must verify first.");
       return;
@@ -242,14 +233,7 @@ if (techTitles.includes(empData.emp_jobtitle)) {
   }
   // 3. Engineer/Section Head verify
   else if (
-    [
-      "Equipment Engineer",
-      "Supervisor - Equipment Technician",
-      "Senior Equipment Engineer",
-      "Sr. Equipment Engineer",
-      "Equipment Engineering Section Head",
-      "Section Head - Equipment Engineering",
-    ].includes(empData.emp_jobtitle)
+    ["engineer"].includes(emp_data.emp_system_role)
   ) {
     if (!selectedActivity.qa_ack) {
       alert("⚠️ ESD must verify first.");
@@ -324,6 +308,12 @@ if (techTitles.includes(empData.emp_jobtitle)) {
   });
 };
 
+const handleInputChange = (e) => {
+  const { name, value } = e.target;
+  setFormData((prev) => ({ ...prev, [name]: value }));
+};
+
+
 
 const dataWithProgressAndAction = (tableData?.data || []).map((row, index) => {
 
@@ -352,14 +342,14 @@ const dataWithProgressAndAction = (tableData?.data || []).map((row, index) => {
         className={`
           h-5 text-xs flex justify-center items-center ont-semibold transition-all duration-500
           ${value === 0
-            ? "bg-gradient-to-r from-red-600 to-black"
+            ? "bg-gradient-to-r from-red-600 to-black text-white"
             : value <= 25
-            ? "bg-gradient-to-r from-red-900 to-amber-600"
+            ? "bg-gradient-to-r from-red-900 to-amber-600 text-white"
             : value <= 50
-            ? "bg-gradient-to-r from-amber-700 to-green-600"
+            ? "bg-gradient-to-r from-amber-700 to-green-600 text-white"
             : value <= 75
-            ? "bg-gradient-to-r from-yellow-700 to-green-700"
-            : "bg-gradient-to-r from-green-700 to-green-700"
+            ? "bg-gradient-to-r from-yellow-700 to-green-700 text-white"
+            : "bg-gradient-to-r from-green-700 to-green-700 text-white"
           }
         `}
         style={{ width: `${value}%` }}
@@ -483,7 +473,7 @@ const handleCheckAll = (e, complianceField) => {
 
   return (
     <AuthenticatedLayout>
-      <div className="rounded-2xl shadow p-4 text-white overflow-auto">
+      <div className="rounded-2xl shadow p-4 overflow-auto light:text-gray-600">
         {/* Header */}
         <div className="border-b p-4 flex justify-between items-center bg-gradient-to-r from-gray-600 to-black text-white rounded-t-2xl">
           <h2 className="text-lg font-bold">
@@ -511,7 +501,14 @@ const handleCheckAll = (e, complianceField) => {
             { key: "action", label: "Action" },
           ]}
           data={dataWithProgressAndAction}
-          meta={tableData?.meta}
+          meta={{
+            from: tableData?.from,
+            to: tableData?.to,
+            total: tableData?.total,
+            links: tableData?.links,
+            currentPage: tableData?.current_page,
+            lastPage: tableData?.last_page,
+          }}
           routeName={route("tnr.schedulerTable")}
           filters={tableFilters}
           rowKey="id"
@@ -621,28 +618,33 @@ const handleCheckAll = (e, complianceField) => {
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-gray-500">
-                    PM Date
-                  </label>
-                  <input
-                    type="text"
-                    className="border rounded w-full text-gray-700"
-                    value={formData.pmDate}
-                    required
-                  />
-                </div>
+  <label className="block font-semibold text-gray-500">
+    PM Date
+  </label>
+  <input
+    type="text"
+    name="pmDate"
+    className="border rounded w-full text-gray-700"
+    value={formData.pmDate}
+    onChange={handleInputChange}
+    required
+  />
+</div>
 
-                <div>
-                  <label className="block font-semibold text-gray-500">
-                    PM Due
-                  </label>
-                  <input
-                    type="text"
-                    className="border rounded w-full text-gray-700"
-                    value={formData.pmDue}
-                    required
-                  />
-                </div>
+<div>
+  <label className="block font-semibold text-gray-500">
+    PM Due
+  </label>
+  <input
+    type="text"
+    name="pmDue"
+    className="border rounded w-full text-gray-700"
+    value={formData.pmDue}
+    onChange={handleInputChange}
+    required
+  />
+</div>
+
 
                 <div>
                   <label className="block font-semibold text-gray-500">
@@ -1200,25 +1202,9 @@ const handleCheckAll = (e, complianceField) => {
 
         {/* ✅ Verify Buttons */}
         {empData && (() => {
-          const isTech = [
-            "Senior Equipment Technician",
-            "Equipment Technician 1",
-            "Equipment Technician 2",
-            "Equipment Technician 3",
-            "PM Technician 1",
-            "PM Technician 2",
-            "Equipment Engineering Supervisor / Equipment Specialist",
-            "Trainee - Equipment Technician 1"
-          ].includes(empData.emp_jobtitle);
-          const isQA = ["ESD Technician 1", "ESD Technician 2", "Senior QA Engineer", "DIC Clerk 1"].includes(empData.emp_jobtitle);
-          const isEngineer = [
-            "Equipment Engineer",
-            "Supervisor - Equipment Technician",
-            "Senior Equipment Engineer",
-            "Sr. Equipment Engineer",
-            "Equipment Engineering Section Head",
-            "Section Head - Equipment Engineering"
-          ].includes(empData.emp_jobtitle);
+          const isTech = ["seniortech"].includes(emp_data.emp_system_role);
+          const isQA = ["esd"].includes(emp_data.emp_system_role);
+          const isEngineer = ["engineer"].includes(emp_data.emp_system_role);
 
           if (isTech && !selectedActivity.tech_ack) {
             return (

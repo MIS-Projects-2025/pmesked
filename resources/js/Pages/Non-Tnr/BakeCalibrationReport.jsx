@@ -11,6 +11,8 @@ export default function BakeCalibrationReport({
 }) {
     const [showModal, setShowModal] = useState(false);
 
+    
+
     const createProfilingTemplate = () => [
         "Thermocouple 1",
         "Thermocouple 2",
@@ -184,6 +186,8 @@ export default function BakeCalibrationReport({
     const [viewModal, setViewModal] = useState(false);
     const [selectedReport, setSelectedReport] = useState(null);
 
+    
+
 // State para sa Edit Modal
 const [editModal, setEditModal] = useState(false);
 const [editData, setEditData] = useState(null);
@@ -222,6 +226,15 @@ const dataWithAction = tableData.data.map((r) => ({
     </div>
   ),
 }));
+
+// const Creators = emp_data?.emp_name === selectedReport?.performed_by;
+
+// console.log(
+//   "Creators (boolean):", Creators,
+//   "emp_data.emp_name:", emp_data?.emp_name,
+//   "selectedReport.performed_by:", selectedReport?.performed_by
+// );
+
 
 
 
@@ -434,6 +447,18 @@ const dataWithAction = tableData.data.map((r) => ({
           <i className="fa-solid fa-xmark"></i>
         </button>
       </div>
+<div className="flex justify-end items-center mb-3 border-b pb-2">
+ {emp_data?.emp_name === selectedReport.performed_by && (
+      <a
+  href={`/bake-calibration/pdf/${selectedReport.id}`}
+  target="_blank"
+  className="px-3 py-2 bg-gray-100 text-red-600 rounded shadow hover:bg-red-700 hover:text-white border-2 border-red-600 hover:border-gray-500 flex items-center text-bold"
+>
+  <i className="fa-solid fa-file-pdf mr-2"></i>
+  View as PDF
+</a>
+  )}
+</div>
 
       <div className="space-y-4">
         <table className="w-full border-collapse border text-sm text-left">
