@@ -77,7 +77,7 @@ export default function NonTnrcalibrationReportMassApproved({ reports, empData }
     currentPage * itemsPerPage
   );
 
-//   console.log(empData);
+
 
 const handleVerifyQA = () => {
   if (!selectedReport) return;
@@ -110,7 +110,7 @@ const handleVerifyReviewer = () => {
   );
 };
 
-console.log(reports);
+
 
   return (
     <AuthenticatedLayout>

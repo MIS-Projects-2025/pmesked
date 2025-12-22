@@ -258,7 +258,7 @@ export default function Dashboard(props) {
       )}
 
       {/* Department-level view */}
-      {["pmtech", "seniortech"].includes(emp_data?.emp_system_role) && (
+      {["pmtech", "seniortech", "toolcrib"].includes(emp_data?.emp_system_role) && (
         <div>
           {/* 🔹 Summary Cards */}
           <div className="grid grid-cols-4 gap-4 mb-6">

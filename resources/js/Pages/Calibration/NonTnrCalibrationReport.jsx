@@ -503,7 +503,7 @@ const handleVerifyReviewer = () => {
     <AuthenticatedLayout>
       <div className="p-6">
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-xl font-bold"><i className="fa-solid fa-fan"></i> Non-TnR Calibration Report</h1>
+          <h1 className="text-xl font-bold"><i className="fa-solid fa-file-circle-exclamation"></i> Non-TnR Calibration Report</h1>
           <button
             onClick={() => setShowModal(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded"

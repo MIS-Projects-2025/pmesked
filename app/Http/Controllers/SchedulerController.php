@@ -49,12 +49,16 @@ class SchedulerController extends Controller
                 'defaultSortDirection' => 'desc',
                 'dateColumn' => 'first_cycle',
                 'searchColumns' => [
-                    'pmnt_no',
                     'machine_num',
+                    'pmnt_no',
                     'quarter',
                     'first_cycle',
                     'pm_due',
                     'responsible_person',
+                    'tech_ack',
+                    'qa_ack',
+                    'senior_ee_ack',
+                    'progress_value',
                 ],
                 'selectColumns' => [
                     'id',
@@ -198,5 +202,12 @@ class SchedulerController extends Controller
 
         // stream para makita sa browser (may toolbar)
         return $pdf->stream("activity_$id.pdf");
+    }
+
+    public function remove($id)
+    {
+        DB::connection('mysql')->table('scheduler_tbl')->where('id', $id)->delete();
+
+        return redirect()->route('tnr.schedulerTable')->with('success', 'Checklist removed successfully.');
     }
 }

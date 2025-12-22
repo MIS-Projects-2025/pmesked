@@ -4,6 +4,7 @@ use App\Http\Controllers\CalibrationController;
 use App\Http\Controllers\Tnr\CalibrationMassApprovedController;
 use App\Http\Controllers\CalibrationReportController;
 use App\Http\Controllers\ChecklistController;
+use App\Http\Controllers\generator\ChecklistGeneratorController;
 use App\Http\Controllers\ionizer\DthmController;
 use App\Http\Controllers\ionizer\IonizerCalibrationMassApprovedController;
 use App\Http\Controllers\Ionizer\IonizerCalibrationReportController;
@@ -44,6 +45,7 @@ Route::get('/tnr/scheduler-table', [SchedulerController::class, 'index'])->name(
 Route::get('/scheduler/{id}/pdf', [SchedulerController::class, 'viewPdf'])->name('scheduler.pdf');
 Route::post('/scheduler', [SchedulerController::class, 'store'])->name('scheduler.store');
 Route::put('/scheduler/{id}/verify', [SchedulerController::class, 'verify']);
+Route::delete('/scheduler/remove/{id}', [SchedulerController::class, 'remove'])->name('pm.remove');
 
 // 📂 Checklist API view
 Route::get('/checklist/{platform}', [ChecklistController::class, 'getByPlatform']);
@@ -189,7 +191,7 @@ Route::prefix('non-tnr')->group(function () {
     Route::post('/mass-approve', [NonTnrMassAprovedController::class, 'massApprove'])->name('non_tnr.mass.approve');
 });
 
-Route::prefix('ionizer')->group(function () {
+Route::prefix('/ionizer')->group(function () {
     Route::get('/mass-approve', [IonizerMassApprovedController::class, 'index'])->name('ionizer.mass.index');
     Route::post('/tech-verify', [IonizerMassApprovedController::class, 'techVerify'])->name('ionizer.tech.verify');
     Route::post('/qa-verify', [IonizerMassApprovedController::class, 'qaVerify'])->name('ionizer.qa.verify');
@@ -223,8 +225,15 @@ Route::put('/report/{id}', [BakeCalibrationReportController::class, 'update'])->
 
 Route::get('/bake-calibration/pdf/{id}', [BakeCalibrationReportController::class, 'viewPdf']);
 
+Route::get('/generator', [ChecklistGeneratorController::class, 'index'])
+    ->name('generator.index');
+
 // fallback
 Route::fallback(function () {
     // For Inertia requests, just redirect back to the same URL
     return redirect()->to(request()->fullUrl());
 })->name('404');
+
+Route::get('/maintenance', function () {
+    return Inertia::render('Maintenance');
+})->name('maintenance');

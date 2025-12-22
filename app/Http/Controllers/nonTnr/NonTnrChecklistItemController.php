@@ -26,12 +26,14 @@ class NonTnrChecklistItemController extends Controller
             'platform' => 'required|string',
             'check_item' => 'nullable|array',
             'std_use_verification' => 'nullable|array',
+            'tool_life' => 'nullable|array',
         ]);
 
         NonTnrChecklistItem::create([
             'platform' => $data['platform'],
             'items' => json_encode($data['check_item']),
             'std_use_verification' => json_encode($data['std_use_verification']),
+            'tool_life' => json_encode($data['tool_life']),
             'created_by' => session('emp_data')['emp_name'] ?? null,
         ]);
 
@@ -47,12 +49,14 @@ class NonTnrChecklistItemController extends Controller
             'platform' => 'required|string',
             'check_item' => 'nullable|array',
             'std_use_verification' => 'nullable|array',
+            'tool_life' => 'nullable|array',
         ]);
 
         $item->update([
             'platform' => $data['platform'],
             'items' => json_encode($data['check_item']),
             'std_use_verification' => json_encode($data['std_use_verification']),
+            'tool_life' => json_encode($data['tool_life']),
             'updated_by' => session('emp_data')['emp_name'] ?? null,
         ]);
 

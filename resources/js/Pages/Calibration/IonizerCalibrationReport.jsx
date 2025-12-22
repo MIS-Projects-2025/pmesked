@@ -501,7 +501,7 @@ const handleVerifyReviewer = () => {
     <AuthenticatedLayout>
       <div className="p-6">
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-xl font-bold"><i class="fa-solid fa-fan"></i> Ionizer Calibration Report</h1>
+          <h1 className="text-xl font-bold"><i className="fa-solid fa-file-circle-check"></i> Ionizer Calibration Report</h1>
 
           <button
             onClick={() => setShowModal(true)}
@@ -560,7 +560,7 @@ const handleVerifyReviewer = () => {
               <div className="grid grid-cols-4 gap-4 mb-6 mt-4">
                                                 <div>
   <label className="block font-semibold text-gray-500">
-    Machine
+    Equipment
   </label>
 
   <input

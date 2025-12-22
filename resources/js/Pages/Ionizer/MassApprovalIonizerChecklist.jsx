@@ -10,12 +10,22 @@ export default function MassApprovalIonizerChecklist({ ionizerReports, empData }
     const [showView, setShowView] = useState(false);
     const [viewData, setViewData] = useState(null);
 
-    const techRoles = ["seniortech"];
+    // const techRoles = ["seniortech", "engineer"];
+    // const qaRoles = ["esd"];
+
+    // let userRole = null;
+    // if (techRoles.includes(emp_data?.emp_system_role)) userRole = "tech";
+    // else if (qaRoles.includes(emp_data?.emp_system_role)) userRole = "qa";
+
+    const role = emp_data?.emp_system_role?.toLowerCase();
+
+    const techRoles = ["seniortech", "engineer"];
     const qaRoles = ["esd"];
 
     let userRole = null;
-    if (techRoles.includes(emp_data?.emp_system_role)) userRole = "tech";
-    else if (qaRoles.includes(emp_data?.emp_system_role)) userRole = "qa";
+    if (techRoles.includes(role)) userRole = "tech";
+    else if (qaRoles.includes(role)) userRole = "qa";
+
 
     // Filter visible reports per role
     const visibleReports = ionizerReports.filter((r) => {
@@ -45,7 +55,7 @@ export default function MassApprovalIonizerChecklist({ ionizerReports, empData }
 
         router.post(route(userRole === "tech" ? "ionizer.tech.verify" : "ionizer.qa.verify"), { ids: selected }, {
             onSuccess: () => {
-                alert("✅ Selected reports approved successfully!");
+                alert("✅ Selected Ionizer Approved successfully!");
                 window.location.reload();
             },
             onError: (e) => {
@@ -384,7 +394,7 @@ export default function MassApprovalIonizerChecklist({ ionizerReports, empData }
 {/* --- Verifier Buttons --- */}
 <div className="flex justify-end gap-2 mt-4">
   {/* Tech Sign Button */}
-  {["seniortech"].includes(emp_data?.emp_system_role) &&
+  {["seniortech", "engineer"].includes(emp_data?.emp_system_role) &&
     !viewData?.tech_sign && (
       <button
         onClick={() => handleVerify("tech")}

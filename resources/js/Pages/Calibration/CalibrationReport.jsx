@@ -44,6 +44,19 @@ export default function CalibrationReport({ machines, empData }) {
   const [viewModal, setViewModal] = useState(false);
 
 
+  const parsedStdUse = Array.isArray(selectedReport?.cal_std_use)
+  ? selectedReport.cal_std_use
+  : typeof selectedReport?.cal_std_use === "string"
+  ? JSON.parse(selectedReport.cal_std_use)
+  : [];
+
+const parsedDetails = Array.isArray(selectedReport?.cal_details)
+  ? selectedReport.cal_details
+  : typeof selectedReport?.cal_details === "string"
+  ? JSON.parse(selectedReport.cal_details)
+  : [];
+
+
 
 
 
@@ -428,11 +441,17 @@ router.delete(route("calibration-reports.tnr.destroy", id), {
 });
 };
 
-const dataWithAction = reports.data.map((r) => ({
+const reportRows = Array.isArray(reports?.data)
+  ? reports.data
+  : Array.isArray(reports?.data?.data)
+  ? reports.data.data
+  : [];
+
+
+const dataWithAction = reportRows.map((r) => ({
   ...r,
   action: (
     <div className="flex gap-2">
-      {/* View Button */}
       <button
         className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
         onClick={() => {
@@ -443,7 +462,6 @@ const dataWithAction = reports.data.map((r) => ({
         <i className="fas fa-eye"></i> View
       </button>
 
-      {/* Conditional Remove Button */}
       {r.performed_by === empData?.emp_name &&
         (!r.qa_sign && !r.review_by) && (
           <button
@@ -456,6 +474,7 @@ const dataWithAction = reports.data.map((r) => ({
     </div>
   ),
 }));
+
 
 
 // State
@@ -517,7 +536,7 @@ const handleVerifyReviewer = () => {
     <AuthenticatedLayout>
       <div className="p-6">
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-xl font-bold">Calibration Report</h1>
+          <h1 className="text-xl font-bold"><i className="fa-solid fa-file-circle-question"></i>Calibration Report</h1>
           <button
             onClick={() => setShowModal(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded"
@@ -925,43 +944,38 @@ const handleVerifyReviewer = () => {
           </div>
         )}
 
-        {viewModal && selectedReport && (
+      {viewModal && selectedReport && (
   <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
     <div className="bg-white p-6 rounded shadow-lg w-10/12 max-h-[90vh] overflow-y-auto border-t-4 border-blue-600">
-      
+
       {/* Header */}
       <div className="flex justify-between items-center bg-gradient-to-r from-gray-600 to-black text-white p-4 rounded-t-lg sticky top-0 z-10">
         <h2 className="text-lg font-bold ml-4">
           <i className="fa-regular fa-rectangle-list"></i> Calibration Report View
         </h2>
-        <div className="flex space-x-2">
-        
-          {/* Close */}
-          <button
-            className="text-white text-xl"
-            onClick={() => setViewModal(false)}
-          >
-            <i className="fas fa-times text-red-500 hover:text-red-700"></i>
-          </button>
-        </div>
-      </div>
-    <div className="flex space-x-2 justify-end mt-4 ">
-      {selectedReport?.qa_sign && selectedReport?.review_by && (
-        
-
         <button
-          onClick={() => window.open(`/pdf/calibration/${selectedReport.id}`, "_blank")}
-          className="px-3 py-2 bg-gray-100 text-red-600 rounded shadow hover:bg-red-700 hover:text-white border-2 border-red-600 hover:border-gray-500 flex items-center text-bold"
-          >
-          <i className="fas fa-file-pdf mr-2"></i>
-          View as PDF
+          className="text-white text-xl"
+          onClick={() => setViewModal(false)}
+        >
+          <i className="fas fa-times text-red-500 hover:text-red-700"></i>
         </button>
+      </div>
 
-
+      {/* PDF Button */}
+      <div className="flex justify-end mt-4">
+        {selectedReport?.qa_sign && selectedReport?.review_by && (
+          <button
+            onClick={() => window.open(`/pdf/calibration/${selectedReport.id}`, "_blank")}
+            className="px-3 py-2 bg-gray-100 text-red-600 rounded shadow hover:bg-red-700 hover:text-white border-2 border-red-600 flex items-center"
+          >
+            <i className="fas fa-file-pdf mr-2"></i>
+            View as PDF
+          </button>
         )}
-    </div>
-      {/* Machine info */}
-      <div className="grid grid-cols-4 gap-4 mb-6 mt-4 text-gray-500 border p-4">
+      </div>
+
+      {/* Machine Info */}
+      <div className="grid grid-cols-4 gap-4 my-6 text-gray-500 border p-4">
         {[
           "equipment",
           "manufacturer",
@@ -980,37 +994,38 @@ const handleVerifyReviewer = () => {
           "review_date",
         ].map((key) => (
           <div key={key}>
-            <label className="block font-semibold" style={{ textTransform: "capitalize" }}>
+            <label className="block font-semibold capitalize">
               {key.replace(/_/g, " ")}
             </label>
             <input
               type="text"
               value={selectedReport[key] || "Wait for Signature..."}
               readOnly
-              className="border p-2 rounded w-full text-gray-600 bg-gray-100"
+              className="border p-2 rounded w-full bg-gray-100"
             />
           </div>
         ))}
-        
       </div>
 
-
       {/* Calibration Standard Used */}
-      <h3 className="text-md font-semibold mb-2 text-gray-500">Calibration Standard Used</h3>
-      <table className="w-full border mb-3 text-sm">
+      <h3 className="text-md font-semibold mb-2 text-gray-500">
+        Calibration Standard Used
+      </h3>
+      <table className="w-full border mb-4 text-sm">
         <thead className="bg-gray-400">
           <tr>
-            {Object.keys(selectedReport.cal_std_use?.[0] || {}).map((key) => (
-              <th key={key} className="border p-2" style={{ textTransform: "capitalize" }}>{key.replace(/_/g, " ")}</th>
+            {Object.keys(parsedStdUse[0] || {}).map((key) => (
+              <th key={key} className="border p-2 capitalize">
+                {key.replace(/_/g, " ")}
+              </th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {selectedReport.cal_std_use?.map((row, i) => (
+          {parsedStdUse.map((row, i) => (
             <tr key={i}>
               {Object.keys(row).map((key) => (
-                <td key={key} className="border p-2 text-gray-500">
-                  {/* <input type="text" value={row[key]} readOnly className="w-full border p-1 rounded bg-gray-100" /> */}
+                <td key={key} className="border p-2 text-gray-600">
                   {row[key]}
                 </td>
               ))}
@@ -1020,21 +1035,24 @@ const handleVerifyReviewer = () => {
       </table>
 
       {/* Calibration Details */}
-      <h3 className="text-md font-semibold mb-2 text-gray-500">Calibration Details</h3>
-      <table className="w-full border mb-3 text-sm">
+      <h3 className="text-md font-semibold mb-2 text-gray-500">
+        Calibration Details
+      </h3>
+      <table className="w-full border mb-4 text-sm">
         <thead className="bg-gray-400">
           <tr>
-            {Object.keys(selectedReport.cal_details?.[0] || {}).map((key) => (
-              <th key={key} className="border p-2" style={{ textTransform: "capitalize" }}>{key.replace(/_/g, " ")}</th>
+            {Object.keys(parsedDetails[0] || {}).map((key) => (
+              <th key={key} className="border p-2 capitalize">
+                {key.replace(/_/g, " ")}
+              </th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {selectedReport.cal_details?.map((row, i) => (
+          {parsedDetails.map((row, i) => (
             <tr key={i}>
               {Object.keys(row).map((key) => (
-                <td key={key} className="border p-2 text-gray-500">
-                  {/* <input type="text" value={row[key]} readOnly className="w-full border p-1 rounded bg-gray-100" /> */}
+                <td key={key} className="border p-2 text-gray-600">
                   {row[key]}
                 </td>
               ))}
@@ -1042,62 +1060,56 @@ const handleVerifyReviewer = () => {
           ))}
         </tbody>
       </table>
-      <div className="grid grid-cols-4 gap-4 mb-6 mt-4 text-gray-500 border p-4">
-        {[
-          "qa_sign",
-          "qa_sign_date",
-        ].map((key) => (
+
+      {/* QA Sign */}
+      <div className="grid grid-cols-4 gap-4 border p-4 mb-4 text-gray-500">
+        {["qa_sign", "qa_sign_date"].map((key) => (
           <div key={key}>
-            <label className="block font-semibold" style={{ textTransform: "capitalize" }}>
+            <label className="block font-semibold capitalize">
               {key.replace(/_/g, " ")}
             </label>
             <input
               type="text"
               value={selectedReport[key] || "Wait for Signature..."}
               readOnly
-              className="border p-2 rounded w-full text-gray-600 bg-gray-100"
+              className="border p-2 rounded w-full bg-gray-100"
             />
           </div>
         ))}
-        
       </div>
 
-      {/* Footer Close (redundant but okay) */}
-      <div className="flex justify-end mt-4">
-          {/* Verification button logic */}
-          {isQA && !selectedReport?.qa_sign && (
-           <button
-             onClick={handleVerifyQA}
-             className="px-4 py-2 border rounded bg-green-500 text-white hover:bg-green-600 mr-2"
-           >
-             <i className="fas fa-check mr-2"></i>
-             Verify (QA)
-            </button>
-          )}
+      {/* Footer */}
+      <div className="flex justify-end gap-2">
+        {isQA && !selectedReport?.qa_sign && (
+          <button
+            onClick={handleVerifyQA}
+            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+          >
+            <i className="fas fa-check mr-2"></i> Verify (QA)
+          </button>
+        )}
 
-          {isEngineer && selectedReport?.qa_sign && !selectedReport?.review_by && (
-            <button
-             onClick={handleVerifyReviewer}
-             className="px-4 py-2 border rounded bg-blue-500 text-white hover:bg-blue-600 mr-2"
-            >
-             <i className="fas fa-user-cog mr-2"></i>
-             Verify (Reviewer)
-            </button>
-          )}
+        {isEngineer && selectedReport?.qa_sign && !selectedReport?.review_by && (
+          <button
+            onClick={handleVerifyReviewer}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            <i className="fas fa-user-cog mr-2"></i> Verify (Reviewer)
+          </button>
+        )}
 
-        {/* Close */}
         <button
-          type="button"
           onClick={() => setViewModal(false)}
-          className="px-4 py-2 border rounded bg-red-500 text-white hover:bg-red-600"
+          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
         >
-          <i className="fas fa-times mr-2"></i>
-          Close
+          <i className="fas fa-times mr-2"></i> Close
         </button>
       </div>
+
     </div>
   </div>
-        )}
+)}
+
 
 
       </div>

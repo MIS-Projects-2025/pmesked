@@ -8,27 +8,40 @@ use App\Models\IonizerChecklistItem;
 use App\Models\Machine;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\DataTableService;
+use Illuminate\Support\Facades\DB;
 
 
 class IonizerChecklistController extends Controller
 {
+
+    protected $datatable;
+    protected $datatable1;
+
+    public function __construct(DataTableService $datatable)
+    {
+        $this->datatable = $datatable;
+    }
+
+    //old code 12052025
     // Sa IonizerChecklistController@index
     public function index(Request $request)
     {
-        // Kunin lahat ng IonizerChecklist (para sa DataTable / Edit)
+        // Paginated IonizerChecklist (10 per page)
         $reports = IonizerChecklist::orderBy('id', 'desc')->paginate(10);
 
-        // Kunin lahat ng IonizerChecklistItem (template / Add modal)
+        // Template items for Add modal
         $items = IonizerChecklistItem::orderBy('id', 'desc')->get();
 
-        $machines = Machine::select('*')
+        // Machines list
+        $machines = DB::connection('server25')->table('machine_list')->select('*')
             ->whereNotNull('pmnt_no')
-            ->where('machine_type', 'IONIZER')
+            ->whereIn('machine_type', ['IONIZER', 'Air Ionizer'])
             ->orderBy('machine_type')
             ->distinct()
             ->get();
 
-        // Decode JSON fields para sa Edit modal (reports)
+        // Decode JSON fields safely
         $reports->getCollection()->transform(function ($report) {
             $report->check_item = is_string($report->check_item)
                 ? json_decode($report->check_item, true) ?? []
@@ -46,10 +59,20 @@ class IonizerChecklistController extends Controller
         });
 
         return inertia('Ionizer/IonizerChecklist', [
-            'reports' => $reports,
-            'items' => $items,   // template items for Add modal
+            'reports' => $reports,      // paginated data
+            'items' => $items,          // template items for Add modal
             'machines' => $machines,
             'filters' => $request->all(),
+            'tableFilters' => $request->only([
+                'search',
+                'perPage',
+                'sortBy',
+                'sortDirection',
+                'start',
+                'end',
+                'dropdownSearchValue',
+                'dropdownFields',
+            ]),
             'empData' => [
                 'emp_id' => session('emp_data')['emp_id'] ?? null,
                 'emp_name' => session('emp_data')['emp_name'] ?? null,
@@ -57,6 +80,10 @@ class IonizerChecklistController extends Controller
             ],
         ]);
     }
+
+
+
+
 
 
 

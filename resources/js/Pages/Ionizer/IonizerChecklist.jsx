@@ -1,11 +1,22 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DataTable from "@/Components/DataTable";
 import { router, usePage } from "@inertiajs/react";
 import axios from "axios";
 
 export default function Index({ reports, filters, machines, empData, items }) {
   const { flash, emp_data } = usePage().props;
+
+  const usageStartDate = new Date("2025-11-22");
+
+  const computeUsageDays = () => {
+  const today = new Date();
+  const diffMs = today - usageStartDate;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  return 681 + diffDays; // 681 value nung 11/22/2025
+};
+
+
 
   const today = new Date();
   const nextWeek = new Date(today);
@@ -34,7 +45,7 @@ export default function Index({ reports, filters, machines, empData, items }) {
     tech_sign: "",
     qa_sign: "",
     days: "",
-    remarks: "",
+    remarks: "RUNNING IN GOOD CONDITION",
     updated_by: empData?.emp_name || "",
   };
 
@@ -53,54 +64,91 @@ export default function Index({ reports, filters, machines, empData, items }) {
   };
 
   // --- Open Add Modal ---
-  const openAddModal = () => {
-    setEditData(null);
+const openAddModal = () => {
+  setEditData(null);
 
-    const template = items[0] || {};
+  const template = items[0] || {};
 
-    const defaultCheckItems = (template.check_item || []).map((ci, idx) => ({
+  const defaultCheckItems = (template.check_item || []).map((ci, idx) => ({
+    id: idx,
+    assy_item: ci.assy_item ?? "",
+    requirement: ci.requirement ?? "",
+    activity: ci.activity ?? "",
+    compliance: ci.compliance ?? 1,
+    date: ci.date ?? formData.pm_date,
+    remarks: ci.remarks ?? "PASSED",
+  }));
+
+  const defaultVerificationReading = (template.verification_reading || []).map((vr, idx) => ({
+    id: idx,
+    parameter: vr.parameter ?? "",
+    specs_value: vr.specs_value ?? "",
+    trial1_min: vr.trial1_min ?? "",
+    trial1_max: vr.trial1_max ?? "",
+    trial2_min: vr.trial2_min ?? "",
+    trial2_max: vr.trial2_max ?? "",
+    trial3_min: vr.trial3_min ?? "",
+    trial3_max: vr.trial3_max ?? "",
+  }));
+
+  const defaultStdUseVerification = (template.std_use_verification || []).map((sv, idx) => {
+    const defaultValues = ["TREK INC.", "PFK-100/1261", "CN 888", "", ""];
+    return {
       id: idx,
-      assy_item: ci.assy_item ?? "",
-      requirement: ci.requirement ?? "",
-      activity: ci.activity ?? "",
-      compliance: ci.compliance ?? 0,
-      date: ci.date ?? "",
-      remarks: ci.remarks ?? "",
-    }));
+      description: sv.description ?? "",
+      instrument1: sv.instrument1 || defaultValues[idx] || "",
+      instrument2: sv.instrument2 ?? "N/A",
+      instrument3: sv.instrument3 ?? "N/A",
+    };
+  });
 
-    const defaultVerificationReading = (template.verification_reading || []).map(
-      (vr, idx) => ({
-        id: idx,
-        parameter: vr.parameter ?? "",
-        specs_value: vr.specs_value ?? "",
-        trial1_min: vr.trial1_min ?? "",
-        trial1_max: vr.trial1_max ?? "",
-        trial2_min: vr.trial2_min ?? "",
-        trial2_max: vr.trial2_max ?? "",
-        trial3_min: vr.trial3_min ?? "",
-        trial3_max: vr.trial3_max ?? "",
-      })
-    );
+  // --- para sa runninf days value to 
+// --- calculate workweek-based days (Mon-Fri only) ---
+const today = new Date(); // current date
+const ww601Start = new Date("2025-11-03"); // Monday start of WW601
 
-    const defaultStdUseVerification = (template.std_use_verification || []).map(
-      (sv, idx) => ({
-        id: idx,
-        description: sv.description ?? "",
-        instrument1: sv.instrument1 ?? "",
-        instrument2: sv.instrument2 ?? "",
-        instrument3: sv.instrument3 ?? "",
-      })
-    );
+// helper: count number of weekdays between two dates
+function countWeekdays(startDate, endDate) {
+  let count = 0;
+  let current = new Date(startDate);
+  while (current <= endDate) {
+    const day = current.getDay(); // 0=Sun, 6=Sat
+    if (day !== 0 && day !== 6) count++; // only Mon-Fri
+    current.setDate(current.getDate() + 1);
+  }
+  return count;
+}
 
-    setFormData({
-      ...defaultFormData,
-      check_item: defaultCheckItems,
-      verification_reading: defaultVerificationReading,
-      std_use_verification: defaultStdUseVerification,
-    });
+// number of weekdays passed since WW601 start
+const weekdaysPassed = countWeekdays(ww601Start, today);
 
-    setShowForm(true);
-  };
+// calculate days value
+// base = 681 for Nov 24–28, then +7 per workweek after
+const firstWeekEnd = new Date("2025-11-28"); // last day of first block
+let daysValue;
+
+if (today <= firstWeekEnd) {
+  daysValue = 681;
+} else {
+  // number of full workweeks passed since Nov 24–28
+  const nextWeekStart = new Date("2025-12-01"); // next Monday
+  const fullWeeks = Math.floor(countWeekdays(nextWeekStart, today) / 5);
+  daysValue = 687 + fullWeeks * 7; // 287 = first week after initial 681
+}
+
+setFormData({
+  ...defaultFormData,
+  check_item: defaultCheckItems,
+  verification_reading: defaultVerificationReading,
+  std_use_verification: defaultStdUseVerification,
+  days: daysValue,
+});
+
+
+
+  setShowForm(true);
+};
+
 
   // --- Open Edit Modal ---
   const openEditModal = (item) => {
@@ -177,7 +225,6 @@ const handleChange = (e) => {
         serial: machine.serial,
         description: "AIR IONIZER",
         frequency: "Weekly",
-        days: "",
         performed_by: empData?.emp_name || "",
       });
       setError("");
@@ -188,7 +235,6 @@ const handleChange = (e) => {
         serial: "",
         description: "",
         frequency: "",
-        days: "",
         performed_by: empData?.emp_name || "",
       });
       setError(`Machine "${value}" not found. Please add it first in the inventory.`);
@@ -217,6 +263,8 @@ const handleChange = (e) => {
 
   // 🔹 3. other fields
   setFormData({ ...formData, [name]: value });
+
+  
 };
 
 
@@ -245,6 +293,21 @@ const handleChange = (e) => {
         },
       });
     }
+
+    if (name === "days") {
+  const usageStartDate = new Date("2025-11-22");
+  const today = new Date();
+  const diffMs = today - usageStartDate;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  setFormData({
+    ...formData,
+    days: 681 + diffDays, // ← AUTO UPDATE
+  });
+
+  return;
+}
+
   };
 
   // --- Verify Handler ---
@@ -300,7 +363,7 @@ const handleChange = (e) => {
 
   // --- Table Data with Actions ---
   const dataWithAction = filteredReports.map((item) => {
-    const isTechUser = ["seniortech"].includes(emp_data.emp_system_role)
+    const isTechUser = ["seniortech", "engineer"].includes(emp_data.emp_system_role)
 
     const disableCheckbox =
       (isTechUser && item.tech_sign && item.tech_sign.trim() !== "") ||
@@ -349,13 +412,13 @@ const handleChange = (e) => {
         )}
 
         <div className="flex justify-between items-center mb-3">
-          <h2 className="text-xl font-bold">Ionizer Checklist</h2>
+          <h2 className="text-xl font-bold"><i className="fa-solid fa-fan"></i>Ionizer Checklist</h2>
           {["Equipment Engineering"].includes(emp_data?.emp_dept) && (
             <button
               onClick={openAddModal}
-              className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 border-2 border-blue-800"
             >
-              + Add New
+              + New Checklist
             </button>
           )}
         </div>
@@ -404,7 +467,7 @@ const handleChange = (e) => {
         {/* --- Modal Form --- */}
         {showForm && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-40">
-            <div className="bg-white p-5 rounded-lg shadow-lg w-[95%] md:max-w-8xl overflow-y-auto max-h-[95vh]">
+            <div className="bg-white p-5 rounded-lg shadow-lg w-[80%] md:max-w-8xl overflow-y-auto max-h-[95vh]">
               <div className="flex justify-between items-center mb-3 bg-gradient-to-r from-white to-gray-500 p-2 rounded">
                 <h3 className="text-lg font-bold text-violet-800 pt-4 pb-4">
                   <i className="fas fa-wrench mr-2"></i>
@@ -444,7 +507,7 @@ const handleChange = (e) => {
                           value={formData.pm_date}
                           onChange={handleChange}
                           className="w-full border rounded p-1"
-                          required
+                          readOnly
                         />
                       </td>
                     </tr>
@@ -487,7 +550,7 @@ const handleChange = (e) => {
                           value={formData.pm_due}
                           onChange={handleChange}
                           className="w-full border rounded p-1"
-                          required
+                          readOnly
                         />
                       </td>
                        
@@ -604,7 +667,7 @@ const handleChange = (e) => {
                           <input
                             type="checkbox"
                             name="compliance"
-                            checked={row.compliance === 1} // naka-bind sa row
+                            checked={row.compliance === 1} // controlled value
                             onChange={(e) =>
                               handleChecklistChange(index, "compliance", e.target.checked ? 1 : 0)
                            }
@@ -612,14 +675,14 @@ const handleChange = (e) => {
                         </td>
                         <td className="border p-2 w-1/12 items-center">
                         <input
-                          type="date"
+                          type="text"
                           name="date"
-                          value={row.date || "" }
+                          value={row.date || formData.pm_date }
                           onChange={(e) =>
                             handleChecklistChange(index, "date", e.target.value)
                           }
-                          className="border p-1 rounded bg-blue-300"
-                          placeholder="Select Date on right side..."
+                          className="border p-1 rounded bg-gray-200"
+                         
                         />
 
                         </td>
@@ -628,7 +691,7 @@ const handleChange = (e) => {
                            type="text"
                             name="remarks"
                             placeholder="PASS/FAIL..."
-                            value={row.remarks || ""}
+                            value={row.remarks || "PASSED"}
                             onChange={(e) =>
                               handleChecklistChange(index, "remarks", e.target.value)
                             }
@@ -646,7 +709,7 @@ const handleChange = (e) => {
                   <i className="fa-solid fa-magnifying-glass"></i>
                   Verification Reading
                 </h3>
-                <table className="w-full border text-sm text-gray-600 mb-4 bordered">
+                <table className="w-full border text-sm text-gray-600 mb-4">
                   <thead>
                     <tr>
                       <th rowSpan={2} className="border p-2">Verfication Reading</th>
@@ -706,6 +769,7 @@ const handleChange = (e) => {
                         }
                         className="border p-1 rounded w-full"
                        style={{ width: "150px" }}
+                       required
                       />
                     </td>
 
@@ -720,6 +784,7 @@ const handleChange = (e) => {
                         }
                        className="border p-1 rounded"
                        style={{ width: "150px" }}
+                       required
                      />
                     </td>
 
@@ -734,6 +799,7 @@ const handleChange = (e) => {
                        }
                        className="border p-1 rounded"
                         style={{ width: "150px" }}
+                        required
                      />
                     </td>
 
@@ -748,6 +814,7 @@ const handleChange = (e) => {
                          }
                           className="border p-1 rounded"
                          style={{ width: "150px" }}
+                         required
                        />
                      </td>
 
@@ -762,6 +829,7 @@ const handleChange = (e) => {
                           }
                          className="border p-1 rounded"
                          style={{ width: "150px" }}
+                         required
                        />
                       </td>
 
@@ -776,6 +844,7 @@ const handleChange = (e) => {
                          }
                          className="border p-1 rounded w-full"
                          style={{ width: "150px" }}
+                         required
                        />
                      </td>
                     </tr>
@@ -843,7 +912,7 @@ const handleChange = (e) => {
                         </td>
                          <td className="border p-2 w-1/12">
                             <input
-                              type="text"
+                              type={index === 3 || index === 4 ? "date" : "text"}
                               placeholder="Value"
                               value={row.instrument1 || ""}
                               onChange={(e) =>
@@ -901,14 +970,12 @@ const handleChange = (e) => {
                    Duration of usage (Days)
                  </label>
                   <input
-                    type="text"
+                    type="number"
                     name="days"
                     value={formData.days}
-                    onChange={handleChange}
-                    placeholder="Enter Number of Days..."
-                   className="w-full border rounded p-2 text-gray-600 bg-gray-100"
+                    className="w-full border rounded p-2 text-gray-600 bg-gray-100 cursor-not-allowed select-none"
                    style={{ height: "65px", fontSize: "22px" }}
-                   required
+                   readOnly
                   />
                 </div>
 
@@ -1138,7 +1205,7 @@ const handleChange = (e) => {
 {/* --- Verifier Buttons --- */}
 <div className="flex justify-end gap-2 mt-4">
   {/* Tech Sign Button */}
-  {["seniortech"].includes(emp_data.emp_system_role) &&
+  {["seniortech", "engineer"].includes(emp_data.emp_system_role) &&
     !viewData?.tech_sign && (
       <button
         onClick={() => handleVerify("tech")}

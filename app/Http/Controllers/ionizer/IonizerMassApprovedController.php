@@ -13,7 +13,8 @@ class IonizerMassApprovedController extends Controller
     // Main table view
     public function index(Request $request)
     {
-        $ionizerReports = IonizerChecklist::orderByDesc('created_at')->get();
+        $ionizerReports = IonizerChecklist::orderByDesc('created_at')
+            ->get();
 
         // Decode JSON fields para siguradong array
         $ionizerReports->transform(function ($report) {

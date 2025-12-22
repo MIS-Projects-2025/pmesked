@@ -3,8 +3,9 @@ import { useState } from "react";
 import DataTable from "@/Components/DataTable";
 import { router, usePage } from "@inertiajs/react";
 
-export default function Index({ reports, filters, empData, items, templates, machines }) {
-  const { flash, emp_data } = usePage().props;
+export default function Index({ empData, items, templates, machines }) {
+ const { flash, emp_data, reports, filters = {} } = usePage().props;
+
 
   const today = new Date();
   const nextWeek = new Date(today);
@@ -30,6 +31,7 @@ export default function Index({ reports, filters, empData, items, templates, mac
     performed_by: empData?.emp_name || "",
     check_item: [],
     std_use_verification: [],
+    tool_life: [],
     tech_sign: "",
     qa_sign: "",
     days: "",
@@ -82,17 +84,15 @@ const handlePlatformChange = (e) => {
       assy_item: ci.assy_item ?? "",
       requirement: ci.requirement ?? "",
       activity: ci.activity ?? "",
-      compliance: ci.compliance ?? 0,
-      date: ci.date ?? "",
-      remarks: ci.remarks ?? "",
+      compliance: ci.compliance ?? 1,
+      date: ci.date ?? formData.pm_date,
+      remarks: ci.remarks ?? "PASSED",
     }));
 
-    // parse std_use_verification (baka stringified JSON din)
+
     let parsedStd = [];
     try {
-      parsedStd = Array.isArray(template.std_use_verification)
-        ? template.std_use_verification
-        : JSON.parse(template.std_use_verification || "[]");
+      parsedStd = Array.isArray(template.std_use_verification) ? template.std_use_verification : JSON.parse(template.std_use_verification || "[]");
     } catch (err) {
       parsedStd = [];
     }
@@ -105,16 +105,36 @@ const handlePlatformChange = (e) => {
       instrument3: sv.instrument3 ?? "",
     }));
 
+    let parsedToolLife = [];
+try {
+  parsedToolLife = Array.isArray(template.tool_life)
+    ? template.tool_life
+    : JSON.parse(template.tool_life || "[]");
+} catch (err) {
+  parsedToolLife = [];
+}
+
+const defaultToolLife = parsedToolLife.map((tl, idx) => ({
+  id: idx,
+  description: tl.description ?? "",      // Description Name
+  duration_of_usage: tl.duration_of_usage ?? "",    // Duration of Usage
+  expected_tool_life: tl.expected_tool_life ?? "",  // Expected Tool Life
+  remarks: tl.remarks ?? "",                        // Remarks
+}));
+
+
     setFormData((prev) => ({
       ...prev,
       check_item: defaultCheckItems,
       std_use_verification: defaultStdVerification,
+      tool_life: defaultToolLife,
     }));
   } else {
     setFormData((prev) => ({
       ...prev,
       check_item: [],
       std_use_verification: [],
+      tool_life: [],
     }));
   }
 };
@@ -129,8 +149,8 @@ const handleChange = (e) => {
           ...formData,
           control_no: value,
           serial: machine.serial,
-          description: machine.company_rec_id,
-          frequency: "Weekly",
+          description: machine.machine_num,
+          frequency: machine.frequency || "",
           days: "",
         });
         setError("");
@@ -182,12 +202,34 @@ const handleChange = (e) => {
 
   // Sa loob ng component
 const openViewModal = (item) => {
-    setViewData(item);
-    setShowView(true);
+  setViewData({
+    ...item,
+    check_item: Array.isArray(item.check_item)
+      ? item.check_item
+      : JSON.parse(item.check_item || "[]"),
+
+    std_use_verification: Array.isArray(item.std_use_verification)
+      ? item.std_use_verification
+      : JSON.parse(item.std_use_verification || "[]"),
+
+    tool_life: Array.isArray(item.tool_life)
+      ? item.tool_life
+      : JSON.parse(item.tool_life || "[]"),
+  });
+
+  setShowView(true);
 };
 
+
 // Data preparation for DataTable
-const dataWithAction = reports?.data?.map((item) => ({
+const reportRows = Array.isArray(reports?.data)
+  ? reports.data
+  : Array.isArray(reports?.data?.data)
+  ? reports.data.data
+  : [];
+
+
+const dataWithAction = reportRows.map((item) => ({
     ...item,
     action: (
         <button
@@ -225,12 +267,12 @@ const handleVerify = (id) => {
     <AuthenticatedLayout>
       <div className="p-4">
         <div className="flex justify-between items-center mb-3">
-          <h2 className="text-xl font-bold">Non-TNR Checklist</h2>
+          <h2 className="text-xl font-bold"><i className="fa-solid fa-clipboard-list"></i>Non-TNR Checklist</h2>
           <button
             onClick={openAddModal}
-            className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            + Add New
+              className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 border border-blue-800"
+            >
+              + New Checklist
           </button>
         </div>
 
@@ -246,19 +288,20 @@ const handleVerify = (id) => {
             { key: "senior_ee_sign", label: "PM Engineer" },
             { key: "action", label: "Action" }, // View button
           ]}
-          data={dataWithAction}
-          meta={{
-            from: reports?.meta?.from ?? 0,
-            to: reports?.meta?.to ?? 0,
-            total: reports?.meta?.total ?? 0,
-            links: reports?.links ?? [],
-            currentPage: reports?.meta?.current_page ?? 1,
-            lastPage: reports?.meta?.last_page ?? 1,
-          }}
-          filters={filters}
-          rowKey="id"
-          sortBy="id"
-          sortOrder="desc"
+         data={dataWithAction}
+  meta={reports ? {
+    from: reports.from,
+    to: reports.to,
+    total: reports.total,
+    links: reports.links,
+    currentPage: reports.current_page,
+    lastPage: reports.last_page,
+  } : {}}
+  routeName={route("non-tnr-checklists.index")}
+  filters={filters}
+  rowKey="id"
+  sortBy="id"
+  sortOrder="desc"
         />
 
 
@@ -270,7 +313,7 @@ const handleVerify = (id) => {
                 <div className="flex justify-between items-center mb-3 bg-gradient-to-r from-white to-gray-500 p-2 rounded">
                 <h3 className="text-lg font-bold text-violet-800 pt-4 pb-4">
                   <i className="fas fa-wrench mr-2"></i>
-                  {editData ? "Edit Entry" : "Add New Entry"}
+                  {editData ? "Edit Entry" : "New Entry"}
                 </h3>
               
                 <button
@@ -348,7 +391,7 @@ const handleVerify = (id) => {
                           name="frequency"
                           value={formData.frequency}
                           onChange={handleChange}
-                          className="w-full border rounded p-1 bg-gray-100"
+                          className="w-full border rounded p-1"
                           required
                         />
                       </td>
@@ -487,7 +530,7 @@ const handleVerify = (id) => {
                             <td className="border p-2">
                               <input
                                 type="date"
-                                value={row.date}
+                                value={row.date || formData.pm_date}
                                 onChange={(e) =>
                                   handleChecklistChange(
                                     index,
@@ -614,6 +657,78 @@ const handleVerify = (id) => {
                     </>
                   )}
 
+                  {/* Tool Life Monitoring */}
+{formData.tool_life && formData.tool_life.length > 0 && (
+  <>
+    <h3 className="font-bold text-violet-700">TOOL LIFE MONITORING</h3>
+    <table className="w-full border text-sm text-gray-600 mb-4">
+      <thead>
+        <tr className="bg-gray-100">
+          <th className="border p-2">Description Name</th>
+          <th className="border p-2">Duration of Usage</th>
+          <th className="border p-2">Expected Tool Life</th>
+          <th className="border p-2">Remarks</th>
+        </tr>
+      </thead>
+      <tbody>
+        {formData.tool_life.map((tl, idx) => (
+          <tr key={idx}>
+            <td className="border p-2">
+              <input
+                type="text"
+                value={tl.description}
+                onChange={(e) => {
+                  const updated = [...formData.tool_life];
+                  updated[idx].description = e.target.value;
+                  setFormData({ ...formData, tool_life: updated });
+                }}
+                className="border p-1 rounded w-full"
+              />
+            </td>
+            <td className="border p-2">
+              <input
+                type="text"
+                value={tl.duration_of_usage}
+                onChange={(e) => {
+                  const updated = [...formData.tool_life];
+                  updated[idx].duration_of_usage = e.target.value;
+                  setFormData({ ...formData, tool_life: updated });
+                }}
+                className="border p-1 rounded w-full"
+              />
+            </td>
+            <td className="border p-2">
+              <input
+                type="text"
+                value={tl.expected_tool_life}
+                onChange={(e) => {
+                  const updated = [...formData.tool_life];
+                  updated[idx].expected_tool_life = e.target.value;
+                  setFormData({ ...formData, tool_life: updated });
+                }}
+                className="border p-1 rounded w-full"
+              />
+            </td>
+            <td className="border p-2">
+              <input
+                type="text"
+                value={tl.remarks}
+                onChange={(e) => {
+                  const updated = [...formData.tool_life];
+                  updated[idx].remarks = e.target.value;
+                  setFormData({ ...formData, tool_life: updated });
+                }}
+                className="border p-1 rounded w-full"
+              />
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </>
+)}
+
+
                 <div className="text-right">
                   <button
                     type="button"
@@ -697,9 +812,10 @@ const handleVerify = (id) => {
       </table>
 
       {/* Check Items */}
-      {viewData.check_item?.length > 0 && (
+      {Array.isArray(viewData.check_item) && viewData.check_item.length > 0 && (
+
         <>
-          <h3 className="font-bold text-violet-700">Check Items</h3>
+          <h3 className="font-bold text-violet-700">	&#42; Check Items</h3>
           <table className="w-full border text-sm text-gray-600 mb-4">
             <thead>
               <tr className="bg-gray-100">
@@ -756,8 +872,8 @@ const handleVerify = (id) => {
         </>
       )}
 
-      {/* Signatures */}
-      <h3 className="font-bold text-violet-700 mt-4">Signatures</h3>
+      {/* Validation */}
+      <h3 className="font-bold text-violet-700 mt-4">	&#42; Validation</h3>
       <table className="w-full border text-sm text-gray-600 mb-4">
         <tbody>
           <tr>
@@ -780,6 +896,34 @@ const handleVerify = (id) => {
           </tr>
         </tbody>
       </table>
+
+      {/* Tool Life Monitoring */}
+{viewData.tool_life?.length > 0 && (
+  <>
+    <h3 className="font-bold text-violet-700">	&#42; Tool Life Monitoring</h3>
+    <table className="w-full border text-sm text-gray-600 mb-4">
+      <thead>
+        <tr className="bg-gray-100">
+          <th className="border p-2">Description Name</th>
+          <th className="border p-2">Duration of Usage</th>
+          <th className="border p-2">Expected Tool Life</th>
+          <th className="border p-2">Remarks</th>
+        </tr>
+      </thead>
+      <tbody>
+        {viewData.tool_life.map((tl, idx) => (
+          <tr key={idx}>
+            <td className="border p-2">{tl.description}</td>
+            <td className="border p-2">{tl.duration_of_usage}</td>
+            <td className="border p-2">{tl.expected_tool_life}</td>
+            <td className="border p-2">{tl.remarks}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </>
+)}
+
 
       {/* ✅ Action Buttons */}
       <div className="flex justify-end mt-4 gap-2">

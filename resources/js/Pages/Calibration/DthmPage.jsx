@@ -95,14 +95,14 @@ const dataWithAction = records.data
         <div className="flex justify-center gap-2">
           <button
             onClick={() => handleView(rec)}
-            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs"
+            className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-700 transition"
           >
             <i className="fas fa-eye mr-1"></i>View
           </button>
           {isQA && !rec.qa_sign && (
             <button
               onClick={() => handleQAVerify(rec.id)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-xs"
+              className="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition"
             >
               <i className="fas fa-check mr-1"></i>QA Verify
             </button>
@@ -119,13 +119,14 @@ const dataWithAction = records.data
       <div className="p-4">
         {/* Header */}
         <div className="flex justify-between items-center mb-5">
-          <h1 className="text-xl font-semibold text-white">
-            🧾 Thermohygrometer Calibration Data Log Sheet
+          <h1 className="text-xl font-semibold">
+            <i className="fa-solid fa-sheet-plastic"></i>
+             Thermohygrometer Calibration Data Log Sheet
           </h1>
          {["Equipment Engineering"].includes(emp_data?.emp_dept) && (
              <button
             onClick={() => setShowModal(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+            className="bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition border border-gray-900"
           >
             + Add New
           </button>
@@ -443,7 +444,7 @@ const dataWithAction = records.data
     <button
       type="button"
       onClick={() => handleQAVerify(selectedRecord.id)}
-      className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-md"
+      className="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2 rounded-md"
     >
       <i className="fas fa-check mr-2"></i> Verify (QA Sign)
     </button>

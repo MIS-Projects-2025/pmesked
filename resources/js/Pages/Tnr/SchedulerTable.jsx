@@ -178,10 +178,10 @@ const handleMachineChange = (e) => {
           requirements: row.requirements,
           activity_1: row.activity_1,
           compliance1: 0,
-          remarks1: "",
+          remarks1: "PASSED",
           activity_2: row.activity_2,
           compliance2: 0,
-          remarks2: "",
+          remarks2: "PASSED",
         };
       });
       setAnswers(initialAnswers);
@@ -313,6 +313,28 @@ const handleInputChange = (e) => {
   setFormData((prev) => ({ ...prev, [name]: value }));
 };
 
+const handleRemove = (row) => {
+    if (!confirm(`Are you sure you want to permanently delete this checklist for machine ${row.machine_num}?`)) {
+        return;
+    }
+
+    router.delete(
+        route("pm.remove", row.id),   // <-- your delete route
+        {
+            onSuccess: () => {
+                alert("🗑️ Checklist removed successfully!");
+                router.reload(); // refresh table
+            },
+            onError: (errors) => {
+                console.error(errors);
+                alert("❌ Failed to remove checklist.");
+            }
+        }
+    );
+};
+
+
+
 
 
 const dataWithProgressAndAction = (tableData?.data || []).map((row, index) => {
@@ -361,38 +383,63 @@ const dataWithProgressAndAction = (tableData?.data || []).map((row, index) => {
   );
 })(),
 
-  action: (
-  <button
-    className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-    onClick={() => {
-     setFormData({
-  machine: row.machine_num,
-  controlNo: row.pmnt_no,
-  serial: row.serial,
-  pmDate: row.first_cycle,
-  pmDue: row.pm_due,
-  performedBy: row.responsible_person,
-  machinePlatform: row.machine_platform,
-  quarter: row.quarter,
-  progress_value: row.progress_value,
-  seniorTech: row.tech_ack && row.tech_ack_date
-               ? `${row.tech_ack} / ${row.tech_ack_date}` 
-               : '',
-  esdTech: row.qa_ack  && row.qa_ack_date
-               ? `${row.qa_ack} / ${row.qa_ack_date}` 
-               : '',
-  pmEngineer: row.senior_ee_ack && row.senior_ee_ack_date 
-               ? `${row.senior_ee_ack} / ${row.senior_ee_ack_date}` 
-               : ''
-});
+action: (
+  <div className="flex gap-2">
 
-      setSelectedActivity(row);
-      setModalOpen(true); // ito yung view modal
-    }}
-  >
-    <i className="fas fa-eye"></i> View
-  </button>
+    {/* --- VIEW BUTTON --- */}
+    <button
+      className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 group relative"
+      onClick={() => {
+        setFormData({
+          machine: row.machine_num,
+          controlNo: row.pmnt_no,
+          serial: row.serial,
+          pmDate: row.first_cycle,
+          pmDue: row.pm_due,
+          performedBy: row.responsible_person,
+          machinePlatform: row.machine_platform,
+          quarter: row.quarter,
+          progress_value: row.progress_value,
+          seniorTech:
+            row.tech_ack && row.tech_ack_date
+              ? `${row.tech_ack} / ${row.tech_ack_date}`
+              : "",
+          esdTech:
+            row.qa_ack && row.qa_ack_date
+              ? `${row.qa_ack} / ${row.qa_ack_date}`
+              : "",
+          pmEngineer:
+            row.senior_ee_ack && row.senior_ee_ack_date
+              ? `${row.senior_ee_ack} / ${row.senior_ee_ack_date}`
+              : "",
+        });
+
+        setSelectedActivity(row);
+        setModalOpen(true);
+      }}
+    >
+      <span className="block group-hover:hidden"><i className="fas fa-eye"></i></span>
+      <span className="hidden group-hover:block"><i className="fas fa-eye mr-1"></i>View</span>
+      
+    </button>
+
+{/* --- REMOVED BUTTON (VISIBLE ONLY IF tech_ack IS NULL/EMPTY AND USER IS RESPONSIBLE_PERSON) --- */}
+{(!row.tech_ack || row.tech_ack.trim() === "") &&
+  row.responsible_person === emp_data?.emp_name && (
+    <button
+  className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 group relative"
+  onClick={() => handleRemove(row)}
+>
+  <span className="block group-hover:hidden"><i className="fas fa-trash"></i></span>
+  <span className="hidden group-hover:block"><i className="fas fa-trash mr-1"></i>Remove</span>
+</button>
+
+)}
+
+
+  </div>
 ),
+
 
   };
 });
@@ -480,20 +527,23 @@ const handleCheckAll = (e, complianceField) => {
             <i className="fas fa-list"></i> List of Machine for PM
           </h2>
           <button
-            className="px-4 py-2 rounded-lg bg-blue-700 text-white hover:bg-blue-800 transition"
+            className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 border-2 border-blue-800"
             onClick={() => setShowModal(true)}
-          >
-            <i className="fas fa-plus"></i> New
+            
+            >
+              + New Checklist
           </button>
         </div>
 
         {/* DataTable */}
         <DataTable
           columns={[
+            { key: "machine_num", label: "Machine Number" },
             { key: "pmnt_no", label: "PMNT Number" },
             { key: "quarter", label: "Quarter" },
             { key: "first_cycle", label: "PM Date" },
             { key: "pm_due", label: "PM Due" },
+            { key: "responsible_person", label: "Done By" },
             { key: "tech_ack", label: "Tech Verifier" },
             { key: "qa_ack", label: "ESD Verifier" },
             { key: "senior_ee_ack", label: "PM Engineer Verifier" },
@@ -699,8 +749,8 @@ const handleCheckAll = (e, complianceField) => {
     <th colSpan="3" className="border border-gray-300 px-2 py-1">First Cycle</th>
     <th colSpan="3" className="border border-gray-300 px-2 py-1">Second Cycle</th>
   </tr>
-  <tr className="bg-gray-500">
-    <th className="border border-gray-300 px-2 py-1">Activity</th>
+  <tr className="bg-gray-600">
+    <th className="border border-gray-300 text-gray-200 px-2 py-1">Activity</th>
     <th className="border border-gray-300 px-2 py-1 text-center">
       <input
         type="checkbox"
@@ -710,9 +760,9 @@ const handleCheckAll = (e, complianceField) => {
         title="Check all First Cycle"
       />
     </th>
-    <th className="border border-gray-300 px-2 py-1">Remarks</th>
+    <th className="border border-gray-300 text-gray-200 px-2 py-1">Remarks</th>
 
-    <th className="border border-gray-300 px-2 py-1">Activity</th>
+    <th className="border border-gray-300 text-gray-200 px-2 py-1">Activity</th>
     <th className="border border-gray-300 px-2 py-1 text-center">
       <input
         type="checkbox"
@@ -722,7 +772,7 @@ const handleCheckAll = (e, complianceField) => {
         title="Check all Second Cycle"
       />
     </th>
-    <th className="border border-gray-300 px-2 py-1">Remarks</th>
+    <th className="border border-gray-300 text-gray-200 px-2 py-1">Remarks</th>
   </tr>
 </thead>
 
@@ -753,7 +803,7 @@ const handleCheckAll = (e, complianceField) => {
                             <td className="text-center border border-gray-300 px-2 py-1">
                               <input
                                 type="text"
-                                value={answers[row.id]?.remarks1 || ""}
+                                value={answers[row.id]?.remarks1 || "PASSED"}
                                 onChange={(e) =>
                                   handleAnswerChange(
                                     row.id,
@@ -793,7 +843,7 @@ const handleCheckAll = (e, complianceField) => {
                             <td className="text-center border border-gray-300 px-2 py-1">
                               <input
                                 type="text"
-                                value={answers[row.id]?.remarks2 || ""}
+                                value={answers[row.id]?.remarks2 || "PASSED"}
                                 onChange={(e) =>
                                   handleAnswerChange(
                                     row.id,
@@ -830,13 +880,13 @@ const handleCheckAll = (e, complianceField) => {
           onClick={handleAddRow}
           className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
         >
-          + Add Row
+          <i className="fas fa-plus"></i> Add Row
         </button>
         <button
           onClick={handleRemoveRow}
           className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
         >
-          – Remove
+          <i className="fas fa-trash"></i> Remove
         </button>
       </div>
     </div>
@@ -916,9 +966,9 @@ const handleCheckAll = (e, complianceField) => {
               <div className="p-4 flex justify-end gap-4 sticky bottom-0 bg-white border-t">
                 <button
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 rounded-md bg-gray-500 text-white hover:bg-gray-700"
+                  className="px-4 py-2 rounded-md bg-red-500 text-white hover:bg-red-700"
                 >
-                  Cancel
+                  <i className="fas fa-times"></i> Cancel
                 </button>
                 <button
                   onClick={saveSchedule}
@@ -1196,6 +1246,17 @@ const handleCheckAll = (e, complianceField) => {
 
       {/* Footer */}
       <div className="flex justify-end gap-2 p-4 border-t">
+        {empData && (() => {
+           const currentUser = emp_data?.emp_name;
+        if (formData.performedBy === currentUser) {
+  return (
+    <div className="text-red-600 font-semibold bg-red-100 border border-red-400 rounded px-3 py-2 mt-2">
+      <i className="fa-solid fa-circle-exclamation"></i> 
+      &nbsp; You cannot verify your own activity.
+    </div>
+  );
+}
+        })()}
         <button className="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-600" onClick={() => setModalOpen(false)}>
           <i className="fa-solid fa-xmark"></i> Close
         </button>
@@ -1205,14 +1266,20 @@ const handleCheckAll = (e, complianceField) => {
           const isTech = ["seniortech"].includes(emp_data.emp_system_role);
           const isQA = ["esd"].includes(emp_data.emp_system_role);
           const isEngineer = ["engineer"].includes(emp_data.emp_system_role);
+          const currentUser = emp_data?.emp_name;
 
-          if (isTech && !selectedActivity.tech_ack) {
+          // If user is the same person → show error instead of button
+
+
+          if (isTech && !selectedActivity.tech_ack && formData.performedBy !== currentUser) {
             return (
               <button className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700" onClick={() => handleVerify(selectedActivity.id)}>
                 <i className="fa-solid fa-check"></i> Verify
               </button>
             );
           }
+
+          
 
           if (isQA && selectedActivity.tech_ack && !selectedActivity.qa_ack) {
             return (

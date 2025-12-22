@@ -11,15 +11,14 @@ class MassApprovalController extends Controller
 {
     public function index()
     {
-        // Kunin emp data mula session
         $empData = session('emp_data');
         $role = $empData['emp_jobtitle'] ?? null;
+        $currentEmp = $empData['emp_name'] ?? null; // or emp_id if numeric
 
         // Base query: lahat ng hindi 100% progress
         $query = Scheduler::orderBy('id', 'desc')
-            ->where('progress_value', '!=', '100');
-
-
+            ->where('progress_value', '!=', '100')
+            ->where('responsible_person', '!=', $currentEmp); // exclude own activity
 
         // Role-based filtering
         if (in_array($role, [
@@ -30,7 +29,6 @@ class MassApprovalController extends Controller
             'PM Technician 1',
             'PM Technician 2',
         ])) {
-            // ipakita lang kung wala pang tech_ack (NULL o empty string)
             $query->where(function ($q) {
                 $q->whereNull('tech_ack')
                     ->orWhere('tech_ack', '');
@@ -41,7 +39,6 @@ class MassApprovalController extends Controller
             'Senior QA Engineer',
             'DIC Clerk 1',
         ])) {
-            // may tech_ack na pero wala pang qa_ack
             $query->where(function ($q) {
                 $q->whereNotNull('tech_ack')
                     ->where('tech_ack', '!=', '');
@@ -57,7 +54,6 @@ class MassApprovalController extends Controller
             'Equipment Engineering Section Head',
             'Section Head - Equipment Engineering',
         ])) {
-            // may tech_ack + qa_ack na pero wala pang senior_ee_ack
             $query->where(function ($q) {
                 $q->whereNotNull('tech_ack')
                     ->where('tech_ack', '!=', '');
@@ -70,7 +66,6 @@ class MassApprovalController extends Controller
             });
         }
 
-
         $activities = $query->get();
 
         return Inertia::render('Tnr/MassApproved', [
@@ -78,6 +73,8 @@ class MassApprovalController extends Controller
             'empData'    => $empData,
         ]);
     }
+
+
 
 
     // MassApprovalController

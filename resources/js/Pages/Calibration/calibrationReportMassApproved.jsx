@@ -61,7 +61,7 @@ export default function calibrationReportMassApproved({ reports, empData }) {
     currentPage * itemsPerPage
   );
 
-//   console.log(empData);
+
 
 const handleVerifyQA = () => {
   if (!selectedReport) return;
@@ -94,7 +94,7 @@ const handleVerifyReviewer = () => {
   );
 };
 
-console.log(reports);
+
 
   return (
     <AuthenticatedLayout>

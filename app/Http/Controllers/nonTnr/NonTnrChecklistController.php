@@ -9,30 +9,66 @@ use App\Models\NonTnrChecklistItem;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\DB;
+
+use App\Services\DataTableService;
 
 class NonTnrChecklistController extends Controller
 {
-    // ✅ Index page
-    public function index()
-    {
-        // Reports with pagination
-        $reports = NonTnrChecklist::orderByDesc('id')->paginate(10);
 
+    protected $datatable;
+    protected $datatable1;
+
+    public function __construct(DataTableService $datatable)
+    {
+        $this->datatable = $datatable;
+    }
+
+    // ✅ Index page
+    public function index(Request $request)
+    {
+        // Get filter values from request
+        $search = $request->input('search', '');
+        $perPage = $request->input('perPage', 10);
+        $sortBy = $request->input('sortBy', 'id');
+        $sortDirection = $request->input('sortDirection', 'desc');
+
+        // Base query
+        $query = DB::connection('mysql')->table('non_tnr_checklist_tbl');
+
+        // Apply search filters
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('platform', 'like', "%{$search}%")
+                    ->orWhere('control_no', 'like', "%{$search}%")
+                    ->orWhere('pm_date', 'like', "%{$search}%")
+                    ->orWhere('pm_due', 'like', "%{$search}%")
+                    ->orWhere('performed_by', 'like', "%{$search}%")
+                    ->orWhere('tech_sign', 'like', "%{$search}%")
+                    ->orWhere('qa_sign', 'like', "%{$search}%")
+                    ->orWhere('senior_ee_sign', 'like', "%{$search}%");
+            });
+        }
+
+        // Apply sorting
+        $query->orderBy($sortBy, $sortDirection);
+
+        // Paginate results
+        $reports = $query->paginate($perPage)->appends($request->all());
+
+        // Render Inertia page
         return Inertia::render('Non-Tnr/NonTnrChecklists', [
-            'reports' => [
-                'data'        => $reports->items(),
-                'from'        => $reports->firstItem(),
-                'to'          => $reports->lastItem(),
-                'total'       => $reports->total(),
-                'links'       => $reports->linkCollection(), // mas clean kaysa links()
-                'currentPage' => $reports->currentPage(),
-                'lastPage'    => $reports->lastPage(),
-            ],
+            'reports' => $reports,
+            'filters' => $request->only([
+                'search',
+                'perPage',
+                'sortBy',
+                'sortDirection',
+                'page',
+            ]),
             'templates' => NonTnrChecklistItem::orderByDesc('id')->get(),
-            'machines'  => Machine::query()
-                ->whereNotNull('pmnt_no')
+            'machines' => Machine::whereNotNull('pmnt_no')
                 ->where('machine_type', 'NON T&R')
-                ->orderBy('machine_type')
                 ->distinct()
                 ->get(),
             'empData' => [
@@ -61,6 +97,7 @@ class NonTnrChecklistController extends Controller
             'performed_by' => 'nullable|string|max:45',
             'check_item' => 'nullable|array',
             'std_use_verification' => 'nullable|array',
+            'tool_life' => 'nullable|array',
         ]);
 
         NonTnrChecklist::create(array_merge($data, [
@@ -86,6 +123,7 @@ class NonTnrChecklistController extends Controller
             'performed_by' => 'nullable|string|max:45',
             'check_item' => 'nullable|array',
             'std_use_verification' => 'nullable|array',
+            'tool_life' => 'nullable|array',
         ]);
 
         $checklist->update(array_merge($data, [
@@ -187,10 +225,16 @@ class NonTnrChecklistController extends Controller
             ? json_decode($checklist->std_use_verification, true)
             : $checklist->std_use_verification;
 
+        $toolLife = is_string($checklist->tool_life)
+            ? json_decode($checklist->tool_life, true)
+            : $checklist->tool_life;
+
         $pdf = Pdf::loadView('pdf.non_tnr_checklist', [
             'checklist' => $checklist,
             'checkItems' => $checkItems,
             'stdVerifications' => $stdVerifications,
+            'toolLife' => $toolLife,
+
         ]);
 
         return $pdf->stream("non_tnr_checklist_$id.pdf");

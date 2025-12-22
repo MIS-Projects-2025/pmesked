@@ -17,7 +17,7 @@ export default function NavLinks() {
                 }
                 // notifications={5}
             />
-            {["pmtech", "seniortech"].includes(emp_data?.emp_system_role) && (
+            {["pmtech", "toolcrib", "seniortech"].includes(emp_data?.emp_system_role) && (
                 <div>
                      <Dropdown
                 label="TNR"
@@ -57,7 +57,7 @@ export default function NavLinks() {
             </div>
             )}
             
-            {["pmtech", "seniortech"].includes(emp_data?.emp_system_role) && (
+            {["pmtech", "toolcrib", "seniortech"].includes(emp_data?.emp_system_role) && (
                 <div>
                     <Dropdown
                 label="Non-TNR"
@@ -67,15 +67,19 @@ export default function NavLinks() {
                 className='disabled'
                 links={[
                     {
-                        
                         href: route("non-tnr-checklists.index"),
                         label: "Checklist",
                         icon: (
                            <i className="far fa-square"></i>
                         ),
                         className: "opacity-50 pointer-events-none",
-                        // notification: true,
                     },
+
+                    // {
+                    //     href: route("maintenance"),
+                    //     label: "Checklist",
+                    // },
+
                     {
                         href: route("calibration.calibrationReportNontnr"),
                         label: "Calibration Report",
@@ -114,7 +118,7 @@ export default function NavLinks() {
             </div>
             )}
 
-             {["pmtech", "seniortech"].includes(emp_data?.emp_system_role) && (
+             {["pmtech", "toolcrib", "seniortech"].includes(emp_data?.emp_system_role) && (
                 <div>
                     <Dropdown
                 label="Air Ionizer"
@@ -317,18 +321,30 @@ export default function NavLinks() {
             )}
 
 
-            {["superadmin", "admin", "engineer" ].includes(emp_data?.emp_system_role) || ["pmtech" ].includes(emp_data?.emp_system_role) && ["1742" ].includes(emp_data?.emp_id) && (
-                <div>
-                    <SidebarLink
-                        href={route("admin")}
-                        label="PM Personnel"
-                        icon={
-                            <i className="fas fa-user-shield"></i>
-                        }
-                        // notifications={5}
-                    />
-                </div>
-            )}
+            {(
+    ["superadmin", "admin", "engineer"].includes(emp_data?.emp_system_role) 
+    || (["pmtech"].includes(emp_data?.emp_system_role) && ["1742"].includes(emp_data?.emp_id))
+) && (
+    <div>
+        <SidebarLink
+            href={route("admin")}
+            label="PM Personnel"
+            icon={<i className="fas fa-user-shield"></i>}
+        />
+    </div>
+)}
+
+{/* {["superadmin"].includes(emp_data?.emp_system_role) &&(
+    <div>
+        <SidebarLink
+    href={route("non-tnr-checklists.index")}
+    label="Non TNR Checklist"
+    icon={<i className="fa-brands fa-tidal"></i>}
+/>
+
+    </div>
+)} */}
+
         </nav>
     );
 }

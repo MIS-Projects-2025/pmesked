@@ -48,11 +48,11 @@ export default function MassApproval({ activities, empData, emp_data }) {
   );
 
   // 📄 Pagination
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
-  const paginated = filtered.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  // const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  // const paginated = filtered.slice(
+  //   (currentPage - 1) * itemsPerPage,
+  //   currentPage * itemsPerPage
+  // );
 
   // 🔑 Role-based button visibility
   let showButton = false;
@@ -186,127 +186,115 @@ if (techTitles.includes(emp_data.emp_system_role)) {
         {/* 📋 Table */}
         <div className="overflow-x-auto border rounded">
           <table className="table-auto w-full border-collapse">
-            <thead>
-              <tr className="bg-gradient-to-r from-gray-600 to-black text-white">
-                <th className="border px-2 py-1">
-                  <input
-                    type="checkbox"
-                    onChange={(e) =>
-                      setSelected(
-                        e.target.checked ? paginated.map((a) => a.id) : []
-                      )
-                    }
-                    checked={
-                      paginated.length > 0 &&
-                      selected.length === paginated.length
-                    }
-                  />
-                </th>
-                <th className="border px-2 py-1">Machine</th>
-                <th className="border px-2 py-1">Control No</th>
-                <th className="border px-2 py-1">Serial</th>
-                <th className="border px-2 py-1">Technician</th>
-                <th className="border px-2 py-1">Senior Tech</th>
-                <th className="border px-2 py-1">QA Personnel</th>
-                <th className="border px-2 py-1">Senior Engineer</th>
-                <th className="border px-2 py-1 text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginated.length > 0 ? (
-                paginated.map((act) => (
-                  <tr key={act.id} className="text-sm hover:bg-gray-600">
-                    <td className="border px-2 py-1 text-center">
-                      <input
-                        type="checkbox"
-                        checked={selected.includes(act.id)}
-                        onChange={() => toggleSelect(act.id)}
-                      />
-                    </td>
-                    <td className="border px-2 py-1">{act.machine_num}</td>
-                    <td className="border px-2 py-1">{act.pmnt_no}</td>
-                    <td className="border px-2 py-1">{act.serial}</td>
-                    <td className="border px-2 py-1">
-                      {act.responsible_person}
-                    </td>
-                   <td className="border px-2 py-1 text-center">
-  {act.tech_ack ? (
-    <span className="inline-block min-w-[10px] px-3 py-1 rounded-lg text-sm font-medium bg-green-100 text-green-700">
-      Approved
-    </span>
-  ) : (
-    <span className="inline-block min-w-[10px] px-3 py-1 rounded-lg text-sm font-medium bg-red-100 text-red-700">
-      Pending
-    </span>
-  )}
-</td>
+  <thead>
+    <tr className="bg-gradient-to-r from-gray-600 to-black text-white">
+      <th className="border px-2 py-1">
+        <input
+          type="checkbox"
+          onChange={(e) =>
+            setSelected(e.target.checked ? filtered.map((a) => a.id) : [])
+          }
+          checked={
+            filtered.length > 0 && selected.length === filtered.length
+          }
+        />
+      </th>
+      <th className="border px-2 py-1">Machine</th>
+      <th className="border px-2 py-1">Control No</th>
+      <th className="border px-2 py-1">Serial</th>
+      <th className="border px-2 py-1">Technician</th>
+      <th className="border px-2 py-1">Senior Tech</th>
+      <th className="border px-2 py-1">QA Personnel</th>
+      <th className="border px-2 py-1">Senior Engineer</th>
+      <th className="border px-2 py-1 text-center">Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {filtered.length > 0 ? (
+      filtered.map((act) => (
+        <tr key={act.id} className="text-sm hover:bg-gray-600">
+          <td className="border px-2 py-1 text-center">
+            <input
+              type="checkbox"
+              checked={selected.includes(act.id)}
+              onChange={() => toggleSelect(act.id)}
+            />
+          </td>
+          <td className="border px-2 py-1">{act.machine_num}</td>
+          <td className="border px-2 py-1">{act.pmnt_no}</td>
+          <td className="border px-2 py-1">{act.serial}</td>
+          <td className="border px-2 py-1">{act.responsible_person}</td>
+          <td className="border px-2 py-1 text-center">
+            {act.tech_ack ? (
+              <span className="inline-block min-w-[10px] px-3 py-1 rounded-lg text-sm font-medium bg-green-100 text-green-700">
+                Approved
+              </span>
+            ) : (
+              <span className="inline-block min-w-[10px] px-3 py-1 rounded-lg text-sm font-medium bg-red-100 text-red-700">
+                Pending
+              </span>
+            )}
+          </td>
+          <td className="border px-2 py-1 text-center">
+            {act.qa_ack ? (
+              <span className="inline-block min-w-[10px] px-3 py-1 rounded-lg text-sm font-medium bg-green-100 text-green-700">
+                Approved
+              </span>
+            ) : (
+              <span className="inline-block min-w-[10px] px-3 py-1 rounded-lg text-sm font-medium bg-red-100 text-red-700">
+                Pending
+              </span>
+            )}
+          </td>
+          <td className="border px-2 py-1 text-center">
+            {act.senior_ee_ack || act.section_ack ? (
+              <span className="inline-block min-w-[10px] px-3 py-1 rounded-lg text-sm font-medium bg-green-100 text-green-700">
+                Approved
+              </span>
+            ) : (
+              <span className="inline-block min-w-[10px] px-3 py-1 rounded-lg text-sm font-medium bg-red-100 text-red-700">
+                Pending
+              </span>
+            )}
+          </td>
+          <td className="border px-2 py-1 text-center flex justify-center gap-2">
+            <button
+              onClick={() => {
+                setSelectedActivity(act);
+                setFormData({
+                  machine: act.machine_num,
+                  controlNo: act.pmnt_no,
+                  serial: act.serial,
+                  pmDate: act.first_cycle,
+                  pmDue: act.pm_due,
+                  performedBy: act.responsible_person,
+                  seniorTech: act.tech_ack_by,
+                  esdTech: act.qa_ack_by,
+                  pmEngineer: act.senior_ee_ack_by || act.section_ack_by,
+                });
+                setModalOpen(true);
+              }}
+              className="px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-800 text-sm"
+            >
+              <i className="fa-solid fa-eye"></i> View
+            </button>
+          </td>
+        </tr>
+      ))
+    ) : (
+      <tr>
+        <td colSpan="9" className="text-center py-4 text-gray-500">
+          No activities found.
+        </td>
+      </tr>
+    )}
+  </tbody>
+</table>
 
-<td className="border px-2 py-1 text-center">
-  {act.qa_ack ? (
-    <span className="inline-block min-w-[10px] px-3 py-1 rounded-lg text-sm font-medium bg-green-100 text-green-700">
-      Approved
-    </span>
-  ) : (
-    <span className="inline-block min-w-[10px] px-3 py-1 rounded-lg text-sm font-medium bg-red-100 text-red-700">
-      Pending
-    </span>
-  )}
-</td>
-
-<td className="border px-2 py-1 text-center">
-  {act.senior_ee_ack || act.section_ack ? (
-    <span className="inline-block min-w-[10px] px-3 py-1 rounded-lg text-sm font-medium bg-green-100 text-green-700">
-      Approved
-    </span>
-  ) : (
-    <span className="inline-block min-w-[10px] px-3 py-1 rounded-lg text-sm font-medium bg-red-100 text-red-700">
-      Pending
-    </span>
-  )}
-</td>
-
-                    {/* ✅ Action Button */}
-                    <td className="border px-2 py-1 text-center flex justify-center gap-2">
-                        <div className="flex justify-center gap-2">
-                            <button
-                        onClick={() => {
-                          setSelectedActivity(act);
-                          setFormData({
-                            machine: act.machine_num,
-                            controlNo: act.pmnt_no,
-                            serial: act.serial,
-                            pmDate: act.first_cycle,
-                            pmDue: act.pm_due,
-                            performedBy: act.responsible_person,
-                            seniorTech: act.tech_ack_by,
-                            esdTech: act.qa_ack_by,
-                            pmEngineer:
-                              act.senior_ee_ack_by || act.section_ack_by,
-                          });
-                          setModalOpen(true);
-                        }}
-                        className="px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-800 text-sm"
-                      >
-                        <i className="fa-solid fa-eye"></i> View
-                      </button>
-                        </div>
-                      
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="9" className="text-center py-4 text-gray-500">
-                    No activities found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
         </div>
 
         {/* 📌 Pagination */}
-        <div className="flex justify-between items-center mt-2">
+        {/* <div className="flex justify-between items-center mt-2">
           <span>
             Page {currentPage} of {totalPages || 1}
           </span>
@@ -326,7 +314,7 @@ if (techTitles.includes(emp_data.emp_system_role)) {
               Next
             </button>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* ✅ Modal (simplified, pwede mong palitan ng full details mo) */}

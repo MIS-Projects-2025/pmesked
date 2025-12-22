@@ -9,7 +9,7 @@ export default function NavBar() {
         localStorage.removeItem("authify-token");
         router.get(route("logout"));
         // window.location.href = `http://192.168.2.221/authify/public/logout?key=${encodeURIComponent(
-        window.location.href = `http://192.168.3.201/authify/public/logout?key=${encodeURIComponent(
+        window.location.href = `http://192.168.3.201/authify/public/logout?token=${encodeURIComponent(
             token
         )}&redirect=${encodeURIComponent(route("dashboard"))}`;
     };

@@ -15,6 +15,7 @@ class NonTnrChecklistItem extends Model
         'platform',
         'items',
         'std_use_verification',
+        'tool_life',
         'created_by',
         'updated_by',
     ];
@@ -23,5 +24,6 @@ class NonTnrChecklistItem extends Model
     protected $casts = [
         'items' => 'array',
         'std_use_verification' => 'array',
+        'tool_life' => 'array',
     ];
 }

@@ -164,13 +164,17 @@
                 <td>{{ $ans['assy_item'] ?? '' }}</td>
                 <td>{{ $ans['description'] ?? '' }}</td>
                 <td>{{ $ans['requirements'] ?? '' }}</td>
-                <td>{{ $ans['activity_1'] ?? '' }}</td>
+                <td>{{ !empty($ans['activity_1']) && $ans['activity_1'] != 'N/A' ? $ans['activity_1'] : $ans['activity_1'] ?? '' }}</td>
                 <!-- <td>{{ isset($ans['compliance1']) && $ans['compliance1'] == 1 ? '✔' : '✘' }}</td> -->
-                <td>{{ isset($ans['compliance1']) && $ans['compliance1'] == 1 ? '✔' : '' }}</td>
-                <td>{{ $ans['remarks1'] ?? '' }}</td>
-                <td>{{ $ans['activity_2'] ?? '' }}</td>
-                <td>{{ isset($ans['compliance2']) && $ans['compliance2'] == 1 ? '✔' : '' }}</td>
-                <td>{{ $ans['remarks2'] ?? '' }}</td>
+                <td>{{ !empty($ans['compliance1']) && $ans['compliance1'] == 1 ? '✔' : '' }}</td>
+                <td>{{ !empty($ans['compliance1']) && $ans['compliance1'] == 1 ? ($ans['remarks1'] ?? '') : '' }}</td>
+
+                <!-- <td>{{ $ans['activity_2'] ?? '' }}</td> -->
+                <td>{{ !empty($ans['activity_2']) && $ans['activity_2'] != 'N/A' ? $ans['activity_2'] : $ans['activity_2'] ?? '' }}</td>
+
+                <td>{{ !empty($ans['compliance2']) && $ans['compliance2'] == 1 ? '✔' : '' }}</td>
+                <td>{{ !empty($ans['compliance2']) && $ans['compliance2'] == 1 ? ($ans['remarks2'] ?? '') : '' }}</td>
+
             </tr>
             @endforeach
         </tbody>

@@ -100,9 +100,8 @@ const handleSubmit = (e) => {
     action: (
       <button
         onClick={() => openEditModal(item)}
-        className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-      >
-        Edit
+        className="px-2 py-1 bg-amber-500 text-white rounded hover:bg-amber-700"
+      ><i className="fa-regular fa-pen-to-square"></i> Edit
       </button>
     ),
   }));

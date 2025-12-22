@@ -50,8 +50,11 @@ export default function Admin({ tableData, tableFilters, emp_data }) {
                     <i className="fa-solid fa-users"></i> PM Personnel
                 </h1>
 
-                {["superadmin", "admin"].includes(emp_data?.emp_system_role) 
-                || ["pmtech"].includes(emp_data?.emp_system_role) && ["1742"].includes(emp_data?.emp_id)&& (
+                  {(
+    ["superadmin", "admin", "engineer"].includes(emp_data?.emp_system_role) 
+    || (["pmtech"].includes(emp_data?.emp_system_role) && ["1742"].includes(emp_data?.emp_id))
+) && (
+    <div>
                     <button
                          className="text-white bg-emerald-500 border-emerald-900 btn hover:bg-emerald-700"
                         onClick={() =>
@@ -60,6 +63,7 @@ export default function Admin({ tableData, tableFilters, emp_data }) {
                     >
                         <i className="fa-solid fa-user-plus"></i> Add New PM
                     </button>
+                    </div>
                 )}
             </div>
 

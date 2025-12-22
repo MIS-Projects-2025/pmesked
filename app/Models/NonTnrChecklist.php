@@ -22,6 +22,7 @@ class NonTnrChecklist extends Model
         'performed_by',
         'check_item',
         'std_use_verification',
+        'tool_life',
         'tech_sign',
         'tech_sign_date',
         'qa_sign',
@@ -35,10 +36,12 @@ class NonTnrChecklist extends Model
     protected $casts = [
         'check_item' => 'array',
         'std_use_verification' => 'array',
+        'tool_life' => 'array',
     ];
 
     protected $attributes = [
         'check_item' => '[]',
         'std_use_verification' => '[]',
+        'tool_life' => '[]',
     ];
 }

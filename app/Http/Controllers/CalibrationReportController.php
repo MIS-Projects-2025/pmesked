@@ -8,17 +8,23 @@ use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
+use App\Services\DataTableService;
 
 class CalibrationReportController extends Controller
 {
-    // 📌 Inertia page (UI)
-    public function index()
-    {
-        $reports = CalibrationReport::query()
-            ->orderBy('id', 'desc')
-            ->paginate(10)
-            ->withQueryString();
 
+    protected $datatable;
+    protected $datatable1;
+
+    public function __construct(DataTableService $datatable)
+    {
+        $this->datatable = $datatable;
+    }
+
+    // 📌 Inertia page (UI)
+    public function index(Request $request)
+    {
+        // 🔹 Machines for dropdown
         $machines = Machine::select('*')
             ->whereNotNull('machine_num')
             ->where('machine_num', '!=', '')
@@ -26,12 +32,64 @@ class CalibrationReportController extends Controller
             ->orderBy('machine_platform', 'asc')
             ->get();
 
+        // 🔹 Pagination & search params
+        $perPage = $request->input('perPage', 10); // default 10 entries per page
+        $currentPage = $request->input('page', 1);
+        $search = $request->input('search', null);
+
+        // 🔹 Base query
+        $reportsQuery = DB::table('calibration_report_list')
+            ->orderBy('id', 'desc');
+
+        // 🔹 Search filter
+        if ($search) {
+            $reportsQuery->where(function ($q) use ($search) {
+                $q->where('equipment', 'like', "%$search%")
+                    ->orWhere('model', 'like', "%$search%")
+                    ->orWhere('performed_by', 'like', "%$search%")
+                    ->orWhere('qa_sign', 'like', "%$search%")
+                    ->orWhere('review_by', 'like', "%$search%")
+                    ->orWhere('calibration_date', 'like', "%$search%")
+                    ->orWhere('calibration_due', 'like', "%$search%");
+            });
+        }
+
+        // 🔹 Paginate results
+        $reports = $reportsQuery->paginate($perPage, ['*'], 'page', $currentPage)->withQueryString();
+
+        // 🔹 Format links for DataTable
+        $links = [];
+        for ($i = 1; $i <= $reports->lastPage(); $i++) {
+            $links[] = [
+                'url' => $i === $reports->currentPage() ? null : route('calibration.calibrationReport', array_merge($request->all(), ['page' => $i])),
+                'label' => (string)$i,
+                'active' => $i === $reports->currentPage(),
+            ];
+        }
+
         return Inertia::render('Calibration/CalibrationReport', [
-            'reports' => $reports,
             'machines' => $machines,
-            'filters' => request()->all('search', 'sortBy', 'sortDirection'),
+            'reports' => [
+                'data' => $reports->items(),
+                'from' => $reports->firstItem(),
+                'to' => $reports->lastItem(),
+                'total' => $reports->total(),
+                'links' => $links,
+                'current_page' => $reports->currentPage(),
+                'last_page' => $reports->lastPage(),
+            ],
+            'tableFilters' => $request->only([
+                'search',
+                'perPage',
+                'sortBy',
+                'sortDirection',
+                'start',
+                'end',
+                'dropdownSearchValue',
+                'dropdownFields',
+            ]),
             'empData' => [
-                'emp_id'   => session('emp_data')['emp_id'] ?? null,
+                'emp_id' => session('emp_data')['emp_id'] ?? null,
                 'emp_name' => session('emp_data')['emp_name'] ?? null,
                 'emp_jobtitle' => session('emp_data')['emp_jobtitle'] ?? null
             ],
