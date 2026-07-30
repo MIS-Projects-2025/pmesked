@@ -116,18 +116,18 @@
         </tr>
         <tr>
             <td>
-                {{ $scheduler->tech_ack
-        ? $scheduler->tech_ack . ' / ' . \Carbon\Carbon::parse($scheduler['tecjh_ack_date'])->format('m/d/Y h:i A')
+                {{ $scheduler->tech_ack 
+        ? $scheduler->tech_ack . ' / ' . \Carbon\Carbon::parse($scheduler['tecjh_ack_date'])->format('m/d/Y h:i A') 
         : 'Waiting...' }}
             </td>
             <td>
-                {{ $scheduler->qa_ack
-        ? $scheduler->qa_ack . ' / ' . \Carbon\Carbon::parse($scheduler['qa_ack_date'])->format('m/d/Y h:i A')
+                {{ $scheduler->qa_ack 
+        ? $scheduler->qa_ack . ' / ' . \Carbon\Carbon::parse($scheduler['qa_ack_date'])->format('m/d/Y h:i A') 
         : 'Waiting...' }}
             </td>
             <td>
-                {{ $scheduler->senior_ee_ack
-        ? $scheduler->senior_ee_ack . ' / ' . \Carbon\Carbon::parse($scheduler['senior_ee_ack_date'])->format('m/d/Y h:i A')
+                {{ $scheduler->senior_ee_ack 
+        ? $scheduler->senior_ee_ack . ' / ' . \Carbon\Carbon::parse($scheduler['senior_ee_ack_date'])->format('m/d/Y h:i A') 
         : 'Waiting...' }}
             </td>
 
@@ -163,33 +163,15 @@
         </thead>
         <tbody>
             @foreach($answers as $i => $ans)
-            @php
-                // 🔹 CDA items: hindi checkbox ang First Cycle compliance nila, dahil
-                // isang text na sagot lang ang ipinapasok (hal. "#10" o "Y"), naka-store
-                // sa remarks1. Kaya ipakita natin yun diretso sa Compliance column
-                // imbes na maghintay ng compliance1 == 1 (na hindi naman nagagalaw
-                // para sa CDA rows sa UI).
-                $isCda = ($ans['assy_item'] ?? '') === 'CDA';
-            @endphp
             <tr>
                 <td>{{ $i+1 }}</td>
                 <td>{{ $ans['assy_item'] ?? '' }}</td>
                 <td>{{ $ans['description'] ?? '' }}</td>
                 <td>{{ $ans['requirements'] ?? '' }}</td>
                 <td>{{ !empty($ans['activity_1']) && $ans['activity_1'] != 'N/A' ? $ans['activity_1'] : $ans['activity_1'] ?? '' }}</td>
-                @if($isCda)
-    <td>
-        @if(($ans['description'] ?? '') === 'Pneumatic hose diameter')
-            #8 or #10 or #12
-        @else
-            Y or N
-        @endif
-    </td>
-    <td>{{ $ans['remarks1'] ?? '' }}</td>
-@else
-    <td>{{ !empty($ans['compliance1']) && $ans['compliance1'] == 1 ? '✔' : '' }}</td>
-    <td>{{ !empty($ans['compliance1']) && $ans['compliance1'] == 1 ? ($ans['remarks1'] ?? '') : '' }}</td>
-@endif
+                <!-- <td>{{ isset($ans['compliance1']) && $ans['compliance1'] == 1 ? '✔' : '✘' }}</td> -->
+                <td>{{ !empty($ans['compliance1']) && $ans['compliance1'] == 1 ? '✔' : '' }}</td>
+                <td>{{ !empty($ans['compliance1']) && $ans['compliance1'] == 1 ? ($ans['remarks1'] ?? '') : '' }}</td>
 
                 <!-- <td>{{ $ans['activity_2'] ?? '' }}</td> -->
                 <td>{{ !empty($ans['activity_2']) && $ans['activity_2'] != 'N/A' ? $ans['activity_2'] : $ans['activity_2'] ?? '' }}</td>
