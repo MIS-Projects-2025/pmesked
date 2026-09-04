@@ -2,6 +2,8 @@ import { useState } from "react";
 import { router } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import DataTable from "@/Components/DataTable";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import { Select } from "antd";
 
 // 🔹 Default CDA assy item template — di lahat ng platform may CDA sa
@@ -55,54 +57,33 @@ export default function SchedulerTable({
     emp_data,
 }) {
     const { Option } = Select;
+    // 🔹 PDF Download
+    const handleDownloadPDF = () => {
+        const input = document.getElementById("modal-content");
+        html2canvas(input, { scale: 2 }).then((canvas) => {
+            const imgData = canvas.toDataURL("image/png");
+            const pdf = new jsPDF("p", "mm", "a4");
+            const imgProps = pdf.getImageProperties(imgData);
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-    // ─────────────────────────── STATE ───────────────────────────
-    const [showModal, setShowModal] = useState(false); // "New Checklist" modal
-    const [modalOpen, setModalOpen] = useState(false); // "Activity Details" modal
+            pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+            pdf.save("activity-details.pdf");
+        });
+    };
+
+    const [showModal, setShowModal] = useState(false);
     const [selectedChecklist, setSelectedChecklist] = useState([]);
     const [answers, setAnswers] = useState({});
+    const [tool_life, setToolLifeData] = useState({});
     const [selectedActivity, setSelectedActivity] = useState(null);
-    // 🐛 FIX: pigilan ang double-click sa Verify (dati, 2x +25 agad → early 100)
-    const [verifying, setVerifying] = useState(false);
+    const [modalOpen, setModalOpen] = useState(false);
 
     // 🔹 CDA group toggle — naka-ON by default (kasama agad sa checklist),
     // pwedeng i-off kung hindi applicable sa platform na ito.
     const [includeCda, setIncludeCda] = useState(true);
 
-    // Default 4 rows ng Tool Life table
-    const [toolLifeRows, setToolLifeRows] = useState([
-        {
-            description: "",
-            partnumber: "",
-            duration_usage: "",
-            expected_tool_life: "",
-            remarks: "",
-        },
-        {
-            description: "",
-            partnumber: "",
-            duration_usage: "",
-            expected_tool_life: "",
-            remarks: "",
-        },
-        {
-            description: "",
-            partnumber: "",
-            duration_usage: "",
-            expected_tool_life: "",
-            remarks: "",
-        },
-        {
-            description: "",
-            partnumber: "",
-            duration_usage: "",
-            expected_tool_life: "",
-            remarks: "",
-        },
-    ]);
-
-    const [isAllChecked1, setIsAllChecked1] = useState(false);
-    const [isAllChecked2, setIsAllChecked2] = useState(false);
+    // 🔹 Compute Quarter const currentDate = new Date(); const year = currentDate.getFullYear(); const month = currentDate.getMonth() + 1; let quarter = month <= 3 ? 1Q${String(year).slice(-2)} : month <= 6 ? 2Q${String(year).slice(-2)} : month <= 9 ? 3Q${String(year).slice(-2)} : 4Q${String(year).slice(-2)};
 
     // 🔹 Compute Fiscal Quarter (Starting Nov 3, 2024)
     const currentDate = new Date();
@@ -118,12 +99,34 @@ export default function SchedulerTable({
     const quarterNumber = (quarterIndex % 4) + 1;
 
     // Compute which fiscal year we are in
+    // Each cycle of 4 quarters → +1 year
     const fiscalYear = 2025 + Math.floor(quarterIndex / 4);
 
     // Format label (e.g., "1Q25", "2Q25", "3Q25", "4Q25", then "1Q26")
     const quarter = `${quarterNumber}Q${String(fiscalYear).slice(-2)}`;
 
-    // 🔹 Compute Dates
+    // console.log("Current Quarter:", quarter);
+
+    // // 🔹 Compute Work Week
+    // const getWorkWeek = (date) => {
+    //   const start = new Date("2024-11-03"); // Base ref WW501
+    //   const diffMs = date - start;
+    //   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    //   const totalWeeks = Math.floor(diffDays / 7);
+    //   const baseYear = 500;
+    //   const yearOffset = Math.floor(totalWeeks / 52);
+    //   const weekInYear = (totalWeeks % 52) + 1;
+    //   return `WW${baseYear + yearOffset * 100 + weekInYear}`;
+    // };
+
+    // // 🔹 Default PM Dates
+    // const today = new Date();
+    // const pmDateWW = getWorkWeek(today);
+    // const dueDate = new Date(today);
+    // dueDate.setDate(today.getDate() + 13 * 7);
+    // const pmDueWW = getWorkWeek(dueDate);
+
+    // 🔹 Compute Dates (no more WW codes)
     const today = new Date();
 
     // 🔹 Format date helper: MM/DD/YYYY
@@ -140,44 +143,21 @@ export default function SchedulerTable({
     dueDate.setDate(today.getDate() + 91); // add 91 days instead of 13 weeks
     const pmDueWW = formatDate(dueDate);
 
-    // 🔹 🐛 FIX (performed_by bug): laging fresh default values.
-    // Dati kasi, nananatili sa formData ang lumang values galing sa
-    // "View/Activity Details" modal (kasama ang PANGALAN NG IBA), kaya
-    // pag nag-open ulit ng "+ New Checklist" at nag-save, minsan
-    // ibang employee ang naitala sa performed_by.
-    const buildFreshForm = () => ({
-        machine: "",
+    // console.log("PM Date:", pmDateWW);
+    // console.log("PM Due Date (+91 days):", pmDueWW);
+
+    const [formData, setFormData] = useState({
         controlNo: "",
         serial: "",
-        pmDate: pmDateWW,
-        pmDue: pmDueWW,
-        performedBy: empData?.emp_name || "", // session name — totoong naka-log-in
-        machinePlatform: undefined,
+        pmDate: "",
+        pmDue: "",
+        performedBy: empData?.emp_name || "",
         quarter,
-        progress_value: 25, // Q1 lang muna — idadagdag ang 25 kada verifier sa server
+        progress_value: 25,
         seniorTech: "",
         esdTech: "",
         pmEngineer: "",
     });
-
-    const [formData, setFormData] = useState(() => buildFreshForm());
-
-    // 🐛 FIX: i-reset ang form tuwing bubuksan ang "New Checklist" modal
-    const openCreateModal = () => {
-        setFormData(buildFreshForm());
-        setSelectedChecklist([]);
-        setAnswers({});
-        setIncludeCda(true);
-        setShowModal(true);
-    };
-
-    const closeCreateModal = () => {
-        setShowModal(false);
-        // i-clear din para hindi mag-leak sa susunod na bukas
-        setFormData(buildFreshForm());
-        setSelectedChecklist([]);
-        setAnswers({});
-    };
 
     // 🔹 Handle Answer Inputs
     const handleAnswerChange = (id, field, value) => {
@@ -185,6 +165,42 @@ export default function SchedulerTable({
             ...prev,
             [id]: { ...prev[id], [field]: value },
         }));
+    };
+
+    const handleToolLifeChange = (id, field, value) => {
+        setToolLifeData((prev) => ({
+            ...prev,
+            [id]: { ...prev[id], [field]: value },
+        }));
+    };
+
+    const handleMachineChange = (e) => {
+        const selected = e.target.value;
+        const machine = machines.find((m) => m.machine_num === selected);
+        if (!machine) return;
+
+        // const today = new Date();
+        // const pmDateWW = getWorkWeek(today);
+        // const dueDate = new Date(today);
+        // dueDate.setDate(today.getDate() + 5 * 7);
+        // const pmDueWW = getWorkWeek(dueDate);
+
+        let progress_value = 25;
+
+        setFormData({
+            machine: selected,
+            controlNo: machine?.pmnt_no || "",
+            serial: machine?.serial || "",
+            pmDate: `${pmDateWW}`,
+            pmDue: `${pmDueWW}`,
+            quarter,
+            progress_value,
+            performedBy: empData?.emp_name || "",
+        });
+
+        // ✅ Clear checklist + answers since di na sila needed
+        setSelectedChecklist([]);
+        setAnswers({});
     };
 
     // 🔹 Helper: build the default "answers" entry for a checklist row
@@ -260,34 +276,30 @@ export default function SchedulerTable({
     };
 
     const handleVerify = (activityId) => {
-        // 🐛 FIX: pangontra sa double-click / mabilis na repeat request
-        if (verifying) return;
-
         if (!empData?.emp_jobtitle) {
             alert("❌ Missing job title, cannot verify.");
             return;
         }
 
+        const today = new Date().toISOString().slice(0, 19).replace("T", " ");
         let updateFields = {};
 
         // 1. Technician verify
         const techTitles = ["seniortech"];
 
-        if (techTitles.includes(emp_data?.emp_role)) {
+        if (techTitles.includes(emp_data.emp_role)) {
             if (selectedActivity.tech_ack) {
                 alert("⚠️ Already verified by Technician.");
                 return;
             }
             updateFields = {
                 tech_ack: empData.emp_name,
-                tech_ack_date: new Date()
-                    .toISOString()
-                    .slice(0, 19)
-                    .replace("T", " "),
+                tech_ack_date: today,
+                progress_value: (selectedActivity.progress_value || 0) + 25,
             };
         }
         // 2. ESD verify
-        else if (["esd"].includes(emp_data?.emp_role)) {
+        else if (["esd"].includes(emp_data.emp_role)) {
             if (!selectedActivity.tech_ack) {
                 alert("⚠️ Technician must verify first.");
                 return;
@@ -298,49 +310,42 @@ export default function SchedulerTable({
             }
             updateFields = {
                 qa_ack: empData.emp_name,
-                qa_ack_date: new Date()
-                    .toISOString()
-                    .slice(0, 19)
-                    .replace("T", " "),
+                qa_ack_date: today,
+                progress_value: (selectedActivity.progress_value || 0) + 25,
             };
         }
-        // 3. Engineer verify
-        else if (["engineer"].includes(emp_data?.emp_role)) {
+        // 3. Engineer/Section Head verify
+        else if (["engineer"].includes(emp_data.emp_role)) {
             if (!selectedActivity.qa_ack) {
                 alert("⚠️ ESD must verify first.");
                 return;
             }
-            if (selectedActivity.senior_ee_ack) {
-                alert("⚠️ Already verified by Engineer.");
+            if (
+                selectedActivity.senior_ee_ack ||
+                selectedActivity.section_ack
+            ) {
+                alert("⚠️ Already verified by Engineer/Section Head.");
                 return;
             }
             updateFields = {
                 senior_ee_ack: empData.emp_name,
-                senior_ee_ack_date: new Date()
-                    .toISOString()
-                    .slice(0, 19)
-                    .replace("T", " "),
+                senior_ee_ack_date: today,
+                progress_value: (selectedActivity.progress_value || 0) + 25,
             };
         } else {
             alert("⚠️ You are not allowed to verify.");
             return;
         }
 
-        // 🐛 FIX: progress_value ay hindi na ipinapadala dito —
-        // ang SERVER na ang nagre-recompute mula sa mga ack.
-        setVerifying(true);
         router.put(`/scheduler/${activityId}/verify`, updateFields, {
             onSuccess: () => {
-                setVerifying(false);
                 alert("✅ Verified successfully!");
                 setModalOpen(false);
                 window.location.reload();
             },
             onError: () => {
-                setVerifying(false);
                 alert("❌ Verification failed.");
             },
-            onFinish: () => setVerifying(false),
         });
     };
 
@@ -368,11 +373,11 @@ export default function SchedulerTable({
             serial: formData.serial,
             first_cycle: formData.pmDate,
             pm_due: formData.pmDue,
-            responsible_person: formData.performedBy, // ipinapadala pa rin, pero ang SESSION ang masusunod sa server
+            responsible_person: formData.performedBy,
             quarter: formData.quarter,
             progress_value: formData.progress_value,
             answers: JSON.stringify(answersArray),
-            tool_life: JSON.stringify(tool_lifeArray),
+            tool_life: JSON.stringify(tool_lifeArray), // ✅ now correct data
         };
 
         router.post("/scheduler", payload, {
@@ -423,6 +428,19 @@ export default function SchedulerTable({
                 i: index + 1,
                 progress: (() => {
                     const value = row.progress_value || 0;
+                    let label = "";
+
+                    if (value === 0) {
+                        // label = "In Progress";
+                    } else if (value > 0 && value <= 25) {
+                        // label = "Done Filled by Technician";
+                    } else if (value > 25 && value <= 50) {
+                        // label = "Done Filled by ESD Personnel";
+                    } else if (value > 50 && value <= 75) {
+                        // label = "Done Filled by Senior Technician";
+                    } else if (value === 100) {
+                        // label = "Completed";
+                    }
 
                     return (
                         <div className="w-full bg-gray-200 rounded-md h-5 overflow-hidden shadow">
@@ -443,6 +461,7 @@ export default function SchedulerTable({
         `}
                                 style={{ width: `${value}%` }}
                             >
+                                {/* {label} ({value}%) */}
                                 {value}%
                             </div>
                         </div>
@@ -514,14 +533,46 @@ export default function SchedulerTable({
         },
     );
 
-    // Handle changes per cell (Tool Life)
+    // Default 4 rows
+    const [toolLifeRows, setToolLifeRows] = useState([
+        {
+            description: "",
+            partnumber: "",
+            duration_usage: "",
+            expected_tool_life: "",
+            remarks: "",
+        },
+        {
+            description: "",
+            partnumber: "",
+            duration_usage: "",
+            expected_tool_life: "",
+            remarks: "",
+        },
+        {
+            description: "",
+            partnumber: "",
+            duration_usage: "",
+            expected_tool_life: "",
+            remarks: "",
+        },
+        {
+            description: "",
+            partnumber: "",
+            duration_usage: "",
+            expected_tool_life: "",
+            remarks: "",
+        },
+    ]);
+
+    // Handle changes per cell
     const handleRowChange = (index, field, value) => {
         const updated = [...toolLifeRows];
         updated[index][field] = value;
         setToolLifeRows(updated);
     };
 
-    // Add new row (Tool Life)
+    // Add new row
     const handleAddRow = () => {
         setToolLifeRows([
             ...toolLifeRows,
@@ -535,12 +586,15 @@ export default function SchedulerTable({
         ]);
     };
 
-    // Remove last row (Tool Life)
+    // Remove last row
     const handleRemoveRow = () => {
         if (toolLifeRows.length > 1) {
             setToolLifeRows(toolLifeRows.slice(0, -1));
         }
     };
+
+    const [isAllChecked1, setIsAllChecked1] = useState(false);
+    const [isAllChecked2, setIsAllChecked2] = useState(false);
 
     const handleCheckAll = (e, complianceField) => {
         const checked = e.target.checked;
@@ -591,7 +645,7 @@ export default function SchedulerTable({
                     </h2>
                     <button
                         className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 border-2 border-blue-800"
-                        onClick={openCreateModal}
+                        onClick={() => setShowModal(true)}
                     >
                         + New Checklist
                     </button>
@@ -626,7 +680,7 @@ export default function SchedulerTable({
                     rowKey="id"
                 />
 
-                {/* ── "New Checklist" MODAL ── */}
+                {/* Modal */}
                 {showModal && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
                         <div className="bg-white w-full max-w-7xl rounded-lg shadow-lg max-h-screen overflow-y-auto">
@@ -638,7 +692,7 @@ export default function SchedulerTable({
                                 </h5>
                                 <button
                                     className="text-white text-xl"
-                                    onClick={closeCreateModal}
+                                    onClick={() => setShowModal(false)}
                                 >
                                     <i className="fas fa-times text-red-500 hover:text-red-700"></i>
                                 </button>
@@ -1268,7 +1322,7 @@ export default function SchedulerTable({
                             {/* Footer Buttons */}
                             <div className="p-4 flex justify-end gap-4 sticky bottom-0 bg-white border-t">
                                 <button
-                                    onClick={closeCreateModal}
+                                    onClick={() => setShowModal(false)}
                                     className="px-4 py-2 rounded-md bg-red-500 text-white hover:bg-red-700"
                                 >
                                     <i className="fas fa-times"></i> Cancel
@@ -1285,15 +1339,102 @@ export default function SchedulerTable({
                     </div>
                 )}
 
-                {/* ── ACTIVITY DETAILS MODAL ──
-                    🐛 FIX: inalis ang lumang duplicate na "PM Details" modal na
-                    nakapatong/na-block sa modal na ito (pareho kasi silang may
-                    id="modal-content" at parehong z-50, kaya naka-overlap sila).
-                    Ang modal na ito lang ang may laman na answers/tool-life/verify. */}
+                {/* Activity View Modal */}
+                {modalOpen && selectedActivity && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+                        <div
+                            id="modal-content"
+                            className="bg-white w-full max-w-5xl rounded-lg shadow-lg max-h-screen overflow-y-auto"
+                        >
+                            {/* Header */}
+                            <div className="flex justify-between items-center bg-gradient-to-r from-gray-600 to-black text-white p-4 rounded-t-lg sticky top-0 z-10">
+                                <h5 className="text-lg font-bold">
+                                    <i className="fas fa-clipboard-list"></i> PM
+                                    Details
+                                </h5>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={handleDownloadPDF}
+                                        className="bg-red-700 px-3 py-2 rounded-md text-white hover:bg-red-800"
+                                    >
+                                        <i className="fas fa-file-pdf"></i> PDF
+                                    </button>
+                                    <button
+                                        onClick={() => setModalOpen(false)}
+                                        className="text-white text-xl"
+                                    >
+                                        <i className="fas fa-times text-red-500 hover:text-red-700"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Body */}
+                            <div className="p-4">
+                                <table className="table-auto w-full border-collapse border border-gray-300 text-sm">
+                                    <tbody>
+                                        <tr>
+                                            <td className="font-semibold border p-2">
+                                                Platform
+                                            </td>
+                                            <td className="font-semibold border p-2">
+                                                Control No
+                                            </td>
+                                            <td className="border p-2">
+                                                {selectedActivity.pmnt_no}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td className="font-semibold border p-2">
+                                                Serial
+                                            </td>
+                                            <td className="border p-2">
+                                                {selectedActivity.serial}
+                                            </td>
+                                            <td className="font-semibold border p-2">
+                                                Quarter
+                                            </td>
+                                            <td className="border p-2">
+                                                {selectedActivity.quarter}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td className="font-semibold border p-2">
+                                                PM Date
+                                            </td>
+                                            <td className="border p-2">
+                                                {selectedActivity.first_cycle}
+                                            </td>
+                                            <td className="font-semibold border p-2">
+                                                PM Due
+                                            </td>
+                                            <td className="border p-2">
+                                                {selectedActivity.pm_due}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td className="font-semibold border p-2">
+                                                Performed By
+                                            </td>
+                                            <td
+                                                className="border p-2"
+                                                colSpan="3"
+                                            >
+                                                {
+                                                    selectedActivity.responsible_person
+                                                }
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {modalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
                         <div
-                            id="activity-content"
+                            id="modal-content"
                             className="bg-white w-full max-w-7xl rounded-lg shadow-lg max-h-screen overflow-y-auto"
                         >
                             {/* Header */}
@@ -1310,10 +1451,11 @@ export default function SchedulerTable({
                                 </button>
                             </div>
 
-                            {/* PDF button (server-side PDF — available pag fully verified) */}
+                            {/* PDF button */}
                             {selectedActivity?.tech_ack &&
                                 selectedActivity?.qa_ack &&
-                                selectedActivity?.senior_ee_ack && (
+                                (selectedActivity?.senior_ee_ack ||
+                                    selectedActivity?.section_ack) && (
                                     <div className="flex justify-end mt-4 mb-4 mr-4">
                                         <button
                                             className="px-3 py-2 bg-gray-100 text-red-600 rounded shadow hover:bg-red-700 hover:text-white border-2 border-red-600 hover:border-gray-500 flex items-center text-bold"
@@ -1748,9 +1890,9 @@ export default function SchedulerTable({
                                         ) {
                                             return (
                                                 <div className="text-red-600 font-semibold bg-red-100 border border-red-400 rounded px-3 py-2 mt-2">
-                                                    <i className="fa-solid fa-circle-exclamation"></i>{" "}
-                                                    You cannot verify your own
-                                                    activity.
+                                                    <i className="fa-solid fa-circle-exclamation"></i>
+                                                    &nbsp; You cannot verify
+                                                    your own activity.
                                                 </div>
                                             );
                                         }
@@ -1762,19 +1904,18 @@ export default function SchedulerTable({
                                     <i className="fa-solid fa-xmark"></i> Close
                                 </button>
 
-                                {/* ✅ Verify Buttons (disabled habang nagpi-process
-                                    para hindi ma-double click → early 100) */}
+                                {/* ✅ Verify Buttons */}
                                 {empData &&
                                     (() => {
                                         const isTech = ["seniortech"].includes(
-                                            emp_data?.emp_role,
+                                            emp_data.emp_role,
                                         );
                                         const isQA = ["esd"].includes(
-                                            emp_data?.emp_role,
+                                            emp_data.emp_role,
                                         );
                                         const isEngineer = [
                                             "engineer",
-                                        ].includes(emp_data?.emp_role);
+                                        ].includes(emp_data.emp_role);
                                         const currentUser = emp_data?.emp_name;
 
                                         // If user is the same person → show error instead of button
@@ -1786,22 +1927,15 @@ export default function SchedulerTable({
                                         ) {
                                             return (
                                                 <button
-                                                    className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    disabled={verifying}
+                                                    className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
                                                     onClick={() =>
                                                         handleVerify(
                                                             selectedActivity.id,
                                                         )
                                                     }
                                                 >
-                                                    {verifying ? (
-                                                        <i className="fa-solid fa-spinner fa-spin"></i>
-                                                    ) : (
-                                                        <i className="fa-solid fa-check"></i>
-                                                    )}{" "}
-                                                    {verifying
-                                                        ? "Verifying..."
-                                                        : "Verify"}
+                                                    <i className="fa-solid fa-check"></i>{" "}
+                                                    Verify
                                                 </button>
                                             );
                                         }
@@ -1813,22 +1947,15 @@ export default function SchedulerTable({
                                         ) {
                                             return (
                                                 <button
-                                                    className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    disabled={verifying}
+                                                    className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
                                                     onClick={() =>
                                                         handleVerify(
                                                             selectedActivity.id,
                                                         )
                                                     }
                                                 >
-                                                    {verifying ? (
-                                                        <i className="fa-solid fa-spinner fa-spin"></i>
-                                                    ) : (
-                                                        <i className="fa-solid fa-check"></i>
-                                                    )}{" "}
-                                                    {verifying
-                                                        ? "Verifying..."
-                                                        : "Verify"}
+                                                    <i className="fa-solid fa-check"></i>{" "}
+                                                    Verify
                                                 </button>
                                             );
                                         }
@@ -1836,26 +1963,20 @@ export default function SchedulerTable({
                                         if (
                                             isEngineer &&
                                             selectedActivity.qa_ack &&
-                                            !selectedActivity.senior_ee_ack
+                                            !selectedActivity.senior_ee_ack &&
+                                            !selectedActivity.section_ack
                                         ) {
                                             return (
                                                 <button
-                                                    className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    disabled={verifying}
+                                                    className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
                                                     onClick={() =>
                                                         handleVerify(
                                                             selectedActivity.id,
                                                         )
                                                     }
                                                 >
-                                                    {verifying ? (
-                                                        <i className="fa-solid fa-spinner fa-spin"></i>
-                                                    ) : (
-                                                        <i className="fa-solid fa-check"></i>
-                                                    )}{" "}
-                                                    {verifying
-                                                        ? "Verifying..."
-                                                        : "Verify"}
+                                                    <i className="fa-solid fa-check"></i>{" "}
+                                                    Verify
                                                 </button>
                                             );
                                         }

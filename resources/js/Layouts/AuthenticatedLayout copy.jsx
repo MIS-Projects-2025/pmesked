@@ -38,7 +38,7 @@ export default function AuthenticatedLayout({ header, children }) {
 
         if (!token) {
             // window.location.href = `http://192.168.2.221/authify/public/login?redirect=${encodeURIComponent(
-            window.location.href = `http://192.168.3.201/authify/public/login?redirect=${encodeURIComponent(
+            window.location.href = `http://192.168.20.23/authify/public/login?redirect=${encodeURIComponent(
                 route("dashboard")
             )}`;
             return;
@@ -49,7 +49,7 @@ export default function AuthenticatedLayout({ header, children }) {
         try {
             const isTokenValid = await axios.get(
                 // `http://192.168.2.221/authify/public/api/validate?token=${encodeURIComponent(
-                    `http://192.168.3.201/authify/public/api/validate?token=${encodeURIComponent(
+                    `http://192.168.20.23/authify/public/api/validate?token=${encodeURIComponent(
                     token
                 )}`
             );
@@ -58,7 +58,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 localStorage.removeItem("authify-token");
 
                 // window.location.href = `http://192.168.2.221/authify/public/login?redirect=${encodeURIComponent(
-                window.location.href = `http://192.168.3.201/authify/public/login?redirect=${encodeURIComponent(
+                window.location.href = `http://192.168.20.23/authify/public/login?redirect=${encodeURIComponent(
                     route("dashboard")
                 )}`;
                 return;

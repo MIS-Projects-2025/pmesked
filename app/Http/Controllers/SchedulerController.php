@@ -9,8 +9,6 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Barryvdh\DomPDF\Facade\Pdf;
 
-use function Laravel\Prompts\progress;
-
 class SchedulerController extends Controller
 {
     protected $datatable;
@@ -20,8 +18,87 @@ class SchedulerController extends Controller
         $this->datatable = $datatable;
     }
 
+    /**
+     * ============================================================
+     *  📐 ANG PROGRESS VALUE = 4 quarters × 25% (iisang depinisyon)
+     * ------------------------------------------------------------
+     *  Q1 = responsible_person  (ginawa / pinunan ng nag-perform)
+     *  Q2 = tech_ack            (Senior Tech)
+     *  Q3 = qa_ack              (ESD / QA)
+     *  Q4 = senior_ee_ack       (PM Engineer)
+     *
+     *  🔴 Dati: si section_ack ang nasa SQL formula imbes na tech_ack
+     *  (wala palang section_ack na column sa scheduler_tbl), kaya
+     *  nag-100 ang display kahit hindi pa lahat ng tatlong verifier
+     *  (tech → esd → engineer) ang pumirma — at nag-error ang SQL.
+     *
+     *  Ang apat na condition sa ibaba ang IISANG pinagmulan para sa:
+     *  • progressSql()        → display sa index()
+     *  • progressExpression() → auto-repair ng stored column
+     *  • computeProgress()    → store() at verify()
+     * ============================================================
+     */
+    protected function progressConditions(): array
+    {
+        return [
+            // Q1 — ginawa/pinunan ng nag-perform
+            "(CASE WHEN responsible_person IS NOT NULL AND TRIM(responsible_person) != '' THEN 1 ELSE 0 END)",
+            // Q2 — Senior Tech verifier
+            "(CASE WHEN tech_ack IS NOT NULL AND TRIM(tech_ack) != '' THEN 1 ELSE 0 END)",
+            // Q3 — ESD / QA verifier
+            "(CASE WHEN qa_ack IS NOT NULL AND TRIM(qa_ack) != '' THEN 1 ELSE 0 END)",
+            // Q4 — PM Engineer verifier
+            "(CASE WHEN senior_ee_ack IS NOT NULL AND TRIM(senior_ee_ack) != '' THEN 1 ELSE 0 END)",
+        ];
+    }
+
+    /**
+     * MySQL version — ginagamit sa display/index (0–100 scale).
+     */
+    protected function progressSql()
+    {
+        $parts = implode(' + ', $this->progressConditions());
+
+        return DB::connection('mysql')->raw(
+            "ROUND(({$parts}) * 100.0 / 4, 0) AS progress_value"
+        );
+    }
+
+    /**
+     * MySQL expression na gumagawa ng (0–100) na value mismo —
+     * ginagamit sa auto-repair ng stored column (25 bawat quarter).
+     */
+    protected function progressExpression()
+    {
+        return implode(' + ', array_map(
+            fn ($c) => "({$c}) * 25",
+            $this->progressConditions()
+        ));
+    }
+
+    /**
+     * PHP version ng parehong computation — ginagamit sa store() at verify()
+     * para hindi na magkasalungat ang na-save na value vs. ang ipinapakita sa index().
+     */
+    protected function computeProgress($scheduler)
+    {
+        $filled = fn ($v) => ($v !== null && trim((string) $v) !== '') ? 1 : 0;
+
+        return (
+            $filled($scheduler->responsible_person) +
+            $filled($scheduler->tech_ack) +
+            $filled($scheduler->qa_ack) +
+            $filled($scheduler->senior_ee_ack)
+        ) * 25;
+    }
+
     public function index(Request $request)
     {
+        // 🛠 AUTO-HEAL: kung may maling stored progress_value (hal. 100 pero
+        // kulang ang Tech/ESD/PM Engineer), awtomatikong inaayos bago i-fetch
+        // ang data — para laging tama ang View modal, PDF, at iba pang query
+        // na gumagamit ng stored column, kahit may naulit pang lumang bug.
+        $this->repairAllProgress();
 
         // 🔹 Default sorting kung walang laman request
         if (!$request->has('sortBy')) {
@@ -30,14 +107,6 @@ class SchedulerController extends Controller
         if (!$request->has('sortDirection')) {
             $request->merge(['sortDirection' => 'desc']);
         }
-
-        // 🔹 Compute progress_value sa SQL
-        $progress_value = DB::connection('mysql')->raw("ROUND((
-        (CASE WHEN responsible_person IS NOT NULL AND TRIM(responsible_person) != '' THEN 1 ELSE 0 END) +
-        (CASE WHEN qa_ack IS NOT NULL AND TRIM(qa_ack) != '' THEN 1 ELSE 0 END) +
-        (CASE WHEN senior_ee_ack IS NOT NULL AND TRIM(senior_ee_ack) != '' THEN 1 ELSE 0 END) +
-        (CASE WHEN section_ack IS NOT NULL AND TRIM(section_ack) != '' THEN 1 ELSE 0 END)
-        ) * 100.0 / 4, 0) AS progress_value");
 
         // 🔹 Get data via datatable service
         $result = $this->datatable->handle(
@@ -68,11 +137,17 @@ class SchedulerController extends Controller
                     'first_cycle',
                     'pm_due',
                     'responsible_person',
+                    // 🐛 FIX: dagdag — dati hindi kasama si tech_ack at ang
+                    // date fields, kaya blank/empty ang "Tech Verifier"
+                    // at hindi nakikita kung sino/kelan nag-verify.
+                    'tech_ack',
+                    'tech_ack_date',
                     'qa_ack',
+                    'qa_ack_date',
                     'senior_ee_ack',
-                    'section_ack',
+                    'senior_ee_ack_date',
                     'quarter',
-                    $progress_value, // ✅ alias as progress_value
+                    $this->progressSql(), // ✅ computed — hindi na stale na column
                 ],
                 'conditions' => function ($query) use ($request) {
                     return $query;
@@ -94,8 +169,6 @@ class SchedulerController extends Controller
         if ($result instanceof \Symfony\Component\HttpFoundation\StreamedResponse) {
             return $result;
         }
-
-
 
         // ✅ Machines para sa dropdown
         $machines = Machine::select('machine_num', 'pmnt_no', 'serial', 'machine_platform')
@@ -135,7 +208,6 @@ class SchedulerController extends Controller
         ]);
     }
 
-
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -146,13 +218,26 @@ class SchedulerController extends Controller
             'pm_due' => 'nullable|string',
             'responsible_person' => 'nullable|string',
             'quarter' => 'nullable|string',
-            'progress_value' => 'nullable|numeric', // 🔹 mas ok kung numeric
+            'progress_value' => 'nullable|numeric',
             'answers' => 'nullable|json',
             'tool_life' => 'nullable|json',
         ]);
 
+        // 🐛 FIX (performed_by bug): huwag magtiwala sa pangalang galing sa browser.
+        // Ang session lang ang pinagkukunan ng totoong naka-login — kaya kahit
+        // ma-pollute pa ang form ng ibang employee, hindi na ito mase-save.
+        $emp = session('emp_data');
+        $empName = $emp['emp_name'] ?? null;
 
-        Scheduler::create($validated);
+        if ($empName) {
+            $validated['responsible_person'] = $empName;
+        }
+
+        // 🐛 FIX: recompute imbes na kunin kung ano lang ang ipinadala ng JS.
+        // Q1 = 25 kung may responsible_person, kung wala = 0.
+        $scheduler = new Scheduler($validated);
+        $scheduler->progress_value = $this->computeProgress($scheduler);
+        $scheduler->save();
 
         return redirect()->back()->with('success', 'PM Scheduler created successfully!');
     }
@@ -161,36 +246,120 @@ class SchedulerController extends Controller
     {
         $scheduler = Scheduler::findOrFail($id);
 
-        $progress = $scheduler->progress_value ?? 0;
+        // 🐛 FIX: hindi na hinahayaan ang pangalan/date na galing sa client —
+        // ang session (totoong naka-log-in) ang gagamitin.
+        $emp = session('emp_data');
+        $empName = $emp['emp_name'] ?? null;
 
+        if (!$empName) {
+            return back()->withErrors(['verify' => 'Session expired. Please log in again.']);
+        }
+
+        // Hindi pwedeng i-verify ng gumawa ang sarili niyang activity.
+        if (
+            $scheduler->responsible_person
+            && trim($scheduler->responsible_person) === $empName
+            && ($request->has('tech_ack') || $request->has('qa_ack')
+                || $request->has('senior_ee_ack'))
+        ) {
+            return back()->withErrors(['verify' => 'You cannot verify your own activity.']);
+        }
+
+        // ── 1. Senior Tech ──────────────────────────────────────────
         if ($request->has('tech_ack')) {
-            $scheduler->tech_ack = $request->tech_ack;
-            $scheduler->tech_ack_date = $request->tech_ack_date;
-            $progress += 25;
+            // 🐛 FIX: server-side duplicate guard — hindi na pwede ma-double-click
+            if ($scheduler->tech_ack) {
+                return back()->withErrors(['verify' => 'Already verified by Technician.']);
+            }
+            $scheduler->tech_ack = $empName;
+            $scheduler->tech_ack_date = now();
         }
 
+        // ── 2. ESD / QA ─────────────────────────────────────────────
         if ($request->has('qa_ack')) {
-            $scheduler->qa_ack = $request->qa_ack;
-            $scheduler->qa_ack_date = $request->qa_ack_date;
-            $progress += 25;
+            if (!$scheduler->tech_ack) {
+                return back()->withErrors(['verify' => 'Technician must verify first.']);
+            }
+            if ($scheduler->qa_ack) {
+                return back()->withErrors(['verify' => 'Already verified by ESD.']);
+            }
+            $scheduler->qa_ack = $empName;
+            $scheduler->qa_ack_date = now();
         }
 
+        // ── 3. PM Engineer ─────────────────────────────────────────
         if ($request->has('senior_ee_ack')) {
-            $scheduler->senior_ee_ack = $request->senior_ee_ack;
-            $scheduler->senior_ee_ack_date = $request->senior_ee_ack_date;
-            $progress += 25;
+            if (!$scheduler->qa_ack) {
+                return back()->withErrors(['verify' => 'ESD must verify first.']);
+            }
+            if ($scheduler->senior_ee_ack) {
+                return back()->withErrors(['verify' => 'Already verified by Engineer.']);
+            }
+            $scheduler->senior_ee_ack = $empName;
+            $scheduler->senior_ee_ack_date = now();
         }
 
-        if ($request->has('section_ack')) {
-            $scheduler->section_ack = $request->section_ack;
-            $scheduler->section_ack_date = $request->section_ack_date;
-            $progress += 25;
-        }
-
-        $scheduler->progress_value = min(100, $progress);
+        // 🐛 FIX: recompute mula sa totoong estado ng mga ack —
+        // HINDI na incremental (+25), kaya imposible nang lumampas
+        // o umabot ng 100 kung may kulang pang verifier.
+        $scheduler->progress_value = $this->computeProgress($scheduler);
         $scheduler->save();
 
         return back()->with('success', 'Verified successfully');
+    }
+
+    /**
+     * ============================================================
+     *  🛠 REPAIR PROGRESS — panlaban kung may naulit na lumang bug
+     * ------------------------------------------------------------
+     *  I-re-recompute nito ang STORED progress_value ng lahat ng
+     *  records (o ng isa lang kung may id) para tumugma sa aktwal
+     *  na mga ack/verifier. Idempotent — safe kahit paulit-ulit,
+     *  hindi nagkakamali, at hindi nireremove ang ibang data.
+     *
+     *  Auto-heal: tinatawag sa index() tuwing magre-render ang page.
+     *  Manual: "Repair Progress" button o POST /scheduler/repair-progress.
+     * ============================================================
+     */
+
+    protected function repairAllProgress(): int
+    {
+        $expr = $this->progressExpression();
+
+        return DB::connection('mysql')
+            ->table('scheduler_tbl')
+            ->whereRaw("COALESCE(progress_value, 0) <> ({$expr})")
+            ->update(['progress_value' => DB::raw($expr)]);
+    }
+
+    public function repairProgress(Request $request, $id = null)
+    {
+        // (Optional) Kung gusto mong engineer/admin lang ang makapag-repair,
+        // i-uncomment at palitan ng role na ginagamit mo sa app:
+        // if (!in_array(session('emp_data')['emp_role'] ?? null, ['engineer', 'admin'])) {
+        //     abort(403);
+        // }
+
+        // ── Specific record lang ──────────────────────────────────
+        if ($id) {
+            $scheduler = Scheduler::findOrFail($id);
+            $scheduler->progress_value = $this->computeProgress($scheduler);
+            $scheduler->save();
+
+            return back()->with(
+                'success',
+                "Progress repaired for #{$scheduler->id} → {$scheduler->progress_value}%."
+            );
+        }
+
+        // ── Lahat ng records — isang UPDATE lang ──────────────────
+        $affected = $this->repairAllProgress();
+
+        $msg = $affected > 0
+            ? "Progress repaired: {$affected} record(s) updated."
+            : "All progress values are already correct. 👍";
+
+        return back()->with('success', $msg);
     }
 
     public function viewPdf($id)

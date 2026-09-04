@@ -1,13 +1,22 @@
+/* ##app.css */
 /* Fonts */
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
 @import '@fortawesome/fontawesome-free/css/all.min.css';
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
 
-/* Tailwind (v3) */
+/* Tailwind */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Fix Ant Design Input in dark mode */
+/* DaisyUI */
+@plugin "daisyui" {
+    themes: light --default, dark --prefersdark;
+}
+
+/* 🔧 Fix Ant Design Input in dark mode */
 .ant-input,
 .ant-input-affix-wrapper {
     background-color: var(--ant-color-bg-container) !important;
@@ -18,9 +27,10 @@
     color: var(--ant-color-text-placeholder) !important;
 }
 
-/* shadcn/ui design tokens — consumed by tailwind.config.js */
+/* 🌐 BASE THEME */
 @layer base {
     :root {
+        /* Layout */
         --background: oklch(1 0 0);
         --foreground: oklch(0.145 0 0);
 
@@ -30,12 +40,25 @@
         --popover: oklch(1 0 0);
         --popover-foreground: oklch(0.145 0 0);
 
+        /* PRIMARY (#007bff) */
         --primary: oklch(0.205 0 0);
         --primary-foreground: oklch(0.985 0 0);
 
+        --primary-hover: 211 100% 45%;
+        --primary-active: 211 100% 40%;
+        --primary-muted: 211 100% 90%;
+        --primary-border: 211 100% 55%;
+        --primary-ring: 211 100% 50%;
+
+        /* DaisyUI mapping */
+        --p: 211 100% 50%;
+        --pc: 0 0% 98%;
+
+        /* Secondary */
         --secondary: oklch(0.97 0 0);
         --secondary-foreground: oklch(0.205 0 0);
 
+        /* UI states */
         --muted: oklch(0.97 0 0);
         --muted-foreground: oklch(0.556 0 0);
 
@@ -43,8 +66,9 @@
         --accent-foreground: oklch(0.205 0 0);
 
         --destructive: oklch(0.577 0.245 27.325);
-        --destructive-foreground: oklch(0.985 0 0);
+        --destructive-foreground: 0 0% 98%;
 
+        /* Borders & inputs */
         --border: oklch(0.922 0 0);
         --input: oklch(0.922 0 0);
         --ring: oklch(0.708 0 0);
@@ -52,25 +76,33 @@
         --radius: 0.625rem;
 
         --chart-1: oklch(0.87 0 0);
+
         --chart-2: oklch(0.556 0 0);
+
         --chart-3: oklch(0.439 0 0);
+
         --chart-4: oklch(0.371 0 0);
+
         --chart-5: oklch(0.269 0 0);
 
         --sidebar: oklch(0.985 0 0);
-        --sidebar-foreground: oklch(0.145 0 0);
-        --sidebar-primary: oklch(0.205 0 0);
-        --sidebar-primary-foreground: oklch(0.985 0 0);
-        --sidebar-accent: oklch(0.97 0 0);
-        --sidebar-accent-foreground: oklch(0.205 0 0);
-        --sidebar-border: oklch(0.922 0 0);
-        --sidebar-ring: oklch(0.708 0 0);
 
-        /* DaisyUI primary mapping (#007bff) */
-        --p: 211 100% 50%;
-        --pc: 0 0% 98%;
+        --sidebar-foreground: oklch(0.145 0 0);
+
+        --sidebar-primary: oklch(0.205 0 0);
+
+        --sidebar-primary-foreground: oklch(0.985 0 0);
+
+        --sidebar-accent: oklch(0.97 0 0);
+
+        --sidebar-accent-foreground: oklch(0.205 0 0);
+
+        --sidebar-border: oklch(0.922 0 0);
+
+        --sidebar-ring: oklch(0.708 0 0);
     }
 
+    /* 🌙 DARK MODE */
     .dark {
         --background: oklch(0.145 0 0);
         --foreground: oklch(0.985 0 0);
@@ -81,8 +113,19 @@
         --popover: oklch(0.205 0 0);
         --popover-foreground: oklch(0.985 0 0);
 
+        /* PRIMARY (#007bff adjusted for dark mode) */
         --primary: oklch(0.922 0 0);
         --primary-foreground: oklch(0.205 0 0);
+
+        --primary-hover: 211 100% 60%;
+        --primary-active: 211 100% 50%;
+        --primary-muted: 211 100% 20%;
+        --primary-border: 211 100% 60%;
+        --primary-ring: 211 100% 60%;
+
+        /* DaisyUI */
+        --p: 211 100% 60%;
+        --pc: 0 0% 9%;
 
         --secondary: oklch(0.269 0 0);
         --secondary-foreground: oklch(0.985 0 0);
@@ -94,18 +137,16 @@
         --accent-foreground: oklch(0.985 0 0);
 
         --destructive: oklch(0.704 0.191 22.216);
-        --destructive-foreground: oklch(0.985 0 0);
+        --destructive-foreground: 0 0% 98%;
 
         --border: oklch(1 0 0 / 10%);
         --input: oklch(1 0 0 / 15%);
         --ring: oklch(0.556 0 0);
-
         --chart-1: oklch(0.87 0 0);
         --chart-2: oklch(0.556 0 0);
         --chart-3: oklch(0.439 0 0);
         --chart-4: oklch(0.371 0 0);
         --chart-5: oklch(0.269 0 0);
-
         --sidebar: oklch(0.205 0 0);
         --sidebar-foreground: oklch(0.985 0 0);
         --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -114,16 +155,18 @@
         --sidebar-accent-foreground: oklch(0.985 0 0);
         --sidebar-border: oklch(1 0 0 / 10%);
         --sidebar-ring: oklch(0.556 0 0);
-
-        --p: 211 100% 60%;
-        --pc: 0 0% 9%;
     }
-
-    * {
-        @apply border-border;
+  .theme {
+        --font-heading: var(--font-sans);
+        --font-sans: 'Geist Variable', sans-serif;
     }
-
-    body {
-        @apply bg-background text-foreground font-sans;
+  * {
+    @apply border-border outline-ring/50;
+    }
+  body {
+    @apply bg-background text-foreground;
+    }
+  html {
+    @apply font-sans;
     }
 }

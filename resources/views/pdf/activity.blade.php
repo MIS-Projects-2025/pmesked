@@ -117,7 +117,7 @@
         <tr>
             <td>
                 {{ $scheduler->tech_ack
-        ? $scheduler->tech_ack . ' / ' . \Carbon\Carbon::parse($scheduler['tecjh_ack_date'])->format('m/d/Y h:i A')
+        ? $scheduler->tech_ack . ' / ' . \Carbon\Carbon::parse($scheduler['tech_ack_date'])->format('m/d/Y h:i A')
         : 'Waiting...' }}
             </td>
             <td>

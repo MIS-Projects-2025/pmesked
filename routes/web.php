@@ -52,6 +52,9 @@ Route::post('/scheduler', [SchedulerController::class, 'store'])->name('schedule
 Route::put('/scheduler/{id}/verify', [SchedulerController::class, 'verify']);
 Route::delete('/scheduler/remove/{id}', [SchedulerController::class, 'remove'])->name('pm.remove');
 
+Route::post('/scheduler/repair-progress', [SchedulerController::class, 'repairProgress'])
+    ->name('scheduler.repairProgress');
+
 // 📂 Checklist API view
 Route::get('/checklist/{platform}', [ChecklistController::class, 'getByPlatform']);
 

@@ -51,16 +51,11 @@ export default function DataTable({
 }) {
     const [activeRow, setActiveRow] = useState(null);
 
-    const [searchInput, setSearchInput] = useState(
-        filters.search || ""
-    );
+    const [searchInput, setSearchInput] = useState(filters.search || "");
 
-    const [perPage, setPerPage] = useState(
-        filters.perPage || 10
-    );
+    const [perPage, setPerPage] = useState(filters.perPage || 10);
 
-    const [selectedRows, setSelectedRows] =
-        useState({});
+    const [selectedRows, setSelectedRows] = useState({});
 
     const tableColumns = useMemo(() => {
         const cols = [];
@@ -79,9 +74,7 @@ export default function DataTable({
                 cell: ({ row }) => (
                     <Checkbox
                         checked={row.getIsSelected()}
-                        onCheckedChange={(value) =>
-                            row.toggleSelected(!!value)
-                        }
+                        onCheckedChange={(value) => row.toggleSelected(!!value)}
                     />
                 ),
             });
@@ -105,8 +98,7 @@ export default function DataTable({
                             ))}
                     </button>
                 ),
-                cell: ({ row }) =>
-                    row.getValue(col.key) ?? "-",
+                cell: ({ row }) => row.getValue(col.key) ?? "-",
             });
         });
 
@@ -115,8 +107,7 @@ export default function DataTable({
 
     const handleSort = (key) => {
         const direction =
-            filters.sortBy === key &&
-            filters.sortDirection === "asc"
+            filters.sortBy === key && filters.sortDirection === "asc"
                 ? "desc"
                 : "asc";
 
@@ -129,7 +120,7 @@ export default function DataTable({
             },
             {
                 preserveState: true,
-            }
+            },
         );
     };
 
@@ -144,7 +135,7 @@ export default function DataTable({
             },
             {
                 preserveState: true,
-            }
+            },
         );
     };
 
@@ -164,7 +155,6 @@ export default function DataTable({
 
     return (
         <div className="space-y-4">
-
             {/* Toolbar */}
 
             <form
@@ -185,7 +175,7 @@ export default function DataTable({
                                 },
                                 {
                                     preserveState: true,
-                                }
+                                },
                             );
                         }}
                     >
@@ -194,26 +184,15 @@ export default function DataTable({
                         </SelectTrigger>
 
                         <SelectContent className="w-[130px] overflow-hidden bg-white text-gray-700">
-                            <SelectItem value="10">
-                                10 rows
-                            </SelectItem>
-                            <SelectItem value="25">
-                                25 rows
-                            </SelectItem>
-                            <SelectItem value="50">
-                                50 rows
-                            </SelectItem>
-                            <SelectItem value="100">
-                                100 rows
-                            </SelectItem>
+                            <SelectItem value="10">10 rows</SelectItem>
+                            <SelectItem value="25">25 rows</SelectItem>
+                            <SelectItem value="50">50 rows</SelectItem>
+                            <SelectItem value="100">100 rows</SelectItem>
                         </SelectContent>
                     </Select>
 
                     {showExport && (
-                        <Button
-                            type="button"
-                            variant="outline"
-                        >
+                        <Button type="button" variant="outline">
                             Export CSV
                         </Button>
                     )}
@@ -223,9 +202,7 @@ export default function DataTable({
                     <Input
                         placeholder="Search..."
                         value={searchInput}
-                        onChange={(e) =>
-                            setSearchInput(e.target.value)
-                        }
+                        onChange={(e) => setSearchInput(e.target.value)}
                     />
 
                     <Button type="submit" className="bg-gray-500">
@@ -239,72 +216,42 @@ export default function DataTable({
             <div className="border rounded-md">
                 <Table>
                     <TableHeader>
-                        {table
-                            .getHeaderGroups()
-                            .map((headerGroup) => (
-                                <TableRow
-                                    key={headerGroup.id}
-                                >
-                                    {headerGroup.headers.map(
-                                        (header) => (
-                                            <TableHead
-                                                key={header.id}
-                                            >
-                                                {flexRender(
-                                                    header
-                                                        .column
-                                                        .columnDef
-                                                        .header,
-                                                    header.getContext()
-                                                )}
-                                            </TableHead>
-                                        )
-                                    )}
-                                </TableRow>
-                            ))}
+                        {table.getHeaderGroups().map((headerGroup) => (
+                            <TableRow key={headerGroup.id}>
+                                {headerGroup.headers.map((header) => (
+                                    <TableHead key={header.id}>
+                                        {flexRender(
+                                            header.column.columnDef.header,
+                                            header.getContext(),
+                                        )}
+                                    </TableHead>
+                                ))}
+                            </TableRow>
+                        ))}
                     </TableHeader>
 
                     <TableBody>
-                        {table.getRowModel().rows
-                            ?.length ? (
-                            table
-                                .getRowModel()
-                                .rows
-                                .map((row) => (
-                                    <TableRow
-                                        key={row.id}
-                                        className="cursor-pointer"
-                                        onClick={() =>
-                                            setActiveRow(
-                                                row.original
-                                            )
-                                        }
-                                    >
-                                        {row
-                                            .getVisibleCells()
-                                            .map((cell) => (
-                                                <TableCell
-                                                    key={
-                                                        cell.id
-                                                    }
-                                                >
-                                                    {flexRender(
-                                                        cell
-                                                            .column
-                                                            .columnDef
-                                                            .cell,
-                                                        cell.getContext()
-                                                    )}
-                                                </TableCell>
-                                            ))}
-                                    </TableRow>
-                                ))
+                        {table.getRowModel().rows?.length ? (
+                            table.getRowModel().rows.map((row) => (
+                                <TableRow
+                                    key={row.id}
+                                    className="cursor-pointer"
+                                    onClick={() => setActiveRow(row.original)}
+                                >
+                                    {row.getVisibleCells().map((cell) => (
+                                        <TableCell key={cell.id}>
+                                            {flexRender(
+                                                cell.column.columnDef.cell,
+                                                cell.getContext(),
+                                            )}
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            ))
                         ) : (
                             <TableRow>
                                 <TableCell
-                                    colSpan={
-                                        columns.length
-                                    }
+                                    colSpan={columns.length}
                                     className="h-24 text-center"
                                 >
                                     No results found.
@@ -318,9 +265,10 @@ export default function DataTable({
             {/* Footer */}
 
             <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-400 text-muted">
-                    Showing {meta.from} to {meta.to} of{" "}
-                    {meta.total} results
+                {/* 🎨 FIX: text-gray-400 + text-muted → text-gray-700
+                    (dati mapusyaw/halos puti kaya di nakikita sa white bg) */}
+                <div className="text-sm text-gray-700">
+                    Showing {meta.from} to {meta.to} of {meta.total} results
                 </div>
 
                 <div className="flex gap-2">
@@ -329,40 +277,32 @@ export default function DataTable({
                         size="icon"
                         disabled={currentPage <= 1}
                         onClick={() => {
-                            const prev =
-                                meta.links?.find(
-                                    (l) =>
-                                        l.label ===
-                                        "&laquo; Previous"
-                                );
+                            const prev = meta.links?.find(
+                                (l) => l.label === "&laquo; Previous",
+                            );
 
-                            if (prev?.url)
-                                router.visit(prev.url);
+                            if (prev?.url) router.visit(prev.url);
                         }}
                     >
                         <ChevronLeft className="w-4 h-4" />
                     </Button>
 
-                    <span className="flex items-center px-3 text-sm text-muted text-gray-600">
+                    {/* 🎨 FIX: inalis ang 'text-muted' na nag-o-override sa kulay;
+                        text-gray-700 na lang + font-medium para klaro */}
+                    <span className="flex items-center px-3 text-sm font-medium text-gray-700">
                         {currentPage} / {lastPage}
                     </span>
 
                     <Button
                         variant="outline"
                         size="icon"
-                        disabled={
-                            currentPage >= lastPage
-                        }
+                        disabled={currentPage >= lastPage}
                         onClick={() => {
-                            const next =
-                                meta.links?.find(
-                                    (l) =>
-                                        l.label ===
-                                        "Next &raquo;"
-                                );
+                            const next = meta.links?.find(
+                                (l) => l.label === "Next &raquo;",
+                            );
 
-                            if (next?.url)
-                                router.visit(next.url);
+                            if (next?.url) router.visit(next.url);
                         }}
                     >
                         <ChevronRight className="w-4 h-4" />
@@ -374,10 +314,7 @@ export default function DataTable({
 
             {typeof children === "function" &&
                 activeRow &&
-                children(
-                    activeRow,
-                    () => setActiveRow(null)
-                )}
+                children(activeRow, () => setActiveRow(null))}
         </div>
     );
 }

@@ -25,8 +25,8 @@ class AppServiceProvider extends ServiceProvider
         $server_ip = $_SERVER['SERVER_ADDR'] ?? '127.0.0.1';
 
         $url = match ($server_ip) {
-            '172.16.5.181', '192.168.3.201' => env('APP_URL', 'http://machine-portal:88/pmesked'),
-            default => env('APP_BASE_URL', 'http://192.168.3.201:88/pmesked'),
+            '172.16.5.181', '192.168.20.23' => env('APP_URL', 'http://machine-portal:88/pmesked'),
+            default => env('APP_BASE_URL', 'http://192.168.20.23:88/pmesked'),
         };
 
 

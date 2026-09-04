@@ -1,9 +1,7 @@
-
 import { usePage, Link } from "@inertiajs/react";
 import {
     LayoutDashboard,
     ClipboardCheck,
-    CalendarDays,
     FileCheck,
     ClipboardList,
     Fan,
@@ -15,7 +13,7 @@ import {
     CheckSquare,
     List,
     Table2,
-    Pin,
+    ChevronDown,
 } from "lucide-react";
 
 import {
@@ -27,41 +25,76 @@ import {
 import { Button } from "@/Components/ui/button";
 import { ScrollArea } from "@/Components/ui/scroll-area";
 
-function NavItem({ href, label, Icon }) {
+/* ---------------------------------------------------------------------------
+ * Helpers
+ * ------------------------------------------------------------------------ */
+
+/** Compare an href against the current URL, ignoring the query string. */
+const isCurrent = (href, currentUrl) => {
+    if (!href) return false;
+    try {
+        const path = new URL(href, window.location.origin).pathname;
+        const current = currentUrl.split("?")[0];
+        return path === "/" ? current === "/" : current.startsWith(path);
+    } catch {
+        return false;
+    }
+};
+
+/* ---------------------------------------------------------------------------
+ * Items
+ * ------------------------------------------------------------------------ */
+
+function NavItem({ href, label, Icon, nested = false }) {
+    const { url } = usePage();
+    const active = isCurrent(href, url);
+
+    // base-ui buttons do not support `asChild`; `render` swaps the element.
     return (
         <Button
-            asChild
             variant="ghost"
-            className="w-full justify-start"
+            className={`w-full justify-start font-normal ${
+                nested ? "h-8 text-sm" : ""
+            } ${active ? "bg-accent text-accent-foreground font-medium" : ""}`}
+            render={<Link href={href} aria-current={active ? "page" : undefined} />}
         >
-            <Link href={href}>
-                <Icon className="mr-2 h-4 w-4" />
-                {label}
-            </Link>
+            <Icon
+                className={`mr-2 shrink-0 ${
+                    nested ? "h-2 w-2 text-muted-foreground" : "h-4 w-4"
+                }`}
+            />
+            <span className="truncate">{label}</span>
         </Button>
     );
 }
 
 function NavGroup({ label, Icon, links }) {
+    const { url } = usePage();
+    const hasActiveChild = links.some((l) => isCurrent(l.href, url));
+
     return (
-        <Collapsible>
-            <CollapsibleTrigger asChild>
-                <Button
-                    variant="ghost"
-                    className="w-full justify-start"
-                >
-                    <Icon className="mr-2 h-4 w-4" />
-                    {label}
-                </Button>
+        <Collapsible defaultOpen={hasActiveChild}>
+            <CollapsibleTrigger
+                render={
+                    <Button
+                        variant="ghost"
+                        className="group w-full justify-start font-normal"
+                    />
+                }
+            >
+                <Icon className="mr-2 h-4 w-4 shrink-0" />
+                <span className="truncate">{label}</span>
+                <ChevronDown className="ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[panel-open]:rotate-180" />
             </CollapsibleTrigger>
 
-            <CollapsibleContent className="ml-6 space-y-1 pt-1">
+            <CollapsibleContent className="ml-4 space-y-0.5 border-l pl-2 pt-1">
                 {links.map((link) => (
                     <NavItem
                         key={link.label}
                         href={link.href}
                         label={link.label}
-                        Icon={Square}
+                        Icon={link.icon ?? Square}
+                        nested
                     />
                 ))}
             </CollapsibleContent>
@@ -69,25 +102,21 @@ function NavGroup({ label, Icon, links }) {
     );
 }
 
+/* ---------------------------------------------------------------------------
+ * Navigation
+ * ------------------------------------------------------------------------ */
+
 export default function NavLinks() {
     const { emp_data } = usePage().props;
-
-    console.log("emp_data", emp_data);
 
     const role = emp_data?.emp_role;
     const empId = String(emp_data?.emp_id ?? "");
 
-    const isPMRole = [
-        "pmtech",
-        "toolcrib",
-        "seniortech",
-        "engineer",
-    ].includes(role);
+    const isPMRole = ["pmtech", "toolcrib", "seniortech", "engineer"].includes(
+        role,
+    );
 
-    const isESDOrEngineer = [
-        "esd",
-        "engineer",
-    ].includes(role);
+    const isESDOrEngineer = ["esd", "engineer"].includes(role);
 
     const menus = [
         {
@@ -97,20 +126,12 @@ export default function NavLinks() {
             href: route("dashboard"),
         },
 
-        // {
-        //     type: "item",
-        //     label: "PM/Cal Tracker",
-        //     icon: Pin,
-        //     href: route("machines-tracker.index"),
-        // },
-
         isPMRole && {
             type: "group",
             label: "TNR",
             icon: FileCheck,
             links: [
                 {
-                    type: "item",
                     label: "Granite Checklist",
                     icon: ClipboardCheck,
                     href: route("non-tnr.granite"),
@@ -281,7 +302,7 @@ export default function NavLinks() {
 
     return (
         <ScrollArea className="h-full">
-            <nav className="space-y-1 p-2">
+            <nav className="space-y-1 p-2" aria-label="Main navigation">
                 {menus.map((menu) =>
                     menu.type === "group" ? (
                         <NavGroup

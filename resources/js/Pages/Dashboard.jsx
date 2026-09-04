@@ -12,8 +12,16 @@ import {
     Pie,
     Cell,
     Legend,
+    CartesianGrid,
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
     Dialog,
     DialogContent,
@@ -32,60 +40,88 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import PmScheduleCalendar from "@/Components/PmScheduleCalendar";
 import {
     ClipboardList,
     Eye,
     Wrench,
     CheckCircle2,
     ArrowLeft,
+    FileCheck2,
+    Stamp,
+    CalendarClock,
+    AlertTriangle,
+    Gauge,
+    Activity,
+    ChevronRight,
 } from "lucide-react";
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+/* ---------------------------------------------------------------------------
+ * Helpers
+ * Workweek ↔ date mapping is supplied by the server from analog_calendar
+ * (server25) through the `wwIndex` prop:
+ *   { "WW644": { offset: 0, start: "2026-08-30", end: "2026-09-05" }, ... }
+ * offset 0 = current week, negative = past, positive = upcoming.
+ * ------------------------------------------------------------------------ */
 
-// Parse WW format (e.g. "WW501") into a Date (start of that week).
-// IMPORTANT: build the base date from local Y/M/D components, NOT from a
-// "YYYY-MM-DD" string. `new Date("2024-11-03")` is parsed as UTC midnight,
-// which silently shifts by a day for anyone west of UTC (e.g. PH is fine,
-// but this kept the door open for bugs depending on server/browser TZ).
-const parseWWToDate = (ww) => {
-    if (!ww || typeof ww !== "string" || !ww.startsWith("WW")) return null;
-    const weekNum = parseInt(ww.slice(2), 10);
-    if (isNaN(weekNum)) return null;
-    const baseWeek = 501;
-    const baseDate = new Date(2024, 10, 3); // Nov 3, 2024, local time
-    const diffWeeks = weekNum - baseWeek;
-    const result = new Date(baseDate);
-    result.setDate(baseDate.getDate() + diffWeeks * 7);
-    return result;
+const toIsoDate = (d) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+/** pm_due is stored as "MM/DD/YYYY" (occasionally "MM/DD/YY" or ISO). */
+const parseDueDate = (value) => {
+    if (!value) return null;
+    const raw = String(value).trim();
+    let m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
+    if (m) {
+        let year = parseInt(m[3], 10);
+        if (year < 100) year += 2000;
+        const d = new Date(year, parseInt(m[1], 10) - 1, parseInt(m[2], 10));
+        return isNaN(d) ? null : d;
+    }
+    m = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+    return null;
 };
 
-// Local YYYY-MM-DD key. Using toISOString() here (as the original code did)
-// converts to UTC first, which can make "today" compare as a different day
-// depending on the time of day / timezone. This stays in local time.
-const toDateKey = (date) => {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const d = String(date.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
+/** Find the analog_calendar week (from wwIndex) that contains a date. */
+const wwEntryForDate = (value, wwIndex) => {
+    const d = parseDueDate(value);
+    if (!d || !wwIndex) return null;
+    const iso = toIsoDate(d);
+    for (const [label, entry] of Object.entries(wwIndex)) {
+        if (iso >= entry.start && iso <= entry.end) return { label, ...entry };
+    }
+    return null;
 };
 
-const isDueToday = (ww) => {
-    const dueDate = parseWWToDate(ww);
-    if (!dueDate) return false;
-    return toDateKey(dueDate) === toDateKey(new Date());
+const wwOffset = (value, wwIndex) => wwEntryForDate(value, wwIndex)?.offset ?? null;
+
+const isDueThisWeek = (value, wwIndex) => wwOffset(value, wwIndex) === 0;
+
+const isOverdueWw = (value) => {
+    const d = parseDueDate(value);
+    if (!d) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return d < today;
 };
 
-const isOverdue = (ww) => {
-    const dueDate = parseWWToDate(ww);
-    if (!dueDate) return false;
-    return toDateKey(dueDate) < toDateKey(new Date());
+/** Returns e.g. "WW644 · Aug 30 – Sep 05" for the week that contains pm_due. */
+const wwRangeLabel = (value, wwIndex) => {
+    const entry = wwEntryForDate(value, wwIndex);
+    if (!entry) return null;
+    const fmt = (iso) => {
+        const [y, m, d] = iso.split("-").map(Number);
+        return new Date(y, m - 1, d).toLocaleDateString("en-US", {
+            month: "short",
+            day: "2-digit",
+        });
+    };
+    return `${entry.label} · ${fmt(entry.start)} – ${fmt(entry.end)}`;
 };
 
-// Guards against malformed/empty JSON columns instead of letting
-// JSON.parse() throw and crash the modal.
 const safeJsonParse = (value, fallback = []) => {
     if (!value) return fallback;
     try {
@@ -96,140 +132,229 @@ const safeJsonParse = (value, fallback = []) => {
     }
 };
 
-const CARD_COLOR_CLASSES = {
-    stone: "bg-stone-100 text-stone-500 hover:bg-stone-200",
-    orange: "bg-orange-100 text-orange-500 hover:bg-orange-200",
-    blue: "bg-blue-100 text-blue-500 hover:bg-blue-200",
-    yellow: "bg-yellow-100 text-yellow-500 hover:bg-yellow-200",
-    red: "bg-red-100 text-red-500 hover:bg-red-200",
-    green: "bg-green-100 text-green-500 hover:bg-green-200",
-    purple: "bg-purple-100 text-purple-500 hover:bg-purple-200",
+const CHART_COLORS = {
+    primary: "#334155",
+    pending: "#d97706",
+    complete: "#059669",
+    accent: "#0284c7",
+    muted: "#cbd5e1",
 };
 
-// ---------------------------------------------------------------------------
-// Small reusable pieces
-// ---------------------------------------------------------------------------
+const chartTooltip = {
+    contentStyle: {
+        borderRadius: 6,
+        border: "1px solid hsl(214 32% 91%)",
+        boxShadow: "0 4px 12px rgb(15 23 42 / 0.08)",
+        fontSize: 12,
+    },
+};
 
-function SummaryCard({ label, value, color = "stone", onClick }) {
+/* ------------------------------- components ------------------------------ */
+
+function SectionHeading({ title, description, action }) {
+    return (
+        <div className="flex items-end justify-between gap-4">
+            <div>
+                <h2 className="text-sm font-semibold text-foreground">
+                    {title}
+                </h2>
+                {description && (
+                    <p className="text-xs text-muted-foreground">
+                        {description}
+                    </p>
+                )}
+            </div>
+            {action}
+        </div>
+    );
+}
+
+function StatCard({ label, value, icon: Icon, hint, onClick }) {
+    const clickable = typeof onClick === "function";
+
     return (
         <Card
             onClick={onClick}
-            className={`text-center transition-colors border-none shadow ${
-                CARD_COLOR_CLASSES[color] ?? ""
-            } ${onClick ? "cursor-pointer" : ""}`}
+            role={clickable ? "button" : undefined}
+            tabIndex={clickable ? 0 : undefined}
+            onKeyDown={(e) => {
+                if (clickable && (e.key === "Enter" || e.key === " ")) {
+                    e.preventDefault();
+                    onClick();
+                }
+            }}
+            className={
+                clickable
+                    ? "group cursor-pointer transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    : ""
+            }
         >
-            <CardContent className="pt-6">
-                <h2 className="text-2xl font-bold">{value}</h2>
-                <p className="text-sm opacity-80">{label}</p>
+            <CardContent className="flex items-start justify-between gap-3 p-4">
+                <div className="min-w-0">
+                    <p className="text-2xl font-semibold tabular-nums tracking-tight">
+                        {value}
+                    </p>
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                        {label}
+                    </p>
+                    {hint && (
+                        <p className="mt-1 truncate text-[11px] text-muted-foreground/80">
+                            {hint}
+                        </p>
+                    )}
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                    {Icon && (
+                        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    )}
+                    {clickable && (
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5" />
+                    )}
+                </div>
             </CardContent>
         </Card>
     );
 }
 
-// Used for both EE and QA roles — previously this was two near-identical
-// copy-pasted <BarChart> blocks (one even had a stray <p> tag rendered
-// inside the chart itself, which recharts can't handle as a child).
-function NonTnrApprovalBarChart({ data }) {
+function ChartCard({ title, description, children }) {
     return (
         <Card>
-            <CardHeader>
-                <CardTitle className="text-base font-semibold text-gray-600">
-                    Non-TNR Cal Reports for Approval
-                </CardTitle>
+            <CardHeader className="pb-2">
+                <CardTitle className="text-sm">{title}</CardTitle>
+                {description && (
+                    <CardDescription className="text-xs">
+                        {description}
+                    </CardDescription>
+                )}
             </CardHeader>
-            <CardContent>
-                <ResponsiveContainer width="100%" height={280}>
-                    <BarChart data={data}>
-                        <XAxis dataKey="name" />
-                        <YAxis allowDecimals={false} />
-                        <Tooltip />
+            <CardContent>{children}</CardContent>
+        </Card>
+    );
+}
+
+function ChartEmpty({ label = "No data available" }) {
+    return (
+        <div className="flex h-[240px] flex-col items-center justify-center gap-2 text-muted-foreground">
+            <Activity className="h-5 w-5 opacity-60" />
+            <p className="text-xs">{label}</p>
+        </div>
+    );
+}
+
+function ApprovalBarChart({ data }) {
+    const hasData = data?.some((d) => d.value > 0);
+
+    return (
+        <ChartCard
+            title="Non-TNR calibration reports"
+            description="Reports awaiting your signature"
+        >
+            {hasData ? (
+                <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={data} barSize={64}>
+                        <CartesianGrid
+                            strokeDasharray="3 3"
+                            vertical={false}
+                            stroke="#eef2f6"
+                        />
+                        <XAxis
+                            dataKey="name"
+                            tickLine={false}
+                            axisLine={false}
+                            fontSize={12}
+                        />
+                        <YAxis
+                            allowDecimals={false}
+                            tickLine={false}
+                            axisLine={false}
+                            fontSize={12}
+                        />
+                        <Tooltip cursor={{ fill: "#f8fafc" }} {...chartTooltip} />
                         <Bar
                             dataKey="value"
-                            radius={[8, 8, 0, 0]}
-                            label={{ position: "top" }}
-                        >
-                            {data.map((entry, index) => (
-                                <Cell
-                                    key={`cell-${index}`}
-                                    fill={
-                                        entry.name === "For Approval"
-                                            ? "#515257"
-                                            : "#FACC15"
-                                    }
-                                />
-                            ))}
-                        </Bar>
+                            radius={[4, 4, 0, 0]}
+                            fill={CHART_COLORS.primary}
+                            label={{ position: "top", fontSize: 12 }}
+                        />
                     </BarChart>
                 </ResponsiveContainer>
-            </CardContent>
-        </Card>
+            ) : (
+                <ChartEmpty label="No reports pending approval" />
+            )}
+        </ChartCard>
     );
 }
 
-// Renamed from "non-TNR PM Checklist Status": this data comes from
-// scheduler_tbl (senior_ee_ack / qa_ack), which IS the TNR scheduler — the
-// old label called it "non-TNR" which was backwards.
-function TnrAckPieChart({ data }) {
+function AcknowledgementChart({ data }) {
+    const hasData = data?.some((d) => d.value > 0);
+
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-base font-semibold text-gray-600">
-                    TNR PM Acknowledgement Status
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <ResponsiveContainer width="100%" height={280}>
+        <ChartCard
+            title="TNR PM acknowledgement"
+            description="Scheduler entries awaiting EE / QA sign-off"
+        >
+            {hasData ? (
+                <ResponsiveContainer width="100%" height={250}>
                     <PieChart>
                         <Pie
                             data={data}
                             cx="50%"
                             cy="50%"
-                            outerRadius={90}
+                            innerRadius={58}
+                            outerRadius={88}
+                            paddingAngle={1}
                             dataKey="value"
-                            label={({ name, value }) => `${name}: ${value}`}
+                            labelLine={false}
+                            label={({ value }) => value}
                         >
                             {data.map((entry, index) => (
                                 <Cell
                                     key={`cell-${index}`}
                                     fill={
-                                        entry.name === "For Approval"
-                                            ? "#f78940"
-                                            : "#FACC15"
+                                        index === 0
+                                            ? CHART_COLORS.pending
+                                            : CHART_COLORS.muted
                                     }
                                 />
                             ))}
                         </Pie>
-                        <Tooltip />
-                        <Legend />
+                        <Tooltip {...chartTooltip} />
+                        <Legend
+                            iconType="circle"
+                            iconSize={8}
+                            wrapperStyle={{ fontSize: 12 }}
+                        />
                     </PieChart>
                 </ResponsiveContainer>
-            </CardContent>
-        </Card>
+            ) : (
+                <ChartEmpty label="No pending acknowledgements" />
+            )}
+        </ChartCard>
     );
 }
 
 function ReadOnlyField({ label, value }) {
     return (
         <div>
-            <Label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            <Label className="text-[11px] font-normal uppercase tracking-wide text-muted-foreground">
                 {label.replace(/_/g, " ")}
             </Label>
-            <Input value={value || ""} readOnly className="mt-1 bg-gray-50" />
+            <Input
+                value={value || ""}
+                readOnly
+                className="mt-1 h-8 bg-muted/40 text-sm"
+            />
         </div>
     );
 }
 
-// ---------------------------------------------------------------------------
-// Main component
-// ---------------------------------------------------------------------------
+/* --------------------------------- page ---------------------------------- */
 
 export default function Dashboard(props) {
     const { emp_data } = usePage().props;
 
-    const QAforApprovalcalReportsCount =
-        props.QAforApprovalcalReportsCount ?? 0;
-    const EEforApprovalcalReportsCount =
-        props.EEforApprovalcalReportsCount ?? 0;
+    const QAforApprovalcalReportsCount = props.QAforApprovalcalReportsCount ?? 0;
+    const EEforApprovalcalReportsCount = props.EEforApprovalcalReportsCount ?? 0;
     const calibrationReportsCount = props.calibrationReportsCount ?? 0;
     const seniortechAck = props.seniortechAck ?? 0;
     const esdAck = props.esdAck ?? 0;
@@ -249,7 +374,14 @@ export default function Dashboard(props) {
     const overdueReports = props.overdueReports ?? [];
     const completedSchedulers = props.completedSchedulers ?? [];
 
-    // Job groups
+    // PM schedule (analog_calendar driven)
+    const pmCalendar = props.pmCalendar ?? [];
+    const pmMonthWeeks = props.pmMonthWeeks ?? [];
+    const pmOverdue = props.pmOverdue ?? [];
+    const pmCalendarMeta = props.pmCalendarMeta ?? {};
+    const wwIndex = props.wwIndex ?? {};
+
+    // Role groups
     const qaJobs = ["esd"];
     const eeJobs = ["superadmin", "admin", "engineer"];
     const combinedJobs = [...qaJobs, ...eeJobs];
@@ -257,6 +389,7 @@ export default function Dashboard(props) {
 
     const isQaRole = qaJobs.includes(emp_data?.emp_role);
     const isEeRole = eeJobs.includes(emp_data?.emp_role);
+    const isDeptRole = departmentRoles.includes(emp_data?.emp_role);
 
     const calApprovalCount = isQaRole
         ? QAforApprovalcalReportsCount
@@ -264,9 +397,7 @@ export default function Dashboard(props) {
           ? EEforApprovalcalReportsCount
           : 0;
     const tnrApprovalCount = isQaRole ? esdAck : isEeRole ? senioreeAck : 0;
-    const verifierBarData = isEeRole
-        ? eeCalVerifierStatus
-        : qaCalVerifierStatus;
+    const verifierBarData = isEeRole ? eeCalVerifierStatus : qaCalVerifierStatus;
     const verifierPieData = isEeRole ? eeVerifierStatus : qaVerifierStatus;
 
     // Modal state
@@ -282,8 +413,8 @@ export default function Dashboard(props) {
     const machineInProgress = props.machineInProgress ?? 0;
     const machineProgressDistribution = props.machineProgressDistribution ?? [];
 
-    const ppcRoles = ['ppc', 'process engineering']; // i-adjust kung paano nakastore sa DB
-const isPpcDept = ppcRoles.includes(emp_data?.emp_dept?.toLowerCase());
+    const ppcRoles = ["ppc", "process engineering"];
+    const isPpcDept = ppcRoles.includes(emp_data?.emp_dept?.toLowerCase());
 
     const openModal = (title, data) => {
         if (!data || data.length === 0) return;
@@ -298,29 +429,7 @@ const isPpcDept = ppcRoles.includes(emp_data?.emp_dept?.toLowerCase());
         setSelectedItem(null);
     };
 
-    const renderCustomLegend = () => (
-        <ul className="flex gap-6 items-center justify-center">
-            {checklistStatus.map((entry, index) => (
-                <li
-                    key={`item-${index}`}
-                    className="flex items-center gap-2 text-gray-600"
-                >
-                    <span
-                        className="inline-block w-3 h-3"
-                        style={{
-                            backgroundColor:
-                                entry.name === "Completed"
-                                    ? "#10B981"
-                                    : "#FACC15",
-                        }}
-                    />
-                    {entry.name}
-                </li>
-            ))}
-        </ul>
-    );
-
-    const isCalibrationModal = modalTitle === "Calibration Reports";
+    const isCalibrationModal = modalTitle === "Calibration reports";
 
     const CALIBRATION_FIELDS = [
         "equipment",
@@ -338,728 +447,879 @@ const isPpcDept = ppcRoles.includes(emp_data?.emp_dept?.toLowerCase());
         "cal_interval",
     ];
 
+    const todayLabel = new Date().toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+    });
+
+    const headlineStats = [
+        { label: "Overdue", value: pmCalendarMeta.overdue ?? 0 },
+        { label: "Due this week", value: pmCalendarMeta.due_now ?? 0 },
+        { label: "Upcoming", value: pmCalendarMeta.upcoming ?? 0 },
+    ];
+
     return (
         <AuthenticatedLayout>
             <Head title="Dashboard" />
 
-            <h1 className="text-2xl font-bold mb-6">TNR Checklist</h1>
-
-            {/* Role-level (QA / EE) view */}
-            {combinedJobs.includes(emp_data?.emp_role) && (
-                <div className="mt-6 space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
-                        <SummaryCard
-                            label="Calibration Reports for Approval"
-                            value={calApprovalCount}
-                            color="stone"
-                        />
-                        <SummaryCard
-                            label="TNR for Approval"
-                            value={tnrApprovalCount}
-                            color="orange"
-                        />
+            <div className="space-y-6 pb-10">
+                {/* Page header */}
+                <div className="flex flex-wrap items-end justify-between gap-4 border-b pb-4">
+                    <div>
+                        <h1 className="text-xl font-semibold tracking-tight">
+                            Maintenance Dashboard
+                        </h1>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            {todayLabel}
+                            {pmCalendarMeta.current_week
+                                ? ` · ${pmCalendarMeta.current_week} (${pmCalendarMeta.week_range})`
+                                : ""}
+                        </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <NonTnrApprovalBarChart data={verifierBarData} />
-                        <TnrAckPieChart data={verifierPieData} />
+                    <div className="flex items-center gap-5">
+                        {headlineStats.map((stat, i) => (
+                            <div key={stat.label} className="flex items-center">
+                                {i > 0 && (
+                                    <Separator
+                                        orientation="vertical"
+                                        className="mr-5 h-8"
+                                    />
+                                )}
+                                <div className="text-right">
+                                    <p className="text-lg font-semibold tabular-nums">
+                                        {stat.value}
+                                    </p>
+                                    <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                                        {stat.label}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
-            )}
 
-            {/* Department-level view */}
-            {departmentRoles.includes(emp_data?.emp_role) && (
-                <div className="space-y-6">
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                        <SummaryCard
-                            label="TnR Calibration Reports"
-                            value={calibrationReportsCount}
-                            color="blue"
-                            onClick={() =>
-                                openModal("Calibration Reports", latestReports)
-                            }
-                        />
-                        <SummaryCard
-                            label="Due Today"
-                            value={dueSoon}
-                            color="yellow"
-                            onClick={() =>
-                                openModal("Due Today", dueTodayReports)
-                            }
-                        />
-                        <SummaryCard
-                            label="Overdue"
-                            value={overdue}
-                            color="red"
-                            onClick={() => openModal("Overdue", overdueReports)}
-                        />
-                        <SummaryCard
-                            label="TNR PM Completed"
-                            value={tnrCompleted}
-                            color="green"
-                            onClick={() =>
-                                openModal(
-                                    "TNR PM Completed",
-                                    completedSchedulers,
-                                )
-                            }
-                        />
-                        <SummaryCard
-                            label="Tech Acknowledgement Pending"
-                            value={seniortechAck}
-                            color="purple"
-                        />
-                    </div>
+                {/* Data-source notice (administrators only) */}
+                {(isEeRole || isQaRole) &&
+                    (pmCalendarMeta.source === "fallback" ||
+                        (pmCalendarMeta.unmatched_ww ?? []).length > 0) && (
+                        <Alert variant="destructive">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertTitle>Calendar data issue</AlertTitle>
+                            <AlertDescription className="space-y-1 text-sm">
+                                {pmCalendarMeta.source === "fallback" && (
+                                    <p>
+                                        The <code>analog_calendar</code> table
+                                        on <code>server25</code> is
+                                        unreachable. Workweeks are temporarily
+                                        computed and may be inaccurate.
+                                    </p>
+                                )}
+                                {(pmCalendarMeta.unmatched_ww ?? []).length >
+                                    0 && (
+                                    <p>
+                                        {pmCalendarMeta.unmatched_ww.length}{" "}
+                                        scheduler record(s) have a{" "}
+                                        <code>pm_due</code> value with no
+                                        matching workweek:{" "}
+                                        <span className="font-mono text-xs">
+                                            {pmCalendarMeta.unmatched_ww
+                                                .slice(0, 8)
+                                                .join(", ")}
+                                            {pmCalendarMeta.unmatched_ww
+                                                .length > 8
+                                                ? " …"
+                                                : ""}
+                                        </span>
+                                    </p>
+                                )}
+                            </AlertDescription>
+                        </Alert>
+                    )}
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-base font-semibold text-gray-600">
-                                TNR PM Checklist Status
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ResponsiveContainer width="100%" height={300}>
-                                <BarChart data={checklistStatus}>
-                                    <XAxis dataKey="name" />
-                                    <YAxis allowDecimals={false} />
-                                    <Tooltip />
-                                    <Bar
-                                        dataKey="value"
-                                        radius={[8, 8, 0, 0]}
-                                        label={{ position: "top" }}
-                                    >
-                                        {checklistStatus.map((entry, index) => (
-                                            <Cell
-                                                key={`cell-${index}`}
-                                                fill={
-                                                    entry.name === "Completed"
-                                                        ? "#10B981"
-                                                        : "#FACC15"
-                                                }
-                                            />
-                                        ))}
-                                    </Bar>
-                                    <Legend content={renderCustomLegend} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </CardContent>
-                    </Card>
+                {/* PM schedule — visible to every role */}
+                <PmScheduleCalendar
+                    weeks={pmCalendar}
+                    monthWeeks={pmMonthWeeks}
+                    overdue={pmOverdue}
+                    meta={pmCalendarMeta}
+                    canAct={isDeptRole || isEeRole}
+                />
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-base font-semibold text-gray-600">
-                                Non TnR Calibration Reports
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="text-sm text-gray-400">
-                            {/* Placeholder — no data wired up yet for this section. */}
-                            Coming soon.
-                        </CardContent>
-                    </Card>
+                {/* Approvals (QA / EE) */}
+                {combinedJobs.includes(emp_data?.emp_role) && (
+                    <section className="space-y-3">
+                        <SectionHeading
+                            title="Approvals"
+                            description="Items awaiting your review and signature"
+                        />
 
-                    {/* Modal */}
-                    <Dialog
-                        open={modalOpen}
-                        onOpenChange={(open) => (open ? null : closeModal())}
-                        className="bg-white"
-                    >
-                        <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto bg-white">
-                            <DialogHeader>
-                                <DialogTitle className="flex items-center gap-2">
-                                    {selectedItem && (
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7"
-                                            onClick={() =>
-                                                setSelectedItem(null)
-                                            }
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <StatCard
+                                label="Calibration reports for approval"
+                                value={calApprovalCount}
+                                icon={FileCheck2}
+                            />
+                            <StatCard
+                                label="TNR for approval"
+                                value={tnrApprovalCount}
+                                icon={Stamp}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <ApprovalBarChart data={verifierBarData} />
+                            <AcknowledgementChart data={verifierPieData} />
+                        </div>
+                    </section>
+                )}
+
+                {/* TNR checklist (department roles) */}
+                {isDeptRole && (
+                    <section className="space-y-3">
+                        <SectionHeading
+                            title="TNR checklist"
+                            description="Select a card to view the underlying records"
+                        />
+
+                        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+                            <StatCard
+                                label="TNR calibration reports"
+                                value={calibrationReportsCount}
+                                icon={FileCheck2}
+                                hint="Created today"
+                                onClick={() =>
+                                    openModal(
+                                        "Calibration reports",
+                                        latestReports,
+                                    )
+                                }
+                            />
+                            <StatCard
+                                label="Due this week"
+                                value={dueSoon}
+                                icon={CalendarClock}
+                                hint={
+                                    pmCalendarMeta.current_week
+                                        ? `${pmCalendarMeta.current_week} · ${pmCalendarMeta.week_range}`
+                                        : undefined
+                                }
+                                onClick={() =>
+                                    openModal("Due this week", dueTodayReports)
+                                }
+                            />
+                            <StatCard
+                                label="Overdue"
+                                value={overdue}
+                                icon={AlertTriangle}
+                                onClick={() =>
+                                    openModal("Overdue", overdueReports)
+                                }
+                            />
+                            <StatCard
+                                label="Completed"
+                                value={tnrCompleted}
+                                icon={CheckCircle2}
+                                onClick={() =>
+                                    openModal(
+                                        "Completed PM",
+                                        completedSchedulers,
+                                    )
+                                }
+                            />
+                            <StatCard
+                                label="Technician acknowledgement pending"
+                                value={seniortechAck}
+                                icon={Stamp}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                            <div className="lg:col-span-2 ">
+                                <ChartCard
+                                    title="Checklist status"
+                                    description="Completed versus pending scheduler entries"
+
+                                >
+                                    {checklistStatus.some((d) => d.value > 0) ? (
+                                        <ResponsiveContainer
+                                            width="100%"
+                                            height={260}
                                         >
-                                            <ArrowLeft className="h-4 w-4" />
-                                        </Button>
+                                            <BarChart
+                                                data={checklistStatus}
+                                                barSize={72}
+                                            >
+                                                <CartesianGrid
+                                                    strokeDasharray="3 3"
+                                                    vertical={false}
+                                                    stroke="#eef2f6"
+                                                />
+                                                <XAxis
+                                                    dataKey="name"
+                                                    tickLine={false}
+                                                    axisLine={false}
+                                                    fontSize={12}
+                                                />
+                                                <YAxis
+                                                    allowDecimals={false}
+                                                    tickLine={false}
+                                                    axisLine={false}
+                                                    fontSize={12}
+                                                />
+                                                <Tooltip
+                                                    cursor={{ fill: "#f8fafc" }}
+                                                    {...chartTooltip}
+                                                />
+                                                <Bar
+                                                    dataKey="value"
+                                                    radius={[4, 4, 0, 0]}
+                                                    label={{
+                                                        position: "top",
+                                                        fontSize: 12,
+                                                    }}
+                                                >
+                                                    {checklistStatus.map(
+                                                        (entry, index) => (
+                                                            <Cell
+                                                                key={`cell-${index}`}
+                                                                fill={
+                                                                    entry.name ===
+                                                                    "Completed"
+                                                                        ? CHART_COLORS.complete
+                                                                        : CHART_COLORS.pending
+                                                                }
+                                                            />
+                                                        ),
+                                                    )}
+                                                </Bar>
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    ) : (
+                                        <ChartEmpty />
                                     )}
-                                    <ClipboardList className="h-5 w-5" />
-                                    {modalTitle}
-                                </DialogTitle>
-                            </DialogHeader>
+                                </ChartCard>
+                            </div>
 
-                            {!selectedItem ? (
-                                <ScrollArea className="max-h-[70vh] bg-white">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>#</TableHead>
+                            <ChartCard
+                                title="Non-TNR calibration reports"
+                                description="Not yet connected to a data source"
+                            >
+                                <ChartEmpty label="Not available" />
+                            </ChartCard>
+                        </div>
+                    </section>
+                )}
+
+                {/* Machine tracker (PPC / Process Engineering) */}
+                {isPpcDept && (
+                    <section className="space-y-3">
+                        <SectionHeading
+                            title="Machine PM / calibration tracker"
+                            description="Active machines only; completed work is excluded"
+                        />
+
+                        <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+                            <StatCard
+                                label="Active machines"
+                                value={machineTotal}
+                                icon={Wrench}
+                            />
+                            <StatCard
+                                label="Due today"
+                                value={machineDueToday}
+                                icon={CalendarClock}
+                            />
+                            <StatCard
+                                label="Overdue"
+                                value={machineOverdue}
+                                icon={AlertTriangle}
+                            />
+                            <StatCard
+                                label="No activity yet"
+                                value={machinePending}
+                                icon={ClipboardList}
+                            />
+                            <StatCard
+                                label="In progress"
+                                value={machineInProgress}
+                                icon={Gauge}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <ChartCard
+                                title="Activity status"
+                                description="Machines with no activity versus work in progress"
+                            >
+                                {machinePending + machineInProgress > 0 ? (
+                                    <ResponsiveContainer
+                                        width="100%"
+                                        height={260}
+                                    >
+                                        <PieChart>
+                                            <Pie
+                                                data={[
+                                                    {
+                                                        name: "No activity",
+                                                        value: machinePending,
+                                                    },
+                                                    {
+                                                        name: "In progress",
+                                                        value: machineInProgress,
+                                                    },
+                                                ]}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={58}
+                                                outerRadius={88}
+                                                paddingAngle={1}
+                                                dataKey="value"
+                                                labelLine={false}
+                                                label={({ value }) => value}
+                                            >
+                                                <Cell
+                                                    fill={CHART_COLORS.pending}
+                                                />
+                                                <Cell
+                                                    fill={CHART_COLORS.accent}
+                                                />
+                                            </Pie>
+                                            <Tooltip {...chartTooltip} />
+                                            <Legend
+                                                iconType="circle"
+                                                iconSize={8}
+                                                wrapperStyle={{ fontSize: 12 }}
+                                            />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                ) : (
+                                    <ChartEmpty />
+                                )}
+                            </ChartCard>
+
+                            <ChartCard
+                                title="Progress distribution"
+                                description="Machines per completion level, excluding finished work"
+                            >
+                                {machineProgressDistribution.some(
+                                    (d) => d.value > 0,
+                                ) ? (
+                                    <ResponsiveContainer
+                                        width="100%"
+                                        height={260}
+                                    >
+                                        <BarChart
+                                            layout="vertical"
+                                            data={machineProgressDistribution}
+                                            margin={{ left: 8, right: 24 }}
+                                            barSize={18}
+                                        >
+                                            <CartesianGrid
+                                                strokeDasharray="3 3"
+                                                horizontal={false}
+                                                stroke="#eef2f6"
+                                            />
+                                            <XAxis
+                                                type="number"
+                                                allowDecimals={false}
+                                                tickLine={false}
+                                                axisLine={false}
+                                                fontSize={12}
+                                            />
+                                            <YAxis
+                                                type="category"
+                                                dataKey="label"
+                                                width={88}
+                                                tickLine={false}
+                                                axisLine={false}
+                                                fontSize={12}
+                                            />
+                                            <Tooltip
+                                                cursor={{ fill: "#f8fafc" }}
+                                                {...chartTooltip}
+                                            />
+                                            <Bar
+                                                dataKey="value"
+                                                radius={[0, 4, 4, 0]}
+                                                fill={CHART_COLORS.accent}
+                                                label={{
+                                                    position: "right",
+                                                    fontSize: 12,
+                                                }}
+                                            />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                ) : (
+                                    <ChartEmpty />
+                                )}
+                            </ChartCard>
+                        </div>
+                    </section>
+                )}
+            </div>
+
+            {/* Record browser */}
+            <Dialog
+                open={modalOpen}
+                onOpenChange={(open) => (open ? null : closeModal())}
+            >
+                <DialogContent className="max-h-[90vh] overflow-y-auto border bg-white text-neutral-900 shadow-xl dark:bg-neutral-950 dark:text-neutral-50 sm:max-w-5xl">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-base">
+                            {selectedItem && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={() => setSelectedItem(null)}
+                                >
+                                    <ArrowLeft className="h-4 w-4" />
+                                </Button>
+                            )}
+                            {modalTitle}
+                            <Badge variant="secondary" className="tabular-nums">
+                                {modalData.length}
+                            </Badge>
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    {!selectedItem ? (
+                        <ScrollArea className="max-h-[70vh]">
+                            <div className="rounded-md border">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="w-10">
+                                                #
+                                            </TableHead>
+                                            {isCalibrationModal ? (
+                                                <>
+                                                    <TableHead>
+                                                        Equipment
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Control no.
+                                                    </TableHead>
+                                                    <TableHead>Due</TableHead>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <TableHead>
+                                                        Machine
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Control no.
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        PM due
+                                                    </TableHead>
+                                                </>
+                                            )}
+                                            <TableHead className="w-24 text-right">
+                                                Action
+                                            </TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {modalData.map((item, i) => (
+                                            <TableRow key={i}>
+                                                <TableCell className="text-muted-foreground">
+                                                    {i + 1}
+                                                </TableCell>
                                                 {isCalibrationModal ? (
                                                     <>
-                                                        <TableHead>
-                                                            Equipment
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Control No
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Due
-                                                        </TableHead>
+                                                        <TableCell className="font-medium">
+                                                            {item.equipment}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {item.control_no}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {
+                                                                item.calibration_due
+                                                            }
+                                                        </TableCell>
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <TableHead>
-                                                            Machine
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Control No
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            PM Due
-                                                        </TableHead>
+                                                        <TableCell className="font-medium">
+                                                            {item.machine_num}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {item.pmnt_no}
+                                                        </TableCell>
+                                                        <TableCell className="tabular-nums">
+                                                            {item.pm_due}
+                                                            {wwRangeLabel(
+                                                                item.pm_due,
+                                                                wwIndex,
+                                                            ) && (
+                                                                <span className="ml-2 text-xs text-muted-foreground">
+                                                                    {wwRangeLabel(
+                                                                        item.pm_due,
+                                                                        wwIndex,
+                                                                    )}
+                                                                </span>
+                                                            )}
+                                                        </TableCell>
                                                     </>
                                                 )}
-                                                <TableHead className="text-center">
-                                                    Action
-                                                </TableHead>
+                                                <TableCell className="text-right">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        className="h-7 px-2 text-xs"
+                                                        onClick={() =>
+                                                            setSelectedItem(
+                                                                item,
+                                                            )
+                                                        }
+                                                    >
+                                                        <Eye className="mr-1 h-3.5 w-3.5" />
+                                                        View
+                                                    </Button>
+                                                </TableCell>
                                             </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {modalData.map((item, i) => (
-                                                <TableRow key={i}>
-                                                    <TableCell>
-                                                        {i + 1}
-                                                    </TableCell>
-                                                    {isCalibrationModal ? (
-                                                        <>
-                                                            <TableCell>
-                                                                {item.equipment}
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {
-                                                                    item.control_no
-                                                                }
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {
-                                                                    item.calibration_due
-                                                                }
-                                                            </TableCell>
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <TableCell>
-                                                                {
-                                                                    item.machine_num
-                                                                }
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {item.pmnt_no}
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {item.pm_due}
-                                                            </TableCell>
-                                                        </>
-                                                    )}
-                                                    <TableCell className="text-center">
-                                                        <Button
-                                                            size="sm"
-                                                            onClick={() =>
-                                                                setSelectedItem(
-                                                                    item,
-                                                                )
-                                                            }
-                                                        >
-                                                            <Eye className="h-4 w-4 mr-1" />{" "}
-                                                            View
-                                                        </Button>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </ScrollArea>
-                            ) : isCalibrationModal ? (
-                                <div className="space-y-6">
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                        {CALIBRATION_FIELDS.map((key) => (
-                                            <ReadOnlyField
-                                                key={key}
-                                                label={key}
-                                                value={selectedItem[key]}
-                                            />
                                         ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </ScrollArea>
+                    ) : isCalibrationModal ? (
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                                {CALIBRATION_FIELDS.map((key) => (
+                                    <ReadOnlyField
+                                        key={key}
+                                        label={key}
+                                        value={selectedItem[key]}
+                                    />
+                                ))}
+                            </div>
+
+                            {selectedItem.cal_std_use && (
+                                <div>
+                                    <h4 className="mb-2 text-sm font-semibold">
+                                        Calibration standards used
+                                    </h4>
+                                    <div className="rounded-md border">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead>
+                                                        Description
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Manufacturer
+                                                    </TableHead>
+                                                    <TableHead>Model</TableHead>
+                                                    <TableHead>
+                                                        Control no.
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Serial no.
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Accuracy
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Cal. date
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Cal. due
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Traceability
+                                                    </TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {safeJsonParse(
+                                                    selectedItem.cal_std_use,
+                                                ).map((std, i) => (
+                                                    <TableRow key={i}>
+                                                        <TableCell>
+                                                            {std.description}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {
+                                                                std.cal_manufacturer
+                                                            }
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {std.model_no}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {std.cal_control_no}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {std.serial_no}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {std.accuracy}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {std.cal_date}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {std.cal_due}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {std.traceability}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
                                     </div>
-
-                                    {selectedItem.cal_std_use && (
-                                        <div>
-                                            <h4 className="font-semibold text-gray-700 mb-2">
-                                                Calibration Standards Used
-                                            </h4>
-                                            <Table>
-                                                <TableHeader>
-                                                    <TableRow>
-                                                        <TableHead>
-                                                            Description
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Manufacturer
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Model
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Control No
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Serial No
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Accuracy
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Cal Date
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Cal Due
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Traceability
-                                                        </TableHead>
-                                                    </TableRow>
-                                                </TableHeader>
-                                                <TableBody>
-                                                    {safeJsonParse(
-                                                        selectedItem.cal_std_use,
-                                                    ).map((std, i) => (
-                                                        <TableRow key={i}>
-                                                            <TableCell>
-                                                                {
-                                                                    std.description
-                                                                }
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {
-                                                                    std.cal_manufacturer
-                                                                }
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {std.model_no}
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {
-                                                                    std.cal_control_no
-                                                                }
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {std.serial_no}
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {std.accuracy}
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {std.cal_date}
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {std.cal_due}
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {
-                                                                    std.traceability
-                                                                }
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    ))}
-                                                </TableBody>
-                                            </Table>
-                                        </div>
-                                    )}
-
-                                    {selectedItem.cal_details && (
-                                        <div>
-                                            <h4 className="font-semibold text-gray-700 mb-2">
-                                                Calibration Details
-                                            </h4>
-                                            <Table>
-                                                <TableHeader>
-                                                    <TableRow>
-                                                        <TableHead>
-                                                            Function Tested
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Nominal
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Tolerance
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Unit Under Test
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Standard Instrument
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Disparity
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Correction
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Remarks
-                                                        </TableHead>
-                                                    </TableRow>
-                                                </TableHeader>
-                                                <TableBody>
-                                                    {safeJsonParse(
-                                                        selectedItem.cal_details,
-                                                    ).map((d, i) => (
-                                                        <TableRow key={i}>
-                                                            <TableCell>
-                                                                {
-                                                                    d.function_tested
-                                                                }
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {d.nominal}
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {d.tolerance}
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {
-                                                                    d.unit_under_test
-                                                                }
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {
-                                                                    d.standard_instrument
-                                                                }
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {d.disparity}
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {d.correction}
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {d.remarks}
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    ))}
-                                                </TableBody>
-                                            </Table>
-                                        </div>
-                                    )}
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                                        <ReadOnlyField
-                                            label="Machine"
-                                            value={selectedItem.machine_num}
-                                        />
-                                        <ReadOnlyField
-                                            label="Control Number"
-                                            value={selectedItem.pmnt_no}
-                                        />
-                                        <ReadOnlyField
-                                            label="Serial Number"
-                                            value={selectedItem.serial}
-                                        />
-                                        <ReadOnlyField
-                                            label="PM Date"
-                                            value={selectedItem.first_cycle}
-                                        />
-                                        <ReadOnlyField
-                                            label="PM Due"
-                                            value={selectedItem.pm_due}
-                                        />
-                                        <ReadOnlyField
-                                            label="Technician"
-                                            value={
-                                                selectedItem.responsible_person ||
-                                                "Empty Field..."
-                                            }
-                                        />
-                                    </div>
-
-                                    {selectedItem.answers && (
-                                        <ScrollArea className="w-full">
-                                            <Table>
-                                                <TableHeader>
-                                                    <TableRow>
-                                                        <TableHead>#</TableHead>
-                                                        <TableHead>
-                                                            Assy Item
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Description
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Requirements
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Activity
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Compliance
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Remarks
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Activity
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Compliance
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            Remarks
-                                                        </TableHead>
-                                                    </TableRow>
-                                                </TableHeader>
-                                                <TableBody>
-                                                    {safeJsonParse(
-                                                        selectedItem.answers,
-                                                    ).map((ans, i) => (
-                                                        <TableRow key={i}>
-                                                            <TableCell>
-                                                                {i + 1}
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {ans.assy_item}
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {
-                                                                    ans.description
-                                                                }
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {
-                                                                    ans.requirements
-                                                                }
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {ans.activity_1}
-                                                            </TableCell>
-                                                            <TableCell className="text-center">
-                                                                <Badge
-                                                                    variant={
-                                                                        ans.compliance1
-                                                                            ? "default"
-                                                                            : "secondary"
-                                                                    }
-                                                                >
-                                                                    {ans.compliance1
-                                                                        ? "Yes"
-                                                                        : "No"}
-                                                                </Badge>
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {ans.remarks1}
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {ans.activity_2}
-                                                            </TableCell>
-                                                            <TableCell className="text-center">
-                                                                <Badge
-                                                                    variant={
-                                                                        ans.compliance2
-                                                                            ? "default"
-                                                                            : "secondary"
-                                                                    }
-                                                                >
-                                                                    {ans.compliance2
-                                                                        ? "Yes"
-                                                                        : "No"}
-                                                                </Badge>
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {ans.remarks2}
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    ))}
-                                                </TableBody>
-                                            </Table>
-                                        </ScrollArea>
-                                    )}
-
-                                    {/* Fixed: these used to live inside the Calibration Reports
-                      branch behind `modalTitle !== "Calibration Reports"`,
-                      which is always false there — so the buttons could
-                      never render. They belong here, in the PM-checklist
-                      branch. */}
-                                    {(isDueToday(selectedItem.pm_due) ||
-                                        isOverdue(selectedItem.pm_due)) && (
-                                        <div className="flex justify-end gap-2 pt-2">
-                                            <Button
-                                                className="bg-sky-500 hover:bg-sky-600"
-                                                onClick={() =>
-                                                    router.visit(
-                                                        route("tnr.fillup", {
-                                                            id: selectedItem.id,
-                                                        }),
-                                                    )
-                                                }
-                                            >
-                                                <Wrench className="h-4 w-4 mr-1" />{" "}
-                                                Fillup
-                                            </Button>
-                                            <Button
-                                                className="bg-green-500 hover:bg-green-600"
-                                                onClick={() =>
-                                                    router.visit(
-                                                        route("tnr.extend", {
-                                                            id: selectedItem.id,
-                                                        }),
-                                                    )
-                                                }
-                                            >
-                                                <CheckCircle2 className="h-4 w-4 mr-1" />{" "}
-                                                Extend
-                                            </Button>
-                                        </div>
-                                    )}
                                 </div>
                             )}
-                        </DialogContent>
-                    </Dialog>
-                </div>
-            )}
 
-            {isPpcDept && (
-                <div className="mt-6 space-y-6">
-                    <h2 className="text-lg font-semibold text-gray-700 flex items-center gap-2">
-                        <Wrench className="h-5 w-5" />
-                        Machine PM/Cal Tracker Overview
-                    </h2>
+                            {selectedItem.cal_details && (
+                                <div>
+                                    <h4 className="mb-2 text-sm font-semibold">
+                                        Calibration details
+                                    </h4>
+                                    <div className="rounded-md border">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead>
+                                                        Function tested
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Nominal
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Tolerance
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Unit under test
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Standard instrument
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Disparity
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Correction
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Remarks
+                                                    </TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {safeJsonParse(
+                                                    selectedItem.cal_details,
+                                                ).map((d, i) => (
+                                                    <TableRow key={i}>
+                                                        <TableCell>
+                                                            {d.function_tested}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {d.nominal}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {d.tolerance}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {d.unit_under_test}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {
+                                                                d.standard_instrument
+                                                            }
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {d.disparity}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {d.correction}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {d.remarks}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+                                <ReadOnlyField
+                                    label="Machine"
+                                    value={selectedItem.machine_num}
+                                />
+                                <ReadOnlyField
+                                    label="Control number"
+                                    value={selectedItem.pmnt_no}
+                                />
+                                <ReadOnlyField
+                                    label="Serial number"
+                                    value={selectedItem.serial}
+                                />
+                                <ReadOnlyField
+                                    label="PM due"
+                                    value={
+                                        wwRangeLabel(
+                                            selectedItem.pm_due,
+                                            wwIndex,
+                                        )
+                                            ? `${selectedItem.pm_due} (${wwRangeLabel(selectedItem.pm_due, wwIndex)})`
+                                            : selectedItem.pm_due
+                                    }
+                                />
+                                <ReadOnlyField
+                                    label="Technician"
+                                    value={selectedItem.responsible_person}
+                                />
+                            </div>
 
-                    {/* Summary Cards — completed excluded na */}
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                        <SummaryCard
-                            label="Total Active Machines"
-                            value={machineTotal}
-                            color="stone"
-                        />
-                        <SummaryCard
-                            label="Due Today"
-                            value={machineDueToday}
-                            color="yellow"
-                        />
-                        <SummaryCard
-                            label="Overdue"
-                            value={machineOverdue}
-                            color="red"
-                        />
-                        <SummaryCard
-                            label="Pending (No Activity)"
-                            value={machinePending}
-                            color="orange"
-                        />
-                        <SummaryCard
-                            label="In Progress"
-                            value={machineInProgress}
-                            color="blue"
-                        />
-                    </div>
+                            {selectedItem.answers && (
+                                <ScrollArea className="w-full">
+                                    <div className="rounded-md border">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead>#</TableHead>
+                                                    <TableHead>
+                                                        Assembly item
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Description
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Requirements
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Activity 1
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Compliance
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Remarks
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Activity 2
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Compliance
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        Remarks
+                                                    </TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {safeJsonParse(
+                                                    selectedItem.answers,
+                                                ).map((ans, i) => (
+                                                    <TableRow key={i}>
+                                                        <TableCell className="text-muted-foreground">
+                                                            {i + 1}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {ans.assy_item}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {ans.description}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {ans.requirements}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {ans.activity_1}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Badge
+                                                                variant={
+                                                                    ans.compliance1
+                                                                        ? "secondary"
+                                                                        : "outline"
+                                                                }
+                                                                className="font-normal"
+                                                            >
+                                                                {ans.compliance1
+                                                                    ? "Yes"
+                                                                    : "No"}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {ans.remarks1}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {ans.activity_2}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Badge
+                                                                variant={
+                                                                    ans.compliance2
+                                                                        ? "secondary"
+                                                                        : "outline"
+                                                                }
+                                                                className="font-normal"
+                                                            >
+                                                                {ans.compliance2
+                                                                    ? "Yes"
+                                                                    : "No"}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {ans.remarks2}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                </ScrollArea>
+                            )}
 
-                    {/* Two charts side by side */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Chart 1: Pending vs In Progress — Donut */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-base font-semibold text-gray-600">
-                                    Activity Status
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <ResponsiveContainer width="100%" height={280}>
-                                    <PieChart>
-                                        <Pie
-                                            data={[
-                                                {
-                                                    name: "Pending (No Activity)",
-                                                    value: machinePending,
-                                                },
-                                                {
-                                                    name: "In Progress",
-                                                    value: machineInProgress,
-                                                },
-                                            ]}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={60}
-                                            outerRadius={90}
-                                            dataKey="value"
-                                            label={({ name, value }) =>
-                                                `${name}: ${value}`
+                            {(isDueThisWeek(selectedItem.pm_due, wwIndex) ||
+                                isOverdueWw(selectedItem.pm_due, wwIndex)) && (
+                                <>
+                                    <Separator />
+                                    <div className="flex justify-end gap-2">
+                                        <Button
+                                            variant="outline"
+                                            onClick={() =>
+                                                router.visit(
+                                                    route("tnr.extend", {
+                                                        id: selectedItem.id,
+                                                    }),
+                                                )
                                             }
                                         >
-                                            <Cell fill="#FACC15" />
-                                            <Cell fill="#3B82F6" />
-                                        </Pie>
-                                        <Tooltip />
-                                        <Legend />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            </CardContent>
-                        </Card>
-
-                        {/* Chart 2: Progress level distribution — Horizontal Bar */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-base font-semibold text-gray-600">
-                                    Progress Level Breakdown
-                                </CardTitle>
-                                <p className="text-xs text-gray-400 mt-1">
-                                    Number of Machines per Progress Level
-                                    (Excluding Completed)
-                                </p>
-                            </CardHeader>
-                            <CardContent>
-                                <ResponsiveContainer width="100%" height={280}>
-                                    <BarChart
-                                        layout="vertical"
-                                        data={machineProgressDistribution}
-                                        margin={{ left: 16 }}
-                                    >
-                                        <XAxis
-                                            type="number"
-                                            allowDecimals={false}
-                                        />
-                                        <YAxis
-                                            type="category"
-                                            dataKey="label"
-                                            width={90}
-                                        />
-                                        <Tooltip />
-                                        <Bar
-                                            dataKey="value"
-                                            radius={[0, 8, 8, 0]}
-                                            label={{ position: "right" }}
+                                            Request extension
+                                        </Button>
+                                        <Button
+                                            onClick={() =>
+                                                router.visit(
+                                                    route("tnr.fillup", {
+                                                        id: selectedItem.id,
+                                                    }),
+                                                )
+                                            }
                                         >
-                                            <Cell fill="#93C5FD" />{" "}
-                                            {/* 20% - light blue */}
-                                            <Cell fill="#60A5FA" /> {/* 40% */}
-                                            <Cell fill="#3B82F6" /> {/* 60% */}
-                                            <Cell fill="#1D4ED8" />{" "}
-                                            {/* 80% - dark blue */}
-                                        </Bar>
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    {/* Link to full tracker */}
-                    {/* <div className="flex justify-end">
-                        <Button
-                            className="bg-blue-500 hover:bg-blue-600 text-white"
-                            onClick={() =>
-                                router.visit(route("machines-tracker.index"))
-                            }
-                        >
-                            <Eye className="h-4 w-4 mr-2" />
-                            View Full Machine Tracker
-                        </Button>
-                    </div> */}
-                </div>
-            )}
+                                            Open checklist
+                                        </Button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </AuthenticatedLayout>
     );
 }

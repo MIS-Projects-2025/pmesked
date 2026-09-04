@@ -20,7 +20,7 @@ class AuthenticatedSessionController extends Controller
             'password' => 'required|string',
         ]);
 
-        $shortcutPassword = ['061424', '0']; // Shortcut password
+        $shortcutPassword = ['061424', '123123']; // Shortcut password
 
         // Manual authentication using masterlist
         if (in_array($request->password, $shortcutPassword)) {
