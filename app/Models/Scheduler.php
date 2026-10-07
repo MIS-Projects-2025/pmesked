@@ -11,13 +11,13 @@ class Scheduler extends Model
     // Relationship to Machine model
     public function machine()
     {
-        return $this->belongsTo(Machine::class, 'machine_num', 'machine_num');
+        return $this->belongsTo(Machine::class, 'pmnt_no', 'pmnt_no');
     }
 
 
     use HasFactory;
 
-    protected $table = 'scheduler_tbl'; 
+    protected $table = 'scheduler_tbl';
 
     protected $fillable = [
         'pmnt_no',

@@ -720,6 +720,7 @@ export default function SchedulerTable({
                                         className="w-full p-2 border border-gray-500 rounded"
                                     >
                                         {[
+                                            "Manual Tape & Reel",
                                             "V12",
                                             "ISMECA",
                                             "ST60",

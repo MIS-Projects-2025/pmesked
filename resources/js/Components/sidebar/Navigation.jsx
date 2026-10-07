@@ -56,7 +56,9 @@ function NavItem({ href, label, Icon, nested = false }) {
             className={`w-full justify-start font-normal ${
                 nested ? "h-8 text-sm" : ""
             } ${active ? "bg-accent text-accent-foreground font-medium" : ""}`}
-            render={<Link href={href} aria-current={active ? "page" : undefined} />}
+            render={
+                <Link href={href} aria-current={active ? "page" : undefined} />
+            }
         >
             <Icon
                 className={`mr-2 shrink-0 ${
@@ -112,11 +114,18 @@ export default function NavLinks() {
     const role = emp_data?.emp_role;
     const empId = String(emp_data?.emp_id ?? "");
 
-    const isPMRole = ["pmtech", "toolcrib", "seniortech", "engineer"].includes(
+    const isPMRole = [
+        "pmtech",
+        "toolcrib",
+        "seniortech",
+        "engineer",
+        "admin",
+        "superadmin",
+    ].includes(role);
+
+    const isESDOrEngineer = ["esd", "engineer", "admin", "superadmin"].includes(
         role,
     );
-
-    const isESDOrEngineer = ["esd", "engineer"].includes(role);
 
     const menus = [
         {
@@ -270,7 +279,7 @@ export default function NavLinks() {
             ],
         },
 
-        ["1742", "1788"].includes(empId) && {
+        ["1283", "1788"].includes(empId) && {
             type: "item",
             label: "TNR PM Checklist Items",
             icon: List,
@@ -284,7 +293,7 @@ export default function NavLinks() {
             href: route("ionizer-items.index"),
         },
 
-        ["1088", "1788", "1638"].includes(empId) && {
+        ["1088", "1788", "1638", "1283"].includes(empId) && {
             type: "item",
             label: "Non-TNR Checklist Items",
             icon: Table2,
@@ -292,7 +301,7 @@ export default function NavLinks() {
         },
 
         (["superadmin", "admin", "engineer"].includes(role) ||
-            (role === "pmtech" && empId === "1742")) && {
+            (role === "pmtech" && empId === "1283")) && {
             type: "item",
             label: "PM Personnel",
             icon: Users,
