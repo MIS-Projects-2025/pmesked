@@ -193,6 +193,7 @@ export default function SchedulerTable({
     // ✏️ Buksan ang modal sa EDIT mode — kunin muna ang answers/tool_life sa server
     const openEditModal = async (row) => {
         if (!canEdit || loadingEdit) return;
+        if (Number(row.progress_value) < 100) return; // 100% lang ang pwede i-edit
 
         setLoadingEdit(true);
         try {
@@ -625,8 +626,8 @@ export default function SchedulerTable({
                             </span>
                         </button>
 
-                        {/* --- EDIT BUTTON (✏️ para lang sa naka-allow: emp_id 1797 via can_edit) --- */}
-                        {canEdit && (
+                        {/* --- EDIT BUTTON (✏️ emp_id 1797 via can_edit, at 100% progress lang) --- */}
+                        {canEdit && Number(row.progress_value) >= 100 && (
                             <button
                                 className="px-3 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600 group relative disabled:opacity-50 disabled:cursor-not-allowed"
                                 disabled={loadingEdit}

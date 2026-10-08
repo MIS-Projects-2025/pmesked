@@ -35,6 +35,15 @@ class SchedulerController extends Controller
     }
 
     /**
+     * ✏️ Pwede lang i-edit ang record na 100% na (kumpleto ang Tech, ESD, at Engineer).
+     * Sinusuri sa totoong ack ng record, hindi sa value na galing sa browser.
+     */
+    protected function isEditableRecord($scheduler): bool
+    {
+        return $this->computeProgress($scheduler) >= 100;
+    }
+
+    /**
      * ============================================================
      *  📐 ANG PROGRESS VALUE = 4 quarters × 25% (iisang depinisyon)
      * ------------------------------------------------------------
@@ -261,7 +270,7 @@ class SchedulerController extends Controller
     }
 
     /**
-     * ✏️ JSON para sa Edit modal — answers + tool_life ng isang record.
+     * ✏️ JSON para sa Edit modal (100% records lang) — answers + tool_life ng isang record.
      * (Hindi kasama ang mga ito sa selectColumns ng index() para gumaan ang table.)
      */
     public function editData($id)
@@ -269,6 +278,7 @@ class SchedulerController extends Controller
         abort_unless($this->canEdit(), 403, 'You are not allowed to edit.');
 
         $scheduler = Scheduler::findOrFail($id);
+        abort_unless($this->isEditableRecord($scheduler), 403, 'Only 100% records can be edited.');
 
         return response()->json([
             'id'          => $scheduler->id,
@@ -314,6 +324,11 @@ class SchedulerController extends Controller
         ]);
 
         $scheduler = Scheduler::findOrFail($id);
+
+        // ✏️ 100% lang ang pwede i-edit (sinusuri bago i-apply ang changes)
+        if (!$this->isEditableRecord($scheduler)) {
+            return back()->withErrors(['edit' => 'Only records at 100% progress can be edited.']);
+        }
 
         $scheduler->first_cycle = $validated['first_cycle'] ?? $scheduler->first_cycle;
         $scheduler->pm_due      = $validated['pm_due'] ?? $scheduler->pm_due;
