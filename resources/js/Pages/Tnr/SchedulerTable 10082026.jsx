@@ -47,23 +47,6 @@ const cdaTemplateRows = [
     },
 ];
 
-// 🔹 Isang blangkong row ng Tool Life
-const emptyToolLifeRow = () => ({
-    description: "",
-    partnumber: "",
-    duration_usage: "",
-    expected_tool_life: "",
-    remarks: "",
-});
-
-// 🔹 Default 4 rows ng Tool Life table
-const defaultToolLifeRows = () => [
-    emptyToolLifeRow(),
-    emptyToolLifeRow(),
-    emptyToolLifeRow(),
-    emptyToolLifeRow(),
-];
-
 export default function SchedulerTable({
     tableData,
     empData,
@@ -73,13 +56,8 @@ export default function SchedulerTable({
 }) {
     const { Option } = Select;
 
-    // ✏️ Ang server ang nagde-decide kung sino ang pwede mag-edit
-    // (SchedulerController::canEdit → emp_id 1797). Hindi lang ito UI check —
-    // may 403 din sa server para sa edit-data at update.
-    const canEdit = !!empData?.can_edit;
-
     // ─────────────────────────── STATE ───────────────────────────
-    const [showModal, setShowModal] = useState(false); // "New Checklist" / "Edit" modal
+    const [showModal, setShowModal] = useState(false); // "New Checklist" modal
     const [modalOpen, setModalOpen] = useState(false); // "Activity Details" modal
     const [selectedChecklist, setSelectedChecklist] = useState([]);
     const [answers, setAnswers] = useState({});
@@ -87,17 +65,41 @@ export default function SchedulerTable({
     // 🐛 FIX: pigilan ang double-click sa Verify (dati, 2x +25 agad → early 100)
     const [verifying, setVerifying] = useState(false);
 
-    // ✏️ EDIT MODE — may laman na id = nag-eedit; null = bagong checklist
-    const [editingId, setEditingId] = useState(null);
-    const [loadingEdit, setLoadingEdit] = useState(false);
-    const [saving, setSaving] = useState(false);
-
     // 🔹 CDA group toggle — naka-ON by default (kasama agad sa checklist),
     // pwedeng i-off kung hindi applicable sa platform na ito.
     const [includeCda, setIncludeCda] = useState(true);
 
     // Default 4 rows ng Tool Life table
-    const [toolLifeRows, setToolLifeRows] = useState(defaultToolLifeRows());
+    const [toolLifeRows, setToolLifeRows] = useState([
+        {
+            description: "",
+            partnumber: "",
+            duration_usage: "",
+            expected_tool_life: "",
+            remarks: "",
+        },
+        {
+            description: "",
+            partnumber: "",
+            duration_usage: "",
+            expected_tool_life: "",
+            remarks: "",
+        },
+        {
+            description: "",
+            partnumber: "",
+            duration_usage: "",
+            expected_tool_life: "",
+            remarks: "",
+        },
+        {
+            description: "",
+            partnumber: "",
+            duration_usage: "",
+            expected_tool_life: "",
+            remarks: "",
+        },
+    ]);
 
     const [isAllChecked1, setIsAllChecked1] = useState(false);
     const [isAllChecked2, setIsAllChecked2] = useState(false);
@@ -162,13 +164,9 @@ export default function SchedulerTable({
 
     // 🐛 FIX: i-reset ang form tuwing bubuksan ang "New Checklist" modal
     const openCreateModal = () => {
-        setEditingId(null);
         setFormData(buildFreshForm());
         setSelectedChecklist([]);
         setAnswers({});
-        setToolLifeRows(defaultToolLifeRows());
-        setIsAllChecked1(false);
-        setIsAllChecked2(false);
         setIncludeCda(true);
         setShowModal(true);
     };
@@ -176,89 +174,9 @@ export default function SchedulerTable({
     const closeCreateModal = () => {
         setShowModal(false);
         // i-clear din para hindi mag-leak sa susunod na bukas
-        setEditingId(null);
         setFormData(buildFreshForm());
         setSelectedChecklist([]);
         setAnswers({});
-        setToolLifeRows(defaultToolLifeRows());
-        setIsAllChecked1(false);
-        setIsAllChecked2(false);
-    };
-
-    // ✏️ Buksan ang modal sa EDIT mode — kunin muna ang answers/tool_life sa server
-    const openEditModal = async (row) => {
-        if (!canEdit || loadingEdit) return;
-
-        setLoadingEdit(true);
-        try {
-            const res = await fetch(`/scheduler/${row.id}/edit-data`, {
-                headers: { Accept: "application/json" },
-                credentials: "same-origin",
-            });
-            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-
-            const data = await res.json();
-
-            // answers galing DB → checklist rows + answers map
-            const savedRows = Array.isArray(data.answers) ? data.answers : [];
-            const answersMap = {};
-            savedRows.forEach((r) => {
-                answersMap[r.id] = {
-                    assy_item: r.assy_item,
-                    description: r.description,
-                    requirements: r.requirements,
-                    activity_1: r.activity_1,
-                    compliance1: r.compliance1 ?? 0,
-                    remarks1: r.remarks1 ?? "",
-                    activity_2: r.activity_2,
-                    compliance2: r.compliance2 ?? 0,
-                    remarks2: r.remarks2 ?? "",
-                };
-            });
-
-            // platform — kunin sa machines list base sa machine_num
-            const machineInfo = (machines || []).find(
-                (m) => m.machine_num === row.machine_num,
-            );
-
-            const savedToolLife =
-                Array.isArray(data.tool_life) && data.tool_life.length > 0
-                    ? data.tool_life.map((t) => ({
-                          ...emptyToolLifeRow(),
-                          ...t,
-                      }))
-                    : defaultToolLifeRows();
-
-            setEditingId(row.id);
-            setFormData({
-                machine: row.machine_num,
-                controlNo: row.pmnt_no,
-                serial: row.serial,
-                pmDate: data.first_cycle || row.first_cycle || "",
-                pmDue: data.pm_due || row.pm_due || "",
-                performedBy: row.responsible_person || "",
-                machinePlatform: machineInfo?.machine_platform,
-                quarter: row.quarter,
-                progress_value: row.progress_value,
-                seniorTech: "",
-                esdTech: "",
-                pmEngineer: "",
-            });
-            setSelectedChecklist(savedRows);
-            setAnswers(answersMap);
-            setToolLifeRows(savedToolLife);
-            setIncludeCda(
-                savedRows.some((r) => String(r.id).startsWith("cda-")),
-            );
-            setIsAllChecked1(false);
-            setIsAllChecked2(false);
-            setShowModal(true);
-        } catch (err) {
-            console.error("❌ Error loading edit data:", err.message);
-            alert("❌ Failed to load checklist for editing.");
-        } finally {
-            setLoadingEdit(false);
-        }
     };
 
     // 🔹 Handle Answer Inputs
@@ -428,7 +346,6 @@ export default function SchedulerTable({
 
     const saveSchedule = (e) => {
         e.preventDefault();
-        if (saving) return;
 
         const answersArray = Object.keys(answers).map((key) => ({
             id: key,
@@ -444,34 +361,6 @@ export default function SchedulerTable({
                 row.expected_tool_life !== "" ||
                 row.remarks !== "",
         );
-
-        // ✏️ EDIT MODE — PUT /scheduler/{id}
-        // Apat lang ang ipinapadala; hindi ginagalaw ang machine, performed by, at acks.
-        if (editingId) {
-            setSaving(true);
-            router.put(
-                `/scheduler/${editingId}`,
-                {
-                    first_cycle: formData.pmDate,
-                    pm_due: formData.pmDue,
-                    answers: JSON.stringify(answersArray),
-                    tool_life: JSON.stringify(tool_lifeArray),
-                },
-                {
-                    onSuccess: () => {
-                        alert("✅ PM Scheduler updated successfully!");
-                        setShowModal(false);
-                        setEditingId(null);
-                        router.visit(route("tnr.schedulerTable"));
-                    },
-                    onError: () => {
-                        alert("❌ Failed to update scheduler.");
-                    },
-                    onFinish: () => setSaving(false),
-                },
-            );
-            return;
-        }
 
         const payload = {
             machine_num: formData.machine,
@@ -603,23 +492,6 @@ export default function SchedulerTable({
                             </span>
                         </button>
 
-                        {/* --- EDIT BUTTON (✏️ para lang sa naka-allow: emp_id 1797 via can_edit) --- */}
-                        {canEdit && (
-                            <button
-                                className="px-3 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600 group relative disabled:opacity-50 disabled:cursor-not-allowed"
-                                disabled={loadingEdit}
-                                onClick={() => openEditModal(row)}
-                            >
-                                <span className="block group-hover:hidden">
-                                    <i className="fas fa-pen-to-square"></i>
-                                </span>
-                                <span className="hidden group-hover:block">
-                                    <i className="fas fa-pen-to-square mr-1"></i>
-                                    Edit
-                                </span>
-                            </button>
-                        )}
-
                         {/* --- REMOVED BUTTON (VISIBLE ONLY IF tech_ack IS NULL/EMPTY AND USER IS RESPONSIBLE_PERSON) --- */}
                         {(!row.tech_ack || row.tech_ack.trim() === "") &&
                             row.responsible_person === emp_data?.emp_name && (
@@ -645,13 +517,22 @@ export default function SchedulerTable({
     // Handle changes per cell (Tool Life)
     const handleRowChange = (index, field, value) => {
         const updated = [...toolLifeRows];
-        updated[index] = { ...updated[index], [field]: value };
+        updated[index][field] = value;
         setToolLifeRows(updated);
     };
 
     // Add new row (Tool Life)
     const handleAddRow = () => {
-        setToolLifeRows([...toolLifeRows, emptyToolLifeRow()]);
+        setToolLifeRows([
+            ...toolLifeRows,
+            {
+                description: "",
+                partnumber: "",
+                duration_usage: "",
+                expected_tool_life: "",
+                remarks: "",
+            },
+        ]);
     };
 
     // Remove last row (Tool Life)
@@ -745,24 +626,15 @@ export default function SchedulerTable({
                     rowKey="id"
                 />
 
-                {/* ── "New Checklist" / "Edit" MODAL ── */}
+                {/* ── "New Checklist" MODAL ── */}
                 {showModal && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
                         <div className="bg-white w-full max-w-7xl rounded-lg shadow-lg max-h-screen overflow-y-auto">
                             {/* Header */}
                             <div className="flex justify-between items-center bg-gradient-to-r from-gray-600 to-black text-white p-4 rounded-t-lg sticky top-0 z-10">
                                 <h5 className="text-lg font-bold">
-                                    {editingId ? (
-                                        <>
-                                            <i className="fas fa-pen-to-square"></i>{" "}
-                                            Edit TNR Machine PM
-                                        </>
-                                    ) : (
-                                        <>
-                                            <i className="fas fa-tools"></i> New
-                                            TNR Machine for PM
-                                        </>
-                                    )}
+                                    <i className="fas fa-tools"></i> New TNR
+                                    Machine for PM
                                 </h5>
                                 <button
                                     className="text-white text-xl"
@@ -780,8 +652,7 @@ export default function SchedulerTable({
                                     </label>
                                     <Select
                                         showSearch
-                                        allowClear={!editingId}
-                                        disabled={!!editingId}
+                                        allowClear
                                         placeholder="Select or type machine..."
                                         value={formData.machine || undefined}
                                         onChange={(value) => {
@@ -835,8 +706,7 @@ export default function SchedulerTable({
                                     </label>
                                     <Select
                                         showSearch
-                                        allowClear={!editingId}
-                                        disabled={!!editingId}
+                                        allowClear
                                         value={formData.machinePlatform}
                                         placeholder="Select or type platform..."
                                         onChange={(value) =>
@@ -1406,15 +1276,10 @@ export default function SchedulerTable({
                                 </button>
                                 <button
                                     onClick={saveSchedule}
-                                    disabled={saving}
-                                    className="px-4 py-2 rounded-md bg-green-700 text-white hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="px-4 py-2 rounded-md bg-green-700 text-white hover:bg-green-800"
                                 >
-                                    <i className="fas fa-save"></i>{" "}
-                                    {saving
-                                        ? "Saving..."
-                                        : editingId
-                                          ? "Update Schedule"
-                                          : "Save Schedule"}
+                                    <i className="fas fa-save"></i> Save
+                                    Schedule
                                 </button>
                             </div>
                         </div>

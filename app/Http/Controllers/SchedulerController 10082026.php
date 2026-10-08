@@ -13,25 +13,9 @@ class SchedulerController extends Controller
 {
     protected $datatable;
 
-    /**
-     * ✏️ Ang LANG pwedeng mag-edit ng na-save na PM Scheduler.
-     * Para magdagdag ng iba pang pwede, gawing array (in_array) sa canEdit().
-     */
-    protected const EDITOR_EMP_ID = '1797';
-
     public function __construct(\App\Services\DataTableService $datatable)
     {
         $this->datatable = $datatable;
-    }
-
-    /**
-     * ✏️ Server-side check — ang session ang batayan, hindi ang browser.
-     */
-    protected function canEdit(): bool
-    {
-        $empId = session('emp_data')['emp_id'] ?? null;
-
-        return $empId !== null && (string) $empId === self::EDITOR_EMP_ID;
     }
 
     /**
@@ -51,7 +35,7 @@ class SchedulerController extends Controller
      *  Ang apat na condition sa ibaba ang IISANG pinagmulan para sa:
      *  • progressSql()        → display sa index()
      *  • progressExpression() → auto-repair ng stored column
-     *  • computeProgress()    → store(), update() at verify()
+     *  • computeProgress()    → store() at verify()
      * ============================================================
      */
     protected function progressConditions(): array
@@ -93,7 +77,7 @@ class SchedulerController extends Controller
     }
 
     /**
-     * PHP version ng parehong computation — ginagamit sa store(), update() at verify()
+     * PHP version ng parehong computation — ginagamit sa store() at verify()
      * para hindi na magkasalungat ang na-save na value vs. ang ipinapakita sa index().
      */
     protected function computeProgress($scheduler)
@@ -219,9 +203,7 @@ class SchedulerController extends Controller
             'empData' => [
                 'emp_id'   => session('emp_data')['emp_id'] ?? null,
                 'emp_name' => session('emp_data')['emp_name'] ?? null,
-                'emp_jobtitle' => session('emp_data')['emp_jobtitle'] ?? null,
-                // ✏️ para sa Edit button — ang server ang nagde-decide
-                'can_edit' => $this->canEdit(),
+                'emp_jobtitle' => session('emp_data')['emp_jobtitle'] ?? null
             ],
         ]);
     }
@@ -258,58 +240,6 @@ class SchedulerController extends Controller
         $scheduler->save();
 
         return redirect()->back()->with('success', 'PM Scheduler created successfully!');
-    }
-
-    /**
-     * ✏️ JSON para sa Edit modal — answers + tool_life ng isang record.
-     * (Hindi kasama ang mga ito sa selectColumns ng index() para gumaan ang table.)
-     */
-    public function editData($id)
-    {
-        abort_unless($this->canEdit(), 403, 'You are not allowed to edit.');
-
-        $scheduler = Scheduler::findOrFail($id);
-
-        return response()->json([
-            'id'          => $scheduler->id,
-            'machine_num' => $scheduler->machine_num,
-            'first_cycle' => $scheduler->first_cycle,
-            'pm_due'      => $scheduler->pm_due,
-            'answers'     => $scheduler->answers ? json_decode($scheduler->answers, true) : [],
-            'tool_life'   => $scheduler->tool_life ? json_decode($scheduler->tool_life, true) : [],
-        ]);
-    }
-
-    /**
-     * ✏️ I-save ang na-edit na PM Scheduler.
-     *
-     * Ang pwede lang baguhin: first_cycle (PM Date), pm_due, answers, tool_life.
-     * HINDI ginagalaw: machine, responsible_person, at ang mga ack (tech/qa/engineer),
-     * kaya hindi nagre-reset ang verification o progress.
-     */
-    public function update(Request $request, $id)
-    {
-        abort_unless($this->canEdit(), 403, 'You are not allowed to edit.');
-
-        $validated = $request->validate([
-            'first_cycle' => 'nullable|string',
-            'pm_due'      => 'nullable|string',
-            'answers'     => 'nullable|json',
-            'tool_life'   => 'nullable|json',
-        ]);
-
-        $scheduler = Scheduler::findOrFail($id);
-
-        $scheduler->first_cycle = $validated['first_cycle'] ?? $scheduler->first_cycle;
-        $scheduler->pm_due      = $validated['pm_due'] ?? $scheduler->pm_due;
-        $scheduler->answers     = $validated['answers'] ?? $scheduler->answers;
-        $scheduler->tool_life   = $validated['tool_life'] ?? $scheduler->tool_life;
-
-        // recompute pa rin para laging consistent sa mga ack
-        $scheduler->progress_value = $this->computeProgress($scheduler);
-        $scheduler->save();
-
-        return back()->with('success', 'PM Scheduler updated successfully!');
     }
 
     public function verify(Request $request, $id)

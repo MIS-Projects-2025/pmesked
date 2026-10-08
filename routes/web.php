@@ -54,6 +54,8 @@ Route::delete('/scheduler/remove/{id}', [SchedulerController::class, 'remove'])-
 
 Route::post('/scheduler/repair-progress', [SchedulerController::class, 'repairProgress'])
     ->name('scheduler.repairProgress');
+Route::get('/scheduler/{id}/edit-data', [SchedulerController::class, 'editData']);
+Route::put('/scheduler/{id}', [SchedulerController::class, 'update']);
 
 // 📂 Checklist API view
 Route::get('/checklist/{platform}', [ChecklistController::class, 'getByPlatform']);
