@@ -47,6 +47,11 @@ const cdaTemplateRows = [
     },
 ];
 
+// ✏️ "YYYY-MM-DD HH:mm:ss" (DB) <-> "YYYY-MM-DDTHH:mm:ss" (datetime-local input)
+const toDtLocal = (v) => (v ? String(v).replace(" ", "T").slice(0, 19) : "");
+const fromDtLocal = (v) =>
+    v ? v.replace("T", " ") + (v.length === 16 ? ":00" : "") : "";
+
 // 🔹 Isang blangkong row ng Tool Life
 const emptyToolLifeRow = () => ({
     description: "",
@@ -243,6 +248,13 @@ export default function SchedulerTable({
                 seniorTech: "",
                 esdTech: "",
                 pmEngineer: "",
+                // ✏️ verifiers (editable)
+                techAck: data.tech_ack || "",
+                techAckDate: toDtLocal(data.tech_ack_date),
+                qaAck: data.qa_ack || "",
+                qaAckDate: toDtLocal(data.qa_ack_date),
+                eeAck: data.senior_ee_ack || "",
+                eeAckDate: toDtLocal(data.senior_ee_ack_date),
             });
             setSelectedChecklist(savedRows);
             setAnswers(answersMap);
@@ -456,6 +468,13 @@ export default function SchedulerTable({
                     pm_due: formData.pmDue,
                     answers: JSON.stringify(answersArray),
                     tool_life: JSON.stringify(tool_lifeArray),
+                    // ✏️ verifiers — blangko ang pangalan = tanggal ang verification
+                    tech_ack: formData.techAck,
+                    tech_ack_date: fromDtLocal(formData.techAckDate),
+                    qa_ack: formData.qaAck,
+                    qa_ack_date: fromDtLocal(formData.qaAckDate),
+                    senior_ee_ack: formData.eeAck,
+                    senior_ee_ack_date: fromDtLocal(formData.eeAckDate),
                 },
                 {
                     onSuccess: () => {
@@ -464,8 +483,11 @@ export default function SchedulerTable({
                         setEditingId(null);
                         router.visit(route("tnr.schedulerTable"));
                     },
-                    onError: () => {
-                        alert("❌ Failed to update scheduler.");
+                    onError: (errors) => {
+                        const msg = Object.values(errors || {}).join("\n");
+                        alert(
+                            `❌ Failed to update scheduler.${msg ? "\n" + msg : ""}`,
+                        );
                     },
                     onFinish: () => setSaving(false),
                 },
@@ -970,6 +992,102 @@ export default function SchedulerTable({
                                     />
                                 </div>
                             </div>
+
+                            {/* ✏️ Verifiers — EDIT MODE lang (blangko ang pangalan = tanggalin ang verification) */}
+                            {editingId && (
+                                <div className="px-4 pb-2">
+                                    <h3 className="font-bold text-gray-700 mb-2">
+                                        <i className="fas fa-user-check"></i>{" "}
+                                        Verifiers
+                                    </h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <label className="block font-semibold text-gray-500">
+                                                Senior Technician
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="techAck"
+                                                placeholder="Waiting for Senior Technician..."
+                                                className="border rounded w-full text-gray-700 mb-1"
+                                                value={formData.techAck || ""}
+                                                onChange={handleInputChange}
+                                            />
+                                            <input
+                                                type="datetime-local"
+                                                step="1"
+                                                className="border rounded w-full text-gray-700"
+                                                value={
+                                                    formData.techAckDate || ""
+                                                }
+                                                onChange={(e) =>
+                                                    setFormData((prev) => ({
+                                                        ...prev,
+                                                        techAckDate:
+                                                            e.target.value,
+                                                    }))
+                                                }
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block font-semibold text-gray-500">
+                                                QA Personnel
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="qaAck"
+                                                placeholder="Waiting for ESD Technician..."
+                                                className="border rounded w-full text-gray-700 mb-1"
+                                                value={formData.qaAck || ""}
+                                                onChange={handleInputChange}
+                                            />
+                                            <input
+                                                type="datetime-local"
+                                                step="1"
+                                                className="border rounded w-full text-gray-700"
+                                                value={formData.qaAckDate || ""}
+                                                onChange={(e) =>
+                                                    setFormData((prev) => ({
+                                                        ...prev,
+                                                        qaAckDate:
+                                                            e.target.value,
+                                                    }))
+                                                }
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block font-semibold text-gray-500">
+                                                Senior Engineer
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="eeAck"
+                                                placeholder="Waiting for Senior Engineer/ Engineer..."
+                                                className="border rounded w-full text-gray-700 mb-1"
+                                                value={formData.eeAck || ""}
+                                                onChange={handleInputChange}
+                                            />
+                                            <input
+                                                type="datetime-local"
+                                                step="1"
+                                                className="border rounded w-full text-gray-700"
+                                                value={formData.eeAckDate || ""}
+                                                onChange={(e) =>
+                                                    setFormData((prev) => ({
+                                                        ...prev,
+                                                        eeAckDate:
+                                                            e.target.value,
+                                                    }))
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Sunod-sunod pa rin: Senior Technician →
+                                        QA → Engineer.
+                                    </p>
+                                </div>
+                            )}
 
                             {/* Checklist */}
                             {selectedChecklist.length > 0 && (

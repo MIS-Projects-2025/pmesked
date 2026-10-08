@@ -277,15 +277,23 @@ class SchedulerController extends Controller
             'pm_due'      => $scheduler->pm_due,
             'answers'     => $scheduler->answers ? json_decode($scheduler->answers, true) : [],
             'tool_life'   => $scheduler->tool_life ? json_decode($scheduler->tool_life, true) : [],
+            // raw DB string — para hindi ma-convert ng model cast / timezone
+            'tech_ack'           => $scheduler->tech_ack,
+            'tech_ack_date'      => $scheduler->getRawOriginal('tech_ack_date'),
+            'qa_ack'             => $scheduler->qa_ack,
+            'qa_ack_date'        => $scheduler->getRawOriginal('qa_ack_date'),
+            'senior_ee_ack'      => $scheduler->senior_ee_ack,
+            'senior_ee_ack_date' => $scheduler->getRawOriginal('senior_ee_ack_date'),
         ]);
     }
 
     /**
      * ✏️ I-save ang na-edit na PM Scheduler.
      *
-     * Ang pwede lang baguhin: first_cycle (PM Date), pm_due, answers, tool_life.
-     * HINDI ginagalaw: machine, responsible_person, at ang mga ack (tech/qa/engineer),
-     * kaya hindi nagre-reset ang verification o progress.
+     * Ang pwede baguhin: first_cycle (PM Date), pm_due, answers, tool_life,
+     * at ang mga verifier (tech_ack / qa_ack / senior_ee_ack + mga petsa nila).
+     * HINDI ginagalaw: machine at responsible_person.
+     * Ang progress_value ay nire-recompute mula sa mga ack.
      */
     public function update(Request $request, $id)
     {
@@ -296,6 +304,13 @@ class SchedulerController extends Controller
             'pm_due'      => 'nullable|string',
             'answers'     => 'nullable|json',
             'tool_life'   => 'nullable|json',
+            // ✏️ verifiers (pangalan + petsa) — pwedeng i-edit ng admin
+            'tech_ack'           => 'nullable|string|max:255',
+            'tech_ack_date'      => 'nullable|date_format:Y-m-d H:i:s',
+            'qa_ack'             => 'nullable|string|max:255',
+            'qa_ack_date'        => 'nullable|date_format:Y-m-d H:i:s',
+            'senior_ee_ack'      => 'nullable|string|max:255',
+            'senior_ee_ack_date' => 'nullable|date_format:Y-m-d H:i:s',
         ]);
 
         $scheduler = Scheduler::findOrFail($id);
@@ -304,6 +319,39 @@ class SchedulerController extends Controller
         $scheduler->pm_due      = $validated['pm_due'] ?? $scheduler->pm_due;
         $scheduler->answers     = $validated['answers'] ?? $scheduler->answers;
         $scheduler->tool_life   = $validated['tool_life'] ?? $scheduler->tool_life;
+
+        // ✏️ Verifiers — i-apply lang kung ipinadala (has), para hindi masira ang ibang caller.
+        // Walang pangalan = blangko ang pangalan AT petsa. May pangalan pero walang petsa =
+        // gamitin ang dating petsa, o ngayon kung wala pa.
+        foreach (['tech_ack', 'qa_ack', 'senior_ee_ack'] as $f) {
+            if (!$request->has($f)) {
+                continue;
+            }
+
+            $name = trim((string) ($validated[$f] ?? ''));
+            $dateField = $f . '_date';
+
+            if ($name === '') {
+                $scheduler->{$f} = null;
+                $scheduler->{$dateField} = null;
+            } else {
+                $scheduler->{$f} = $name;
+                $scheduler->{$dateField} = !empty($validated[$dateField])
+                    ? $validated[$dateField]
+                    : ($scheduler->getRawOriginal($dateField) ?: now()->format('Y-m-d H:i:s'));
+            }
+        }
+
+        // 🔒 Dapat sunod-sunod pa rin: tech → ESD → engineer.
+        // (Bawal may Engineer na walang ESD, o ESD na walang Tech.)
+        $has = fn ($v) => $v !== null && trim((string) $v) !== '';
+
+        if ($has($scheduler->qa_ack) && !$has($scheduler->tech_ack)) {
+            return back()->withErrors(['ack' => 'QA Personnel needs a Senior Technician verifier first.']);
+        }
+        if ($has($scheduler->senior_ee_ack) && !$has($scheduler->qa_ack)) {
+            return back()->withErrors(['ack' => 'Senior Engineer needs a QA Personnel verifier first.']);
+        }
 
         // recompute pa rin para laging consistent sa mga ack
         $scheduler->progress_value = $this->computeProgress($scheduler);
