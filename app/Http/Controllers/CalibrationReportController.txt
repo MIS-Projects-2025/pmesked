@@ -16,24 +16,9 @@ class CalibrationReportController extends Controller
     protected $datatable;
     protected $datatable1;
 
-    /**
-     * ✏️ Ang LANG pwedeng mag-edit ng na-save na report (at 100% verified lang).
-     */
-    protected const EDITOR_EMP_ID = '1797';
-
     public function __construct(DataTableService $datatable)
     {
         $this->datatable = $datatable;
-    }
-
-    /**
-     * ✏️ Server-side check — session ang batayan, hindi ang browser.
-     */
-    protected function canEdit(): bool
-    {
-        $empId = session('emp_data')['emp_id'] ?? null;
-
-        return $empId !== null && (string) $empId === self::EDITOR_EMP_ID;
     }
 
     // 📌 Inertia page (UI)
@@ -113,9 +98,7 @@ class CalibrationReportController extends Controller
             'empData' => [
                 'emp_id' => session('emp_data')['emp_id'] ?? null,
                 'emp_name' => session('emp_data')['emp_name'] ?? null,
-                'emp_jobtitle' => session('emp_data')['emp_jobtitle'] ?? null,
-                // ✏️ para sa Edit button — ang server ang nagde-decide
-                'can_edit' => $this->canEdit(),
+                'emp_jobtitle' => session('emp_data')['emp_jobtitle'] ?? null
             ],
         ]);
     }
@@ -169,97 +152,6 @@ class CalibrationReportController extends Controller
         $calibrationReport->update($data);
 
         return response()->json($calibrationReport);
-    }
-
-    /**
-     * ✏️ Admin edit — 1797 lang, at 100% verified (QA + Reviewer) lang.
-     *
-     * Pwedeng baguhin: calibration_date/due, temperature, relative_humidity, specs,
-     * report_no, cal_interval, cal_std_use, cal_details, at ang mga verifier
-     * (qa_sign / review_by + mga petsa nila).
-     * HINDI ginagalaw: equipment, model, serial, manufacturer, control_no, performed_by.
-     *
-     * Raw table update ang gamit (tulad ng destroy()) para hindi madamay ang model casts —
-     * JSON text ang sine-save sa cal_std_use / cal_details.
-     */
-    public function adminUpdate(Request $request, $id)
-    {
-        abort_unless($this->canEdit(), 403, 'You are not allowed to edit.');
-
-        $row = DB::connection('mysql')->table('calibration_report_list')->where('id', $id)->first();
-        abort_if(!$row, 404);
-
-        $has = fn ($v) => $v !== null && trim((string) $v) !== '';
-
-        if (!($has($row->qa_sign) && $has($row->review_by))) {
-            return back()->withErrors(['edit' => 'Only fully verified (100%) reports can be edited.']);
-        }
-
-        $v = $request->validate([
-            'calibration_date'  => 'nullable|string|max:255',
-            'calibration_due'   => 'nullable|string|max:255',
-            'temperature'       => 'nullable|string|max:255',
-            'relative_humidity' => 'nullable|string|max:255',
-            'specs'             => 'nullable|string|max:255',
-            'report_no'         => 'nullable|string|max:255',
-            'cal_interval'      => 'nullable|string|max:255',
-            'cal_std_use'       => 'nullable|array',
-            'cal_details'       => 'nullable|array',
-            'qa_sign'           => 'nullable|string|max:255',
-            'qa_sign_date'      => 'nullable|date_format:Y-m-d H:i:s',
-            'review_by'         => 'nullable|string|max:255',
-            'review_date'       => 'nullable|date_format:Y-m-d H:i:s',
-        ]);
-
-        $update = [];
-
-        foreach (['calibration_date', 'calibration_due', 'temperature', 'relative_humidity', 'specs', 'report_no', 'cal_interval'] as $f) {
-            if ($request->has($f)) {
-                $update[$f] = $v[$f] ?? null;
-            }
-        }
-
-        if ($request->has('cal_std_use')) {
-            $update['cal_std_use'] = json_encode($v['cal_std_use'] ?? []);
-        }
-        if ($request->has('cal_details')) {
-            $update['cal_details'] = json_encode($v['cal_details'] ?? []);
-        }
-
-        // Verifiers — walang pangalan = blangko rin ang petsa.
-        // May pangalan pero walang petsa = dating petsa, o ngayon kung wala pa.
-        $final = ['qa_sign' => $row->qa_sign, 'review_by' => $row->review_by];
-
-        foreach (['qa_sign' => 'qa_sign_date', 'review_by' => 'review_date'] as $f => $dateField) {
-            if (!$request->has($f)) {
-                continue;
-            }
-
-            $name = trim((string) ($v[$f] ?? ''));
-
-            if ($name === '') {
-                $update[$f] = null;
-                $update[$dateField] = null;
-            } else {
-                $update[$f] = $name;
-                $update[$dateField] = !empty($v[$dateField])
-                    ? $v[$dateField]
-                    : ($row->{$dateField} ?: now()->format('Y-m-d H:i:s'));
-            }
-
-            $final[$f] = $update[$f];
-        }
-
-        // 🔒 Dapat sunod-sunod pa rin: QA → Reviewer
-        if ($has($final['review_by']) && !$has($final['qa_sign'])) {
-            return back()->withErrors(['sign' => 'Reviewer needs a QA verifier first.']);
-        }
-
-        if (!empty($update)) {
-            DB::connection('mysql')->table('calibration_report_list')->where('id', $id)->update($update);
-        }
-
-        return back()->with('success', '✅ Calibration report updated successfully!');
     }
 
     // 📌 Delete

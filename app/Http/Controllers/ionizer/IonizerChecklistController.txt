@@ -20,33 +20,9 @@ class IonizerChecklistController extends Controller
     protected $datatable;
     protected $datatable1;
 
-    /**
-     * ✏️ Ang LANG pwedeng mag-edit ng na-save na checklist (at 100% verified lang).
-     */
-    protected const EDITOR_EMP_ID = '1797';
-
     public function __construct(DataTableService $datatable)
     {
         $this->datatable = $datatable;
-    }
-
-    /**
-     * ✏️ Server-side check — session ang batayan, hindi ang browser.
-     */
-    protected function canEdit(): bool
-    {
-        $empId = session('emp_data')['emp_id'] ?? null;
-
-        return $empId !== null && (string) $empId === self::EDITOR_EMP_ID;
-    }
-
-    /**
-     * ✏️ 100% = may Tech sign AT QA sign na.
-     */
-    protected function isFullyVerified($record): bool
-    {
-        return trim((string) $record->tech_sign) !== ''
-            && trim((string) $record->qa_sign) !== '';
     }
 
     //old code 04272026
@@ -201,8 +177,6 @@ class IonizerChecklistController extends Controller
                 'dropdownSearchValue',
                 'dropdownFields',
             ]),
-            // ✏️ para sa Edit button — ang server ang nagde-decide
-            'canEdit' => $this->canEdit(),
         ]);
     }
 
@@ -230,26 +204,9 @@ class IonizerChecklistController extends Controller
 
     public function update(Request $request, $id)
     {
-        // ✏️ 1797 lang, at 100% verified lang ang pwedeng i-edit
-        abort_unless($this->canEdit(), 403, 'You are not allowed to edit.');
-
         $checklist = IonizerChecklist::findOrFail($id);
 
-        if (!$this->isFullyVerified($checklist)) {
-            return back()->withErrors(['edit' => 'Only fully verified (100%) checklists can be edited.']);
-        }
-
-        $request->validate([
-            'tech_sign'      => 'nullable|string|max:255',
-            'tech_sign_date' => 'nullable|date_format:Y-m-d H:i:s',
-            'qa_sign'        => 'nullable|string|max:255',
-            'qa_sign_date'   => 'nullable|date_format:Y-m-d H:i:s',
-        ]);
-
         $data = $request->all();
-
-        // Verifiers — hiwalay ang handling (hindi sumasama sa mass update)
-        unset($data['tech_sign'], $data['tech_sign_date'], $data['qa_sign'], $data['qa_sign_date']);
 
         // Encode JSON fields bago i-update
         $data['check_item'] = json_encode($request->check_item ?? []);
@@ -257,35 +214,7 @@ class IonizerChecklistController extends Controller
         $data['std_use_verification'] = json_encode($request->std_use_verification ?? []);
         $data['updated_by'] = session('emp_data')['emp_name'] ?? null;
 
-        $checklist->fill($data);
-
-        // ✏️ Verifiers (pangalan + petsa). Walang pangalan = blangko rin ang petsa.
-        // May pangalan pero walang petsa = dating petsa, o ngayon kung wala pa.
-        foreach (['tech_sign', 'qa_sign'] as $f) {
-            if (!$request->has($f)) {
-                continue;
-            }
-
-            $name = trim((string) $request->input($f));
-            $dateField = $f . '_date';
-
-            if ($name === '') {
-                $checklist->{$f} = null;
-                $checklist->{$dateField} = null;
-            } else {
-                $checklist->{$f} = $name;
-                $checklist->{$dateField} = $request->filled($dateField)
-                    ? $request->input($dateField)
-                    : ($checklist->getRawOriginal($dateField) ?: now()->format('Y-m-d H:i:s'));
-            }
-        }
-
-        // 🔒 Dapat sunod-sunod pa rin: Tech → QA
-        if (trim((string) $checklist->qa_sign) !== '' && trim((string) $checklist->tech_sign) === '') {
-            return back()->withErrors(['sign' => 'QA Verifier needs a Tech Verifier first.']);
-        }
-
-        $checklist->save();
+        $checklist->update($data);
 
         return redirect()->route('ionizer.index')
             ->with('success', 'Ionizer checklist updated successfully');

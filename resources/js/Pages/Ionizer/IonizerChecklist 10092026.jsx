@@ -4,11 +4,6 @@ import DataTable from "@/Components/DataTable";
 import { router, usePage } from "@inertiajs/react";
 import axios from "axios";
 
-// ✏️ "YYYY-MM-DD HH:mm:ss" (DB) <-> "YYYY-MM-DDTHH:mm:ss" (datetime-local input)
-const toDtLocal = (v) => (v ? String(v).replace(" ", "T").slice(0, 19) : "");
-const fromDtLocal = (v) =>
-    v ? v.replace("T", " ") + (v.length === 16 ? ":00" : "") : "";
-
 export default function Index({
     tableData,
     reports,
@@ -16,7 +11,6 @@ export default function Index({
     machines,
     empData,
     items,
-    canEdit, // ✏️ galing sa server (emp_id 1797 lang)
 }) {
     const { flash, emp_data } = usePage().props;
 
@@ -194,28 +188,21 @@ export default function Index({
         setFormData({
             ...defaultFormData,
             ...item,
-            // safeArray: tumatanggap ng array O JSON string (tulad ng View modal)
-            check_item: safeArray(item.check_item).map((ci, idx) => ({
-                id: idx,
-                ...ci,
-            })),
-            verification_reading: safeArray(item.verification_reading).map(
-                (vr, idx) => ({
-                    id: idx,
-                    ...vr,
-                }),
-            ),
-            std_use_verification: safeArray(item.std_use_verification).map(
-                (sv, idx) => ({
-                    id: idx,
-                    ...sv,
-                }),
-            ),
-            // ✏️ verifiers (editable)
-            tech_sign: item.tech_sign || "",
-            tech_sign_date: toDtLocal(item.tech_sign_date),
-            qa_sign: item.qa_sign || "",
-            qa_sign_date: toDtLocal(item.qa_sign_date),
+            check_item: Array.isArray(item.check_item)
+                ? item.check_item.map((ci, idx) => ({ id: idx, ...ci }))
+                : [],
+            verification_reading: Array.isArray(item.verification_reading)
+                ? item.verification_reading.map((vr, idx) => ({
+                      id: idx,
+                      ...vr,
+                  }))
+                : [],
+            std_use_verification: Array.isArray(item.std_use_verification)
+                ? item.std_use_verification.map((sv, idx) => ({
+                      id: idx,
+                      ...sv,
+                  }))
+                : [],
         });
 
         setShowForm(true);
@@ -326,25 +313,13 @@ export default function Index({
         }
 
         if (editData) {
-            router.put(
-                `/ionizer-checklists/${editData.id}`,
-                {
-                    ...formData,
-                    tech_sign_date: fromDtLocal(formData.tech_sign_date),
-                    qa_sign_date: fromDtLocal(formData.qa_sign_date),
+            router.put(`/ionizer-checklists/${editData.id}`, formData, {
+                onSuccess: () => {
+                    alert("✅ Successfully saved!");
+                    setShowForm(false);
+                    window.location.reload();
                 },
-                {
-                    onSuccess: () => {
-                        alert("✅ Successfully saved!");
-                        setShowForm(false);
-                        window.location.reload();
-                    },
-                    onError: (errors) => {
-                        const msg = Object.values(errors || {}).join("\n");
-                        alert(`❌ Failed to update.${msg ? "\n" + msg : ""}`);
-                    },
-                },
-            );
+            });
         } else {
             router.post("/ionizer-checklists", formData, {
                 onSuccess: () => {
@@ -453,17 +428,14 @@ export default function Index({
                         <i className="fas fa-eye"></i> View
                     </button>
 
-                    {/* ✏️ emp_id 1797 lang, at 100% verified (Tech + QA) lang */}
-                    {canEdit &&
-                        String(item.tech_sign || "").trim() !== "" &&
-                        String(item.qa_sign || "").trim() !== "" && (
-                            <button
-                                onClick={() => openEditModal(item)}
-                                className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-                            >
-                                <i className="fas fa-edit"></i> Edit
-                            </button>
-                        )}
+                    {["superadmin", "admin"].includes(emp_data?.emp_role) && (
+                        <button
+                            onClick={() => openEditModal(item)}
+                            className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                        >
+                            <i className="fas fa-edit"></i> Edit
+                        </button>
+                    )}
                 </div>
             ),
         };
@@ -557,7 +529,6 @@ export default function Index({
                                     value={formData.updated_by}
                                     hidden
                                 />
-
                                 {/* Header */}
                                 <table className="w-full border text-sm text-gray-600 mb-4 rounded-lg">
                                     <tbody>
@@ -686,84 +657,6 @@ export default function Index({
                                         </tr>
                                     </tbody>
                                 </table>
-                                {/* ✏️ Verifiers — EDIT MODE lang (blangko ang pangalan = tanggalin ang verification) */}
-                                {editData && (
-                                    <div className="border rounded p-3">
-                                        <h3 className="text-violet-800 mb-2 font-bold">
-                                            <i className="fa-solid fa-user-check"></i>{" "}
-                                            Verifiers
-                                        </h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-600">
-                                            <div>
-                                                <label className="font-semibold">
-                                                    Tech Verifier
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    name="tech_sign"
-                                                    value={
-                                                        formData.tech_sign || ""
-                                                    }
-                                                    onChange={handleChange}
-                                                    placeholder="Waiting for Tech Verifier..."
-                                                    className="w-full border rounded p-1 mb-1"
-                                                />
-                                                <input
-                                                    type="datetime-local"
-                                                    step="1"
-                                                    value={
-                                                        formData.tech_sign_date ||
-                                                        ""
-                                                    }
-                                                    onChange={(e) =>
-                                                        setFormData({
-                                                            ...formData,
-                                                            tech_sign_date:
-                                                                e.target.value,
-                                                        })
-                                                    }
-                                                    className="w-full border rounded p-1"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="font-semibold">
-                                                    QA Verifier
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    name="qa_sign"
-                                                    value={
-                                                        formData.qa_sign || ""
-                                                    }
-                                                    onChange={handleChange}
-                                                    placeholder="Waiting for QA Verifier..."
-                                                    className="w-full border rounded p-1 mb-1"
-                                                />
-                                                <input
-                                                    type="datetime-local"
-                                                    step="1"
-                                                    value={
-                                                        formData.qa_sign_date ||
-                                                        ""
-                                                    }
-                                                    onChange={(e) =>
-                                                        setFormData({
-                                                            ...formData,
-                                                            qa_sign_date:
-                                                                e.target.value,
-                                                        })
-                                                    }
-                                                    className="w-full border rounded p-1"
-                                                />
-                                            </div>
-                                        </div>
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            The order is still enforced: Tech →
-                                            QA. Leave a name blank to remove
-                                            that verification.
-                                        </p>
-                                    </div>
-                                )}
 
                                 {/* --- Check Items --- */}
                                 <h3 className="text-violet-800 mb-2 font-bold">

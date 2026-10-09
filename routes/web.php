@@ -74,6 +74,7 @@ Route::post('/calibration-reports/{report}/verify-qa', [CalibrationReportControl
 
 Route::post('/calibration-reports/{report}/verify-reviewer', [CalibrationReportController::class, 'verifyReviewer'])
     ->name('calibration-reports.verify-reviewer');
+Route::put('/calibration-reports/{id}/admin-update', [CalibrationReportController::class, 'adminUpdate']);
 
 Route::get('/calibration-report/ionizer', [IonizerCalibrationReportController::class, 'index'])
     ->name('calibration.IonizerCalibrationReport');
