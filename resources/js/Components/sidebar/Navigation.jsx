@@ -111,7 +111,10 @@ function NavGroup({ label, Icon, links }) {
 export default function NavLinks() {
     const { emp_data } = usePage().props;
 
+
+
     const role = emp_data?.emp_role;
+
     const empId = String(emp_data?.emp_id ?? "");
 
     const isPMRole = [

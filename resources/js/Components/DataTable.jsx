@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { router } from "@inertiajs/react";
+import { usePage, router } from "@inertiajs/react";
 
 import {
     flexRender,
@@ -36,6 +36,7 @@ import {
     ArrowUp,
     ArrowDown,
     Search,
+    Download,
 } from "lucide-react";
 
 export default function DataTable({
@@ -49,6 +50,10 @@ export default function DataTable({
     showExport = false,
     children,
 }) {
+
+    const { emp_data } = usePage().props;
+    const canExport = ["superadmin", "admin", "engineer"].includes(emp_data?.emp_role);
+
     const [activeRow, setActiveRow] = useState(null);
 
     const [searchInput, setSearchInput] = useState(filters.search || "");
@@ -159,7 +164,7 @@ export default function DataTable({
 
             <form
                 onSubmit={handleSearch}
-                className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+                className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mt-4"
             >
                 <div className="flex gap-2">
                     <Select
@@ -190,12 +195,6 @@ export default function DataTable({
                             <SelectItem value="100">100 rows</SelectItem>
                         </SelectContent>
                     </Select>
-
-                    {showExport && (
-                        <Button type="button" variant="outline">
-                            Export CSV
-                        </Button>
-                    )}
                 </div>
 
                 <div className="flex gap-2">
@@ -204,10 +203,40 @@ export default function DataTable({
                         value={searchInput}
                         onChange={(e) => setSearchInput(e.target.value)}
                     />
-
                     <Button type="submit" className="bg-gray-500">
                         <Search className="w-4 h-4 text-white" />
                     </Button>
+                    {showExport && canExport && (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                                const params = new URLSearchParams();
+
+                                Object.entries(filters).forEach(
+                                    ([key, value]) => {
+                                        if (
+                                            value !== undefined &&
+                                            value !== null &&
+                                            value !== ""
+                                        ) {
+                                            params.set(key, String(value));
+                                        }
+                                    },
+                                );
+
+                                // Laravel boolean export parameter
+                                params.set("export", "1");
+
+                                // Download CSV through Laravel
+                                window.location.href = `${routeName}?${params.toString()}`;
+                            }}
+                            className="bg-blue-500 text-white hover:bg-blue-600 hover:text-blue-100"
+                        >
+                            <Download className="mr-2 h-4 w-4" />
+                            Export CSV
+                        </Button>
+                    )}
                 </div>
             </form>
 

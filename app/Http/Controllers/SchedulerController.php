@@ -181,11 +181,22 @@ class SchedulerController extends Controller
                 'exportColumns' => [
                     'pmnt_no',
                     'machine_num',
-                    'serial',
-                    'first_cycle',
-                    'pm_due',
-                    'responsible_person',
                     'quarter',
+                    'first_cycle',
+                    'responsible_person',
+                    'serial',
+                    'pm_due',
+                    'progress_value',
+                    'answers',
+                    'tool_life',
+                    'status',
+                    'tech_ack',
+                    'tech_ack_date',
+                    'qa_ack',
+                    'qa_ack_date',
+                    'senior_ee_ack',
+                    'senior_ee_ack_date',
+                    'created_at',
                 ],
             ]
         );
@@ -232,6 +243,7 @@ class SchedulerController extends Controller
                 // ✏️ para sa Edit button — ang server ang nagde-decide
                 'can_edit' => $this->canEdit(),
             ],
+            'emp_data' => session('emp_data'),
         ]);
     }
 

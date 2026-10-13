@@ -766,6 +766,7 @@ export default function SchedulerTable({
                     routeName={route("tnr.schedulerTable")}
                     filters={tableFilters}
                     rowKey="id"
+                    showExport={true}
                 />
 
                 {/* ── "New Checklist" / "Edit" MODAL ── */}
