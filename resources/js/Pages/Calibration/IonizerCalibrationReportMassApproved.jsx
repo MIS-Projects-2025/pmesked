@@ -1,5 +1,5 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, usePage, router } from "@inertiajs/react";
+import { Head, router } from "@inertiajs/react";
 import { useState } from "react";
 
 export default function IonizerCalibrationReportMassApproved({ reports, empData }) {
@@ -11,8 +11,12 @@ export default function IonizerCalibrationReportMassApproved({ reports, empData 
   const itemsPerPage = 10;
 
   // Roles
-   const isQA = ["esd"].includes(empData.emp_role);
+  const isQA = ["esd"].includes(empData.emp_role);
   const isEngineer = ["engineer"].includes(empData.emp_role);
+
+  // Show the real validation / server message instead of a generic one
+  const showError = (errors) =>
+    alert(`⚠️ ${Object.values(errors || {})[0] || "Something went wrong!"}`);
 
   // Toggle select row
   const toggleSelect = (id) => {
@@ -28,11 +32,12 @@ export default function IonizerCalibrationReportMassApproved({ reports, empData 
       route("ionizer.ionizer.mass.approve_qa"),
       { ids },
       {
+        preserveScroll: true,
         onSuccess: () => {
+          setSelected([]);
           alert("✅ Selected reports approved!");
-          window.location.reload();
         },
-        onError: () => alert("Something went wrong!"),
+        onError: showError,
       }
     );
   };
@@ -43,24 +48,14 @@ export default function IonizerCalibrationReportMassApproved({ reports, empData 
       route("ionizer.ionizer.mass.approve_ee"),
       { ids },
       {
+        preserveScroll: true,
         onSuccess: () => {
+          setSelected([]);
           alert("✅ Selected reports approved!");
-          window.location.reload();
         },
-        onError: () => alert("Something went wrong!"),
+        onError: showError,
       }
     );
-  };
-
-  // Determine if current user can approve this report
-  const canApprove = (report) => {
-    // ESD approves first if qa_sign is null/false
-    if (isQA && !report.qa_sign) return true;
-
-    // Engineer approves after QA, but only if review_by is still null/empty
-    if (isEngineer && report.qa_sign && !report.review_by) return true;
-
-    return false;
   };
 
   // Filter & pagination
@@ -77,42 +72,39 @@ export default function IonizerCalibrationReportMassApproved({ reports, empData 
     currentPage * itemsPerPage
   );
 
-//   console.log(empData);
+  const handleVerifyQA = () => {
+    if (!selectedReport) return;
+    router.post(
+      route("calibration-reports.ionizer.verify-qa", selectedReport.id),
+      {},
+      {
+        preserveScroll: true,
+        onSuccess: () => {
+          alert("✅ Successfully approved!");
+          setViewModal(false);
+          setSelectedReport(null);
+        },
+        onError: showError,
+      }
+    );
+  };
 
-const handleVerifyQA = () => {
-  if (!selectedReport) return;
-  router.post(
-    route("calibration-reports.ionizer.verify-qa", selectedReport.id),
-    {},
-    {
-      preserveScroll: true,
-      onSuccess: (page) => {
-         alert("✅ Successfully approved!");
-        // update state from server response kung may flash or props
-        setSelectedReport(page.props.updatedReport ?? selectedReport);
-        window.location.reload();
-      },
-    }
-  );
-};
-
-const handleVerifyReviewer = () => {
-  if (!selectedReport) return;
-  router.post(
-    route("calibration-reports.ionizer.verify-reviewer", selectedReport.id),
-    {},
-    {
-      preserveScroll: true,
-      onSuccess: (page) => {
-        alert("✅ Successfully approved!");
-        setSelectedReport(page.props.updatedReport ?? selectedReport);
-        window.location.reload();
-      },
-    }
-  );
-};
-
-// console.log(reports);
+  const handleVerifyReviewer = () => {
+    if (!selectedReport) return;
+    router.post(
+      route("calibration-reports.ionizer.verify-reviewer", selectedReport.id),
+      {},
+      {
+        preserveScroll: true,
+        onSuccess: () => {
+          alert("✅ Successfully approved!");
+          setViewModal(false);
+          setSelectedReport(null);
+        },
+        onError: showError,
+      }
+    );
+  };
 
   return (
     <AuthenticatedLayout>
@@ -125,7 +117,7 @@ const handleVerifyReviewer = () => {
             <i className="fas fa-check-circle"></i> Ionizer Calibration Mass Approval
           </h1>
 
-          {selected.length > 0 && canApprove && isQA && (
+          {selected.length > 0 && isQA && (
             <button
               onClick={() => handleMassApproveQA()}
               className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
@@ -134,7 +126,7 @@ const handleVerifyReviewer = () => {
             </button>
           )}
 
-          {selected.length > 0 && canApprove && isEngineer && (
+          {selected.length > 0 && isEngineer && (
             <button
               onClick={() => handleMassApproveEE()}
               className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
@@ -226,13 +218,12 @@ const handleVerifyReviewer = () => {
                       >
                         <i className="fa-solid fa-eye"></i> View
                       </button>
-
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="text-center py-4 text-gray-500">
+                  <td colSpan="8" className="text-center py-4 text-gray-500">
                     No reports found.
                   </td>
                 </tr>
@@ -266,178 +257,170 @@ const handleVerifyReviewer = () => {
 
         {/* View Modal */}
         {viewModal && selectedReport && (
-  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-    <div className="bg-white p-6 rounded shadow-lg w-10/12 max-h-[90vh] overflow-y-auto border-t-4 border-blue-600">
-      
-      {/* Header */}
-      <div className="flex justify-between items-center bg-gradient-to-r from-gray-600 to-black text-white p-4 rounded-t-lg sticky top-0 z-10">
-        <h2 className="text-lg font-bold ml-4">
-          <i className="fa-regular fa-rectangle-list"></i> Non-TnR Calibration Report View
-        </h2>
-        <div className="flex space-x-2">
-        
-          {/* Close */}
-          <button
-            className="text-white text-xl"
-            onClick={() => setViewModal(false)}
-          >
-            <i className="fas fa-times text-red-500 hover:text-red-700"></i>
-          </button>
-        </div>
-      </div>
-    <div className="flex space-x-2 justify-end mt-4 ">
-      {selectedReport?.qa_sign && selectedReport?.review_by && (
-        
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div className="bg-white p-6 rounded shadow-lg w-10/12 max-h-[90vh] overflow-y-auto border-t-4 border-blue-600">
+              {/* Header */}
+              <div className="flex justify-between items-center bg-gradient-to-r from-gray-600 to-black text-white p-4 rounded-t-lg sticky top-0 z-10">
+                <h2 className="text-lg font-bold ml-4">
+                  <i className="fa-regular fa-rectangle-list"></i> Non-TnR Calibration Report View
+                </h2>
+                <div className="flex space-x-2">
+                  {/* Close */}
+                  <button
+                    className="text-white text-xl"
+                    onClick={() => setViewModal(false)}
+                  >
+                    <i className="fas fa-times text-red-500 hover:text-red-700"></i>
+                  </button>
+                </div>
+              </div>
+              <div className="flex space-x-2 justify-end mt-4 ">
+                {selectedReport?.qa_sign && selectedReport?.review_by && (
+                  <button
+                    onClick={() =>
+                      window.open(`/pdf/nonTnrCalibration/${selectedReport.id}`, "_blank")
+                    }
+                    className="px-4 py-2 border rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    <i className="fas fa-file-pdf mr-2"></i>
+                    View as PDF
+                  </button>
+                )}
+              </div>
 
-        <button
-        onClick={() => window.open(`/pdf/nonTnrCalibration/${selectedReport.id}`, "_blank")}
-        className="px-4 py-2 border rounded-md bg-blue-600 text-white hover:bg-blue-700"
-        >
-        <i className="fas fa-file-pdf mr-2"></i>
-          View as PDF
-        </button>
+              {/* Machine info */}
+              <div className="grid grid-cols-4 gap-4 mb-6 mt-4 text-gray-500 border p-4">
+                {[
+                  "equipment",
+                  "manufacturer",
+                  "control_no",
+                  "performed_by",
+                  "calibration_date",
+                  "calibration_due",
+                  "model",
+                  "serial",
+                  "temperature",
+                  "relative_humidity",
+                  "specs",
+                  "report_no",
+                  "cal_interval",
+                  "review_by",
+                  "review_date",
+                ].map((key) => (
+                  <div key={key}>
+                    <label className="block font-semibold" style={{ textTransform: "capitalize" }}>
+                      {key.replace(/_/g, " ")}
+                    </label>
+                    <input
+                      type="text"
+                      value={selectedReport[key] || "Wait for Signature..."}
+                      readOnly
+                      className="border p-2 rounded w-full text-gray-600 bg-gray-100"
+                    />
+                  </div>
+                ))}
+              </div>
 
+              {/* Calibration Standard Used */}
+              <h3 className="text-md font-semibold mb-2 text-gray-500">Calibration Standard Used</h3>
+              <table className="w-full border mb-3 text-sm">
+                <thead className="bg-gray-400">
+                  <tr>
+                    {Object.keys(selectedReport.cal_std_use?.[0] || {}).map((key) => (
+                      <th key={key} className="border p-2" style={{ textTransform: "capitalize" }}>
+                        {key.replace(/_/g, " ")}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedReport.cal_std_use?.map((row, i) => (
+                    <tr key={i}>
+                      {Object.keys(row).map((key) => (
+                        <td key={key} className="border p-2 text-gray-500">
+                          {row[key]}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
 
-        )}
-    </div>
-      {/* Machine info */}
-      <div className="grid grid-cols-4 gap-4 mb-6 mt-4 text-gray-500 border p-4">
-        {[
-          "equipment",
-          "manufacturer",
-          "control_no",
-          "performed_by",
-          "calibration_date",
-          "calibration_due",
-          "model",
-          "serial",
-          "temperature",
-          "relative_humidity",
-          "specs",
-          "report_no",
-          "cal_interval",
-          "review_by",
-          "review_date",
-        ].map((key) => (
-          <div key={key}>
-            <label className="block font-semibold" style={{ textTransform: "capitalize" }}>
-              {key.replace(/_/g, " ")}
-            </label>
-            <input
-              type="text"
-              value={selectedReport[key] || "Wait for Signature..."}
-              readOnly
-              className="border p-2 rounded w-full text-gray-600 bg-gray-100"
-            />
+              {/* Calibration Details */}
+              <h3 className="text-md font-semibold mb-2 text-gray-500">Calibration Details</h3>
+              <table className="w-full border mb-3 text-sm">
+                <thead className="bg-gray-400">
+                  <tr>
+                    {Object.keys(selectedReport.cal_details?.[0] || {}).map((key) => (
+                      <th key={key} className="border p-2" style={{ textTransform: "capitalize" }}>
+                        {key.replace(/_/g, " ")}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedReport.cal_details?.map((row, i) => (
+                    <tr key={i}>
+                      {Object.keys(row).map((key) => (
+                        <td key={key} className="border p-2 text-gray-500">
+                          {row[key]}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="grid grid-cols-4 gap-4 mb-6 mt-4 text-gray-500 border p-4">
+                {["qa_sign", "qa_sign_date"].map((key) => (
+                  <div key={key}>
+                    <label className="block font-semibold" style={{ textTransform: "capitalize" }}>
+                      {key.replace(/_/g, " ")}
+                    </label>
+                    <input
+                      type="text"
+                      value={selectedReport[key] || "Wait for Signature..."}
+                      readOnly
+                      className="border p-2 rounded w-full text-gray-600 bg-gray-100"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Footer */}
+              <div className="flex justify-end mt-4">
+                {/* Verification button logic */}
+                {isQA && !selectedReport?.qa_sign && (
+                  <button
+                    onClick={handleVerifyQA}
+                    className="px-4 py-2 border rounded bg-green-500 text-white hover:bg-green-600 mr-2"
+                  >
+                    <i className="fas fa-check mr-2"></i>
+                    Verify (QA)
+                  </button>
+                )}
+
+                {isEngineer && selectedReport?.qa_sign && !selectedReport?.review_by && (
+                  <button
+                    onClick={handleVerifyReviewer}
+                    className="px-4 py-2 border rounded bg-blue-500 text-white hover:bg-blue-600 mr-2"
+                  >
+                    <i className="fas fa-user-cog mr-2"></i>
+                    Verify (Reviewer)
+                  </button>
+                )}
+
+                {/* Close */}
+                <button
+                  type="button"
+                  onClick={() => setViewModal(false)}
+                  className="px-4 py-2 border rounded bg-red-500 text-white hover:bg-red-600"
+                >
+                  <i className="fas fa-times mr-2"></i>
+                  Close
+                </button>
+              </div>
+            </div>
           </div>
-        ))}
-        
-      </div>
-
-
-      {/* Calibration Standard Used */}
-      <h3 className="text-md font-semibold mb-2 text-gray-500">Calibration Standard Used</h3>
-      <table className="w-full border mb-3 text-sm">
-        <thead className="bg-gray-400">
-          <tr>
-            {Object.keys(selectedReport.cal_std_use?.[0] || {}).map((key) => (
-              <th key={key} className="border p-2" style={{ textTransform: "capitalize" }}>{key.replace(/_/g, " ")}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {selectedReport.cal_std_use?.map((row, i) => (
-            <tr key={i}>
-              {Object.keys(row).map((key) => (
-                <td key={key} className="border p-2 text-gray-500">
-                  {/* <input type="text" value={row[key]} readOnly className="w-full border p-1 rounded bg-gray-100" /> */}
-                  {row[key]}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {/* Calibration Details */}
-      <h3 className="text-md font-semibold mb-2 text-gray-500">Calibration Details</h3>
-      <table className="w-full border mb-3 text-sm">
-        <thead className="bg-gray-400">
-          <tr>
-            {Object.keys(selectedReport.cal_details?.[0] || {}).map((key) => (
-              <th key={key} className="border p-2" style={{ textTransform: "capitalize" }}>{key.replace(/_/g, " ")}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {selectedReport.cal_details?.map((row, i) => (
-            <tr key={i}>
-              {Object.keys(row).map((key) => (
-                <td key={key} className="border p-2 text-gray-500">
-                  {/* <input type="text" value={row[key]} readOnly className="w-full border p-1 rounded bg-gray-100" /> */}
-                  {row[key]}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <div className="grid grid-cols-4 gap-4 mb-6 mt-4 text-gray-500 border p-4">
-        {[
-          "qa_sign",
-          "qa_sign_date",
-        ].map((key) => (
-          <div key={key}>
-            <label className="block font-semibold" style={{ textTransform: "capitalize" }}>
-              {key.replace(/_/g, " ")}
-            </label>
-            <input
-              type="text"
-              value={selectedReport[key] || "Wait for Signature..."}
-              readOnly
-              className="border p-2 rounded w-full text-gray-600 bg-gray-100"
-            />
-          </div>
-        ))}
-        
-      </div>
-
-      {/* Footer Close (redundant but okay) */}
-      <div className="flex justify-end mt-4">
-          {/* Verification button logic */}
-          {isQA && !selectedReport?.qa_sign && (
-  <button
-      onClick={handleVerifyQA}
-    className="px-4 py-2 border rounded bg-green-500 text-white hover:bg-green-600 mr-2"
-  >
-    <i className="fas fa-check mr-2"></i>
-    Verify (QA)
-  </button>
-)}
-
-{isEngineer && selectedReport?.qa_sign && !selectedReport?.review_by && (
-  <button
-     onClick={handleVerifyReviewer}
-    className="px-4 py-2 border rounded bg-blue-500 text-white hover:bg-blue-600 mr-2"
-  >
-    <i className="fas fa-user-cog mr-2"></i>
-    Verify (Reviewer)
-  </button>
-)}
-
-
-        {/* Close */}
-        <button
-          type="button"
-          onClick={() => setViewModal(false)}
-          className="px-4 py-2 border rounded bg-red-500 text-white hover:bg-red-600"
-        >
-          <i className="fas fa-times mr-2"></i>
-          Close
-        </button>
-      </div>
-    </div>
-  </div>
         )}
       </div>
     </AuthenticatedLayout>
