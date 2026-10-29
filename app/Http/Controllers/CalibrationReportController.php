@@ -1,278 +1,249 @@
 <?php
-// app/Http/Controllers/CalibrationReportController.php
+
 namespace App\Http\Controllers;
 
 use App\Models\Machine;
 use App\Models\CalibrationReport;
-use Inertia\Inertia;
-use Illuminate\Http\Request;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\DB;
 use App\Services\DataTableService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 
+/**
+ * CalibrationReportController
+ * 
+ * Handles CRUD operations for calibration reports, including:
+ * - Listing reports with pagination and search
+ * - Creating and updating reports
+ * - Generating PDF reports
+ * - QA and Reviewer verification
+ */
 class CalibrationReportController extends Controller
 {
-
+    /**
+     * DataTable service instance.
+     */
     protected $datatable;
-    protected $datatable1;
 
     /**
-     * ✏️ Ang LANG pwedeng mag-edit ng na-save na report (at 100% verified lang).
+     * Create a new controller instance.
+     *
+     * @param DataTableService $datatable
      */
-    protected const EDITOR_EMP_ID = '1797';
-
     public function __construct(DataTableService $datatable)
     {
         $this->datatable = $datatable;
     }
 
     /**
-     * ✏️ Server-side check — session ang batayan, hindi ang browser.
+     * Display the calibration reports index page.
+     *
+     * @param Request $request
+     * @return \Inertia\Response
      */
-    protected function canEdit(): bool
-    {
-        $empId = session('emp_data')['emp_id'] ?? null;
-
-        return $empId !== null && (string) $empId === self::EDITOR_EMP_ID;
-    }
-
-    // 📌 Inertia page (UI)
     public function index(Request $request)
     {
-        // 🔹 Machines for dropdown
-        $machines = Machine::select('*')
-            ->whereNotNull('machine_num')
-            ->where('machine_num', '!=', '')
-            ->whereIn('status', ['Active', 'ACTIVE', 'active'])
-            ->whereIn('pmnt_no', function ($query) {
-                $query->select('pmnt_no')
-                    ->from('machine_list')
-                    ->groupBy('pmnt_no')
-                    ->havingRaw('COUNT(*) = 1');
-            })
-            ->distinct()
-            ->orderBy('id', 'desc')
-            ->get();
+        try {
+            // Get machines for dropdown (only active machines with unique pmnt_no)
+            $machines = Machine::select('*')
+                ->whereNotNull('machine_num')
+                ->where('machine_num', '!=', '')
+                ->whereIn('status', ['Active', 'ACTIVE', 'active'])
+                ->whereIn('pmnt_no', function ($query) {
+                    $query->select('pmnt_no')
+                        ->from('machine_list')
+                        ->groupBy('pmnt_no')
+                        ->havingRaw('COUNT(*) = 1');
+                })
+                ->distinct()
+                ->orderBy('id', 'desc')
+                ->get();
 
-        // 🔹 Pagination & search params
-        $perPage = $request->input('perPage', 10); // default 10 entries per page
-        $currentPage = $request->input('page', 1);
-        $search = $request->input('search', null);
+            // Pagination and search parameters
+            $perPage = $request->input('perPage', 10);
+            $currentPage = $request->input('page', 1);
+            $search = $request->input('search', null);
 
-        // 🔹 Base query
-        $reportsQuery = DB::table('calibration_report_list')
-            ->orderBy('id', 'desc');
+            // Base query for calibration reports
+            $reportsQuery = DB::table('calibration_report_list')
+                ->orderBy('id', 'desc');
 
-        // 🔹 Search filter
-        if ($search) {
-            $reportsQuery->where(function ($q) use ($search) {
-                $q->where('equipment', 'like', "%$search%")
-                    ->orWhere('model', 'like', "%$search%")
-                    ->orWhere('performed_by', 'like', "%$search%")
-                    ->orWhere('qa_sign', 'like', "%$search%")
-                    ->orWhere('review_by', 'like', "%$search%")
-                    ->orWhere('calibration_date', 'like', "%$search%")
-                    ->orWhere('calibration_due', 'like', "%$search%");
-            });
-        }
+            // Apply search filter
+            if ($search) {
+                $reportsQuery->where(function ($q) use ($search) {
+                    $q->where('equipment', 'like', "%{$search}%")
+                        ->orWhere('model', 'like', "%{$search}%")
+                        ->orWhere('performed_by', 'like', "%{$search}%")
+                        ->orWhere('qa_sign', 'like', "%{$search}%")
+                        ->orWhere('review_by', 'like', "%{$search}%")
+                        ->orWhere('calibration_date', 'like', "%{$search}%")
+                        ->orWhere('calibration_due', 'like', "%{$search}%");
+                });
+            }
 
-        // 🔹 Paginate results
-        $reports = $reportsQuery->paginate($perPage, ['*'], 'page', $currentPage)->withQueryString();
+            // Paginate results
+            $reports = $reportsQuery->paginate($perPage, ['*'], 'page', $currentPage)->withQueryString();
 
-        // 🔹 Format links for DataTable
-        $links = [];
-        for ($i = 1; $i <= $reports->lastPage(); $i++) {
-            $links[] = [
-                'url' => $i === $reports->currentPage() ? null : route('calibration.calibrationReport', array_merge($request->all(), ['page' => $i])),
-                'label' => (string)$i,
-                'active' => $i === $reports->currentPage(),
-            ];
-        }
+            // Format links for DataTable
+            $links = [];
+            for ($i = 1; $i <= $reports->lastPage(); $i++) {
+                $links[] = [
+                    'url' => $i === $reports->currentPage() ? null : route('calibration.calibrationReport', array_merge($request->all(), ['page' => $i])),
+                    'label' => (string)$i,
+                    'active' => $i === $reports->currentPage(),
+                ];
+            }
 
-        return Inertia::render('Calibration/CalibrationReport', [
-            'machines' => $machines,
-            'reports' => [
-                'data' => $reports->items(),
-                'from' => $reports->firstItem(),
-                'to' => $reports->lastItem(),
-                'total' => $reports->total(),
-                'links' => $links,
-                'current_page' => $reports->currentPage(),
-                'last_page' => $reports->lastPage(),
-            ],
-            'tableFilters' => $request->only([
-                'search',
-                'perPage',
-                'sortBy',
-                'sortDirection',
-                'start',
-                'end',
-                'dropdownSearchValue',
-                'dropdownFields',
-            ]),
-            'empData' => [
+            // Get employee data from session
+            $empData = [
                 'emp_id' => session('emp_data')['emp_id'] ?? null,
                 'emp_name' => session('emp_data')['emp_name'] ?? null,
                 'emp_jobtitle' => session('emp_data')['emp_jobtitle'] ?? null,
-                // ✏️ para sa Edit button — ang server ang nagde-decide
-                'can_edit' => $this->canEdit(),
-            ],
-        ]);
+            ];
+
+            return Inertia::render('Calibration/CalibrationReport', [
+                'machines' => $machines,
+                'reports' => [
+                    'data' => $reports->items(),
+                    'from' => $reports->firstItem(),
+                    'to' => $reports->lastItem(),
+                    'total' => $reports->total(),
+                    'links' => $links,
+                    'current_page' => $reports->currentPage(),
+                    'last_page' => $reports->lastPage(),
+                    'per_page' => $reports->perPage(),
+                ],
+                'tableFilters' => $request->only([
+                    'search',
+                    'perPage',
+                    'sortBy',
+                    'sortDirection',
+                    'start',
+                    'end',
+                    'dropdownSearchValue',
+                    'dropdownFields',
+                ]),
+                'empData' => $empData,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in CalibrationReportController@index: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to load calibration reports');
+        }
     }
 
-    // 📌 API: List (for DataTable / API use)
+    /**
+     * Get calibration reports as JSON (for API/DataTable).
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function list()
     {
-        return response()->json(
-            CalibrationReport::orderBy('id', 'desc')->get()
-        );
+        try {
+            $reports = CalibrationReport::orderBy('id', 'desc')->get();
+            return response()->json($reports);
+        } catch (\Exception $e) {
+            Log::error('Error in CalibrationReportController@list: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to fetch reports'], 500);
+        }
     }
 
-    // 📌 Store
-    // app/Http/Controllers/CalibrationReportController.php
+    /**
+     * Store a new calibration report.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'equipment' => 'required|string',
-            'model' => 'nullable|string',
-            'serial' => 'nullable|string',
-            'control_no' => 'nullable|string',
-            'manufacturer' => 'nullable|string',
-            'calibration_date' => 'required|string',
-            'calibration_due' => 'nullable|string',
-            'performed_by' => 'required|string',
-            'temperature' => 'nullable|string',
-            'relative_humidity' => 'nullable|string',
-            'specs' => 'nullable|string',
-            'report_no' => 'nullable|string',
-            'cal_interval' => 'nullable|string',
+            'equipment' => 'required|string|max:255',
+            'model' => 'nullable|string|max:255',
+            'serial' => 'nullable|string|max:255',
+            'control_no' => 'nullable|string|max:255',
+            'manufacturer' => 'nullable|string|max:255',
+            'calibration_date' => 'required|string|max:255',
+            'calibration_due' => 'nullable|string|max:255',
+            'performed_by' => 'required|string|max:255',
+            'temperature' => 'nullable|string|max:255',
+            'relative_humidity' => 'nullable|string|max:255',
+            'specs' => 'nullable|string|max:255',
+            'report_no' => 'nullable|string|max:255',
+            'cal_interval' => 'nullable|string|max:255',
             'cal_std_use' => 'nullable|array',
             'cal_details' => 'nullable|array',
         ]);
 
-        CalibrationReport::create($validated);
-
-        return redirect()->back()->with('success', 'Calibration Report saved successfully!');
-    }
-
-
-    // 📌 Show
-    public function show(CalibrationReport $calibrationReport)
-    {
-        return response()->json($calibrationReport);
-    }
-
-    // 📌 Update
-    public function update(Request $request, CalibrationReport $calibrationReport)
-    {
-        $data = $this->validateData($request);
-        $calibrationReport->update($data);
-
-        return response()->json($calibrationReport);
+        try {
+            CalibrationReport::create($validated);
+            return redirect()->back()->with('success', 'Calibration Report saved successfully!');
+        } catch (\Exception $e) {
+            Log::error('Error in CalibrationReportController@store: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to save calibration report')->withInput();
+        }
     }
 
     /**
-     * ✏️ Admin edit — 1797 lang, at 100% verified (QA + Reviewer) lang.
+     * Display the specified calibration report.
      *
-     * Pwedeng baguhin: calibration_date/due, temperature, relative_humidity, specs,
-     * report_no, cal_interval, cal_std_use, cal_details, at ang mga verifier
-     * (qa_sign / review_by + mga petsa nila).
-     * HINDI ginagalaw: equipment, model, serial, manufacturer, control_no, performed_by.
-     *
-     * Raw table update ang gamit (tulad ng destroy()) para hindi madamay ang model casts —
-     * JSON text ang sine-save sa cal_std_use / cal_details.
+     * @param CalibrationReport $calibrationReport
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function adminUpdate(Request $request, $id)
+    public function show(CalibrationReport $calibrationReport)
     {
-        abort_unless($this->canEdit(), 403, 'You are not allowed to edit.');
-
-        $row = DB::connection('mysql')->table('calibration_report_list')->where('id', $id)->first();
-        abort_if(!$row, 404);
-
-        $has = fn ($v) => $v !== null && trim((string) $v) !== '';
-
-        if (!($has($row->qa_sign) && $has($row->review_by))) {
-            return back()->withErrors(['edit' => 'Only fully verified (100%) reports can be edited.']);
+        try {
+            return response()->json($calibrationReport);
+        } catch (\Exception $e) {
+            Log::error('Error in CalibrationReportController@show: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to fetch report'], 500);
         }
-
-        $v = $request->validate([
-            'calibration_date'  => 'nullable|string|max:255',
-            'calibration_due'   => 'nullable|string|max:255',
-            'temperature'       => 'nullable|string|max:255',
-            'relative_humidity' => 'nullable|string|max:255',
-            'specs'             => 'nullable|string|max:255',
-            'report_no'         => 'nullable|string|max:255',
-            'cal_interval'      => 'nullable|string|max:255',
-            'cal_std_use'       => 'nullable|array',
-            'cal_details'       => 'nullable|array',
-            'qa_sign'           => 'nullable|string|max:255',
-            'qa_sign_date'      => 'nullable|date_format:Y-m-d H:i:s',
-            'review_by'         => 'nullable|string|max:255',
-            'review_date'       => 'nullable|date_format:Y-m-d H:i:s',
-        ]);
-
-        $update = [];
-
-        foreach (['calibration_date', 'calibration_due', 'temperature', 'relative_humidity', 'specs', 'report_no', 'cal_interval'] as $f) {
-            if ($request->has($f)) {
-                $update[$f] = $v[$f] ?? null;
-            }
-        }
-
-        if ($request->has('cal_std_use')) {
-            $update['cal_std_use'] = json_encode($v['cal_std_use'] ?? []);
-        }
-        if ($request->has('cal_details')) {
-            $update['cal_details'] = json_encode($v['cal_details'] ?? []);
-        }
-
-        // Verifiers — walang pangalan = blangko rin ang petsa.
-        // May pangalan pero walang petsa = dating petsa, o ngayon kung wala pa.
-        $final = ['qa_sign' => $row->qa_sign, 'review_by' => $row->review_by];
-
-        foreach (['qa_sign' => 'qa_sign_date', 'review_by' => 'review_date'] as $f => $dateField) {
-            if (!$request->has($f)) {
-                continue;
-            }
-
-            $name = trim((string) ($v[$f] ?? ''));
-
-            if ($name === '') {
-                $update[$f] = null;
-                $update[$dateField] = null;
-            } else {
-                $update[$f] = $name;
-                $update[$dateField] = !empty($v[$dateField])
-                    ? $v[$dateField]
-                    : ($row->{$dateField} ?: now()->format('Y-m-d H:i:s'));
-            }
-
-            $final[$f] = $update[$f];
-        }
-
-        // 🔒 Dapat sunod-sunod pa rin: QA → Reviewer
-        if ($has($final['review_by']) && !$has($final['qa_sign'])) {
-            return back()->withErrors(['sign' => 'Reviewer needs a QA verifier first.']);
-        }
-
-        if (!empty($update)) {
-            DB::connection('mysql')->table('calibration_report_list')->where('id', $id)->update($update);
-        }
-
-        return back()->with('success', '✅ Calibration report updated successfully!');
     }
 
-    // 📌 Delete
+    /**
+     * Update the specified calibration report.
+     *
+     * @param Request $request
+     * @param CalibrationReport $calibrationReport
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function update(Request $request, CalibrationReport $calibrationReport)
+    {
+        $data = $this->validateData($request);
+
+        try {
+            $calibrationReport->update($data);
+            return response()->json($calibrationReport);
+        } catch (\Exception $e) {
+            Log::error('Error in CalibrationReportController@update: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to update report'], 500);
+        }
+    }
+
+    /**
+     * Remove the specified calibration report.
+     *
+     * @param int $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function destroy($id)
     {
-        // Gamit ang custom connection/table
-        DB::connection('mysql')->table('calibration_report_list')->where('id', $id)->delete();
-
-        // Return Inertia redirect para hindi mag-error
-        return redirect()->back()->with('success', '✅ Report removed successfully!!');
+        try {
+            DB::connection('mysql')->table('calibration_report_list')->where('id', $id)->delete();
+            return redirect()->back()->with('success', 'Report removed successfully!');
+        } catch (\Exception $e) {
+            Log::error('Error in CalibrationReportController@destroy: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to delete report');
+        }
     }
 
-    // 📌 Validation rules (shared by store & update)
+    /**
+     * Validate request data for store/update.
+     *
+     * @param Request $request
+     * @return array
+     */
     protected function validateData(Request $request)
     {
         return $request->validate([
@@ -289,51 +260,82 @@ class CalibrationReportController extends Controller
             'specs' => 'nullable|string|max:255',
             'report_no' => 'nullable|string|max:255',
             'cal_interval' => 'nullable|string|max:255',
-
-            // ✅ allow arrays
             'cal_std_use' => 'nullable|array',
             'cal_details' => 'nullable|array',
         ]);
     }
 
+    /**
+     * Verify the calibration report by QA.
+     *
+     * @param CalibrationReport $report
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function verifyQA(CalibrationReport $report)
     {
-        $report->qa_sign = session('emp_data')['emp_name'] ?? null;
-        $report->qa_sign_date = now();
-        $report->save();
+        try {
+            $report->qa_sign = session('emp_data')['emp_name'] ?? null;
+            $report->qa_sign_date = now();
+            $report->save();
 
-        return back()->with([
-            'success' => 'Report verified by QA!',
-            'updatedReport' => $report
-        ]);
+            return back()->with([
+                'success' => 'Report verified by QA!',
+                'updatedReport' => $report
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in CalibrationReportController@verifyQA: ' . $e->getMessage());
+            return back()->with('error', 'Failed to verify report by QA');
+        }
     }
 
+    /**
+     * Verify the calibration report by Reviewer.
+     *
+     * @param CalibrationReport $report
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function verifyReviewer(CalibrationReport $report)
     {
-        $report->review_by = session('emp_data')['emp_name'] ?? null;
-        $report->review_date = now();
-        $report->save();
+        try {
+            $report->review_by = session('emp_data')['emp_name'] ?? null;
+            $report->review_date = now();
+            $report->save();
 
-        return back()->with([
-            'success' => 'Report verified by Reviewer!',
-            'updatedReport' => $report
-        ]);
+            return back()->with([
+                'success' => 'Report verified by Reviewer!',
+                'updatedReport' => $report
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in CalibrationReportController@verifyReviewer: ' . $e->getMessage());
+            return back()->with('error', 'Failed to verify report by Reviewer');
+        }
     }
 
+    /**
+     * Generate and view PDF for a calibration report.
+     *
+     * @param int $id
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse
+     */
     public function viewPdf($id)
     {
-        $calibration = CalibrationReport::findOrFail($id);
+        try {
+            $calibration = CalibrationReport::findOrFail($id);
 
-        $cal_std_use = $calibration->cal_std_use ? json_decode($calibration->cal_std_use, true) : [];
-        $cal_details = $calibration->cal_details ? json_decode($calibration->cal_details, true) : [];
+            $cal_std_use = $calibration->cal_std_use ? json_decode($calibration->cal_std_use, true) : [];
+            $cal_details = $calibration->cal_details ? json_decode($calibration->cal_details, true) : [];
 
-        $pdf = Pdf::loadView('pdf.calibration', [
-            'report'  => $calibration,
-            'calibration'  => $calibration,
-            'cal_std_use'  => $cal_std_use,
-            'cal_details'  => $cal_details,
-        ]);
+            $pdf = Pdf::loadView('pdf.calibration', [
+                'report' => $calibration,
+                'calibration' => $calibration,
+                'cal_std_use' => $cal_std_use,
+                'cal_details' => $cal_details,
+            ]);
 
-        return $pdf->stream("calibration_$id.pdf");
+            return $pdf->stream("calibration_{$id}.pdf");
+        } catch (\Exception $e) {
+            Log::error('Error in CalibrationReportController@viewPdf: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to generate PDF');
+        }
     }
 }

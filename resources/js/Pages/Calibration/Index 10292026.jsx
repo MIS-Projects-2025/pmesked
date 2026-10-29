@@ -19,7 +19,7 @@ export default function Index({ checklist }) {
         setSelected({ platform, manufacturer });
         try {
             const response = await fetch(
-                route("calibration.show", { platform, manufacturer })
+                route("calibration.show", { platform, manufacturer }),
             );
             const data = await response.json();
             setViewData(data.items ?? []);
@@ -76,11 +76,14 @@ export default function Index({ checklist }) {
             <div className="card border rounded-lg shadow">
                 <div className="card-header bg-gray-100 p-3 flex justify-between bg-gradient-to-r from-gray-600 to-black text-white rounded-t-2xl">
                     <h3 className="font-bold text-gray-700 text-white mt-2 ml-2">
-                        <i className="fab fa-slack mr-1"></i> PM Checklist Activities
+                        <i className="fab fa-slack mr-1"></i> PM Checklist
+                        Activities
                     </h3>
                     <button
                         className="btn bg-green-500 hover:bg-green-700 text-white"
-                        onClick={() => router.visit(route("calibration.create"))}
+                        onClick={() =>
+                            router.visit(route("calibration.create"))
+                        }
                     >
                         <i className="fas fa-plus"></i> Add New
                     </button>
@@ -106,7 +109,10 @@ export default function Index({ checklist }) {
                                         <button
                                             className="btn btn-sm bg-gray-500 hover:bg-gray-700 text-white mr-2"
                                             onClick={() =>
-                                                handleView(row.platform, row.manufacturer)
+                                                handleView(
+                                                    row.platform,
+                                                    row.manufacturer,
+                                                )
                                             }
                                         >
                                             <i className="fas fa-eye"></i> View
@@ -126,8 +132,9 @@ export default function Index({ checklist }) {
                         {/* Header */}
                         <div className="flex justify-between items-center border-b pb-2 mb-3 bg-gradient-to-r from-gray-600 to-black text-white rounded-t-2xl">
                             <h5 className="font-semibold text-white text-base md:text-lg mt-2 ml-2">
-                                <i className="fas fa-tasks"></i> Checklist Details (
-                                {selected.platform} - {selected.manufacturer})
+                                <i className="fas fa-tasks"></i> Checklist
+                                Details ({selected.platform} -{" "}
+                                {selected.manufacturer})
                             </h5>
                             <button
                                 className="text-red-400 hover:text-red-700 text-xl mr-3 font-bold"
@@ -142,12 +149,24 @@ export default function Index({ checklist }) {
                             <table className="table-auto border-collapse border border-gray-300 w-full text-sm md:text-base">
                                 <thead className="bg-gradient-to-r from-gray-600 to-black text-white rounded-t-2xl">
                                     <tr>
-                                        <th className="border px-3 py-2">Assembly Item</th>
-                                        <th className="border px-3 py-2">Description</th>
-                                        <th className="border px-3 py-2">Requirements</th>
-                                        <th className="border px-3 py-2">Activity 1</th>
-                                        <th className="border px-3 py-2">Activity 2</th>
-                                        <th className="border px-3 py-2">Actions</th>
+                                        <th className="border px-3 py-2">
+                                            Assembly Item
+                                        </th>
+                                        <th className="border px-3 py-2">
+                                            Description
+                                        </th>
+                                        <th className="border px-3 py-2">
+                                            Requirements
+                                        </th>
+                                        <th className="border px-3 py-2">
+                                            Activity 1
+                                        </th>
+                                        <th className="border px-3 py-2">
+                                            Activity 2
+                                        </th>
+                                        <th className="border px-3 py-2">
+                                            Actions
+                                        </th>
                                     </tr>
                                 </thead>
 
@@ -160,11 +179,16 @@ export default function Index({ checklist }) {
                                                         <td className="border px-3 py-2">
                                                             <input
                                                                 type="text"
-                                                                value={editRow.assy_item}
+                                                                value={
+                                                                    editRow.assy_item
+                                                                }
                                                                 onChange={(e) =>
                                                                     setEditRow({
                                                                         ...editRow,
-                                                                        assy_item: e.target.value,
+                                                                        assy_item:
+                                                                            e
+                                                                                .target
+                                                                                .value,
                                                                     })
                                                                 }
                                                                 className="border p-1 w-full"
@@ -173,12 +197,16 @@ export default function Index({ checklist }) {
                                                         <td className="border px-3 py-2">
                                                             <input
                                                                 type="text"
-                                                                value={editRow.description}
+                                                                value={
+                                                                    editRow.description
+                                                                }
                                                                 onChange={(e) =>
                                                                     setEditRow({
                                                                         ...editRow,
                                                                         description:
-                                                                            e.target.value,
+                                                                            e
+                                                                                .target
+                                                                                .value,
                                                                     })
                                                                 }
                                                                 className="border p-1 w-full"
@@ -187,12 +215,16 @@ export default function Index({ checklist }) {
                                                         <td className="border px-3 py-2">
                                                             <input
                                                                 type="text"
-                                                                value={editRow.requirements}
+                                                                value={
+                                                                    editRow.requirements
+                                                                }
                                                                 onChange={(e) =>
                                                                     setEditRow({
                                                                         ...editRow,
                                                                         requirements:
-                                                                            e.target.value,
+                                                                            e
+                                                                                .target
+                                                                                .value,
                                                                     })
                                                                 }
                                                                 className="border p-1 w-full"
@@ -201,12 +233,16 @@ export default function Index({ checklist }) {
                                                         <td className="border px-3 py-2">
                                                             <input
                                                                 type="text"
-                                                                value={editRow.activity_1}
+                                                                value={
+                                                                    editRow.activity_1
+                                                                }
                                                                 onChange={(e) =>
                                                                     setEditRow({
                                                                         ...editRow,
                                                                         activity_1:
-                                                                            e.target.value,
+                                                                            e
+                                                                                .target
+                                                                                .value,
                                                                     })
                                                                 }
                                                                 className="border p-1 w-full"
@@ -215,12 +251,16 @@ export default function Index({ checklist }) {
                                                         <td className="border px-3 py-2">
                                                             <input
                                                                 type="text"
-                                                                value={editRow.activity_2}
+                                                                value={
+                                                                    editRow.activity_2
+                                                                }
                                                                 onChange={(e) =>
                                                                     setEditRow({
                                                                         ...editRow,
                                                                         activity_2:
-                                                                            e.target.value,
+                                                                            e
+                                                                                .target
+                                                                                .value,
                                                                     })
                                                                 }
                                                                 className="border p-1 w-full"
@@ -233,22 +273,26 @@ export default function Index({ checklist }) {
                                                                     router.put(
                                                                         route(
                                                                             "calibration.update",
-                                                                            item.id
+                                                                            item.id,
                                                                         ),
                                                                         editRow,
                                                                         {
-                                                                            onSuccess: () => {
-                                                                                alert(
-                                                                                    "✅ Updated successfully!"
-                                                                                );
-                                                                                setEditingId(null);
-                                                                                window.location.reload();
-                                                                            },
-                                                                            onError: () =>
-                                                                                alert(
-                                                                                    "❌ Failed to update."
-                                                                                ),
-                                                                        }
+                                                                            onSuccess:
+                                                                                () => {
+                                                                                    alert(
+                                                                                        "✅ Updated successfully!",
+                                                                                    );
+                                                                                    setEditingId(
+                                                                                        null,
+                                                                                    );
+                                                                                    window.location.reload();
+                                                                                },
+                                                                            onError:
+                                                                                () =>
+                                                                                    alert(
+                                                                                        "❌ Failed to update.",
+                                                                                    ),
+                                                                        },
                                                                     );
                                                                 }}
                                                             >
@@ -258,7 +302,9 @@ export default function Index({ checklist }) {
                                                             <button
                                                                 className="bg-gray-400 hover:bg-gray-600 text-white text-xs px-2 py-1 rounded"
                                                                 onClick={() =>
-                                                                    setEditingId(null)
+                                                                    setEditingId(
+                                                                        null,
+                                                                    )
                                                                 }
                                                             >
                                                                 Cancel
@@ -287,8 +333,12 @@ export default function Index({ checklist }) {
                                                                 <button
                                                                     className="bg-blue-500 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded mr-2"
                                                                     onClick={() => {
-                                                                        setEditingId(item.id);
-                                                                        setEditRow(item);
+                                                                        setEditingId(
+                                                                            item.id,
+                                                                        );
+                                                                        setEditRow(
+                                                                            item,
+                                                                        );
                                                                     }}
                                                                 >
                                                                     <i className="fas fa-edit"></i>{" "}
@@ -299,28 +349,28 @@ export default function Index({ checklist }) {
                                                                     onClick={() => {
                                                                         if (
                                                                             confirm(
-                                                                                "Are you sure you want to delete this item?"
+                                                                                "Are you sure you want to delete this item?",
                                                                             )
                                                                         ) {
                                                                             router.delete(
                                                                                 route(
                                                                                     "calibration.destroy",
-                                                                                    item.id
+                                                                                    item.id,
                                                                                 ),
                                                                                 {
                                                                                     onSuccess:
                                                                                         () => {
                                                                                             alert(
-                                                                                                "✅ Deleted successfully!"
+                                                                                                "✅ Deleted successfully!",
                                                                                             );
                                                                                             window.location.reload();
                                                                                         },
                                                                                     onError:
                                                                                         () =>
                                                                                             alert(
-                                                                                                "❌ Failed to delete."
+                                                                                                "❌ Failed to delete.",
                                                                                             ),
-                                                                                }
+                                                                                },
                                                                             );
                                                                         }
                                                                     }}
@@ -336,7 +386,10 @@ export default function Index({ checklist }) {
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan="6" className="text-gray-500 py-3">
+                                            <td
+                                                colSpan="6"
+                                                className="text-gray-500 py-3"
+                                            >
                                                 No records found
                                             </td>
                                         </tr>
