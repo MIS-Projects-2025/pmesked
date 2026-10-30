@@ -166,12 +166,10 @@ Route::get('/ionizer-checklists', [IonizerChecklistController::class, 'index'])-
 Route::post('/ionizer-checklists', [IonizerChecklistController::class, 'store'])->name('ionizer.store');
 Route::put('/ionizer-checklists/{id}', [IonizerChecklistController::class, 'update'])->name('ionizer.update');
 Route::delete('/ionizer-checklists/{id}', [IonizerChecklistController::class, 'destroy'])->name('ionizer.destroy');
-Route::get('/ionizer-checklist/{id}/pdf', [IonizerChecklistController::class, 'generatePdf']);
 
-
-Route::post('/ionizer-checklist/{id}/verify', [IonizerChecklistController::class, 'verify']);
-
-Route::post('/ionizer-checklist/bulk-verify', [IonizerChecklistController::class, 'bulkVerify']);
+Route::get('/ionizer-checklist/{id}/pdf', [IonizerChecklistController::class, 'generatePdf'])->name('ionizer.pdf');
+Route::post('/ionizer-checklist/{id}/verify', [IonizerChecklistController::class, 'verify'])->name('ionizer.verify');
+Route::post('/ionizer-checklist/bulk-verify', [IonizerChecklistController::class, 'bulkVerify'])->name('ionizer.bulkVerify');
 
 
 Route::prefix('non-tnr-checklist-items')->group(function () {
