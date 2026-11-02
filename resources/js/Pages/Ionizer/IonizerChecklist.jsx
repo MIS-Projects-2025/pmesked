@@ -585,7 +585,7 @@ export default function Index({
                                                     value={formData.pm_date}
                                                     onChange={handleChange}
                                                     className="w-full border rounded p-1"
-                                                    readOnly
+                                                    required
                                                 />
                                             </td>
                                         </tr>
@@ -635,7 +635,7 @@ export default function Index({
                                                     value={formData.pm_due}
                                                     onChange={handleChange}
                                                     className="w-full border rounded p-1"
-                                                    readOnly
+                                                    required
                                                 />
                                             </td>
                                         </tr>
