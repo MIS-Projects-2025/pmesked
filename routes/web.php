@@ -104,6 +104,9 @@ Route::post('/calibration-reports/non-tnr/{report}/verify-qa', [NonTnrCalibratio
 Route::post('/calibration-reports/non-tnr/{report}/verify-reviewer', [NonTnrCalibrationReportController::class, 'verifyReviewer'])
     ->name('calibration-reports.non-tnr.verify-reviewer');
 
+Route::put('/calibration-reports/{calibrationReport}/admin-update', [CalibrationReportController::class, 'adminUpdate'])
+    ->name('calibration-reports.admin-update');
+
 // Show Fillup form
 Route::get('/tnr/fillup/{id}', [TnrController::class, 'fillup'])->name('tnr.fillup');
 
