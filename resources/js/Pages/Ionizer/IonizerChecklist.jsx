@@ -127,7 +127,7 @@ export default function Index({
             const defaultValues = [
                 "TREK INC.",
                 "PFK-100/1261",
-                "CN 886",
+                "CN 888",
                 "",
                 "",
             ];
